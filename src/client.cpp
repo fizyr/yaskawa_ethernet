@@ -92,19 +92,19 @@ void EthernetClient::start(int keep_alive, ResultCallback<Response> const & call
 	std::ostream stream(buffer.get());
 	encodeStartRequest(stream, keep_alive);
 
-	auto handler = [this, callback, buffer] (boost::system::error_code const & error, std::size_t bytes_transferred) {
+	auto write_handler = [this, callback, buffer] (boost::system::error_code const & error, std::size_t bytes_transferred) {
 		if (error) return callback(error);
 		buffer->consume(bytes_transferred);
 
-		auto handler = [this, callback, buffer] (boost::system::error_code const & error, std::size_t bytes_transferred) {
+		auto read_handler = [this, callback] (boost::system::error_code const & error, std::size_t bytes_transferred) {
 			if (error) return callback(error);
-			string_view data = {boost::asio::buffer_cast<char const *>(buffer->data()), bytes_transferred};
+			string_view data = {boost::asio::buffer_cast<char const *>(read_buffer_.data()), bytes_transferred};
 			callback(decodeResponse(data));
 		};
-		boost::asio::async_read_until(socket_, read_buffer_, ResponseMatcher{}, handler);
+		boost::asio::async_read_until(socket_, read_buffer_, ResponseMatcher{}, read_handler);
 	};
 
-	boost::asio::async_write(socket_, buffer->data(), handler);
+	boost::asio::async_write(socket_, buffer->data(), write_handler);
 }
 
 }}

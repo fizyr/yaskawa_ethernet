@@ -40,8 +40,6 @@ ErrorOr<Response> decodeResponse(string_view message) {
 	// The response is terminated by a CRLF, so ignore that bit.
 	message = stripResponseFrame(message);
 
-	if (message.size() < 3) return boost::system::error_code{errc::malformed_response};
-
 	if (startsWith(message, "NG:"_v)) {
 		char const * start = std::find_if_not(message.begin() + 3, message.end(), isSpace);
 		return Response{false, std::string(start, message.end())};

@@ -15,7 +15,6 @@ struct ResponseMatcher {
 		cr,
 	} type = Type::unknown;
 
-
 	std::string prefix;
 	bool cr = false;
 
