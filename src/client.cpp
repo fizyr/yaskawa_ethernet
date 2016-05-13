@@ -4,6 +4,7 @@
 
 #include <boost/asio/write.hpp>
 #include <boost/asio/read_until.hpp>
+#include <boost/asio/connect.hpp>
 
 #include <memory>
 #include <atomic>
@@ -31,7 +32,9 @@ namespace {
 	};
 
 	/// Called when a connection attempt finished.
-	void onConnect(boost::system::error_code const & error, std::shared_ptr<ConnectionAttempt> attempt) {
+	void onConnect(boost::system::error_code const & error, Resolver::iterator iterator, std::shared_ptr<ConnectionAttempt> attempt) {
+		(void) iterator;
+
 		if (attempt->finished.exchange(true)) {
 			boost::system::error_code discard_error;
 			attempt->socket->close(discard_error);
@@ -44,7 +47,7 @@ namespace {
 	}
 
 	/// Called when the resolver has a result.
-	void onResolve(boost::system::error_code const & error, Resolver::iterator const & endpoint, std::shared_ptr<ConnectionAttempt> attempt) {
+	void onResolve(boost::system::error_code const & error, Resolver::iterator iterator, std::shared_ptr<ConnectionAttempt> attempt) {
 		if (error) {
 			if (attempt->finished.exchange(true)) return;
 			attempt->callback(error);
@@ -52,8 +55,8 @@ namespace {
 
 		if (attempt->finished.load()) return;
 
-		auto connect_callback = std::bind(onConnect, std::placeholders::_1, attempt);
-		attempt->socket->async_connect(*endpoint, connect_callback);
+		auto connect_callback = std::bind(onConnect, std::placeholders::_1, std::placeholders::_2, attempt);
+		boost::asio::async_connect(*attempt->socket, iterator, connect_callback);
 	}
 
 	/// Called when a connection attempt times out.
