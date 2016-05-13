@@ -49,14 +49,11 @@ struct ResponseMatcher {
 };
 
 /// Decode a response message.
-Response decodeResponse(string_view message);
+ErrorOr<Response> decodeResponse(string_view message);
 
 }}
 
 namespace boost {
 namespace asio {
-
-template<>
-struct is_match_condition<dr::yaskawa::ResponseMatcher> : std::true_type {};
-
+	template<> struct is_match_condition<dr::yaskawa::ResponseMatcher> : std::true_type {};
 }}

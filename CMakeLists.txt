@@ -21,9 +21,13 @@ add_library(${PROJECT_NAME}
 	src/encode.cpp
 	src/decode.cpp
 	src/client.cpp
+	src/error.cpp
 )
 
-target_link_libraries(${PROJECT_NAME} ${LIBRARIES})
+target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+
+add_executable(${PROJECT_NAME}_test src/test.cpp)
+target_link_libraries(${PROJECT_NAME}_test ${PROJECT_NAME})
 
 install(TARGETS ${PROJECT_NAME}
 	ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}

@@ -1,4 +1,6 @@
 #include "decode.hpp"
+#include "error.hpp"
+
 #include <boost/utility/string_ref.hpp>
 #include <algorithm>
 
@@ -34,37 +36,23 @@ namespace {
 	}
 }
 
-char const * findMessageEnd(string_view message) {
-	char const * cr = std::find(message.begin(), message.end(), '\r');
-	bool         lf = cr + 1 < message.end() && *(cr + 1) == '\n';
-	if (cr == message.end()) return message.end();
-
-	if (startsWith(message, "0000\r\n"_v))  return message.begin() + 6;
-	if (startsWith(message, "OK:"_v) && lf) return cr + 2;
-	if (startsWith(message, "NG:"_v) && lf) return cr + 2;
-
-	// If not one of the previous messages, this is a DATA response.
-	// DATA responses are terminated by a single CR, no LF.
-	return cr + 1;
-}
-
-Response decodeResponse(string_view message) {
+ErrorOr<Response> decodeResponse(string_view message) {
 	// The response is terminated by a CRLF, so ignore that bit.
 	message = stripResponseFrame(message);
 
-	if (message.size() < 3) throw std::runtime_error("Invalid response. Reponse too small.");
+	if (message.size() < 3) return boost::system::error_code{errc::malformed_response};
 
 	if (startsWith(message, "NG:"_v)) {
 		char const * start = std::find_if_not(message.begin() + 3, message.end(), isSpace);
-		return {false, std::string(start, message.end())};
+		return Response{false, std::string(start, message.end())};
 	}
 
 	if (startsWith(message, "OK:"_v)) {
 		char const * start = std::find_if_not(message.begin() + 3, message.end(), isSpace);
-		return {true, std::string(start, message.end())};
+		return Response{true, std::string(start, message.end())};
 	}
 
-	throw std::runtime_error("Unknown response.");
+	return boost::system::error_code{errc::malformed_response};
 }
 
 
