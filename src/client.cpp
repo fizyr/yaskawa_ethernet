@@ -2,9 +2,7 @@
 #include "encode.hpp"
 #include "decode.hpp"
 #include "connect.hpp"
-
-#include <boost/asio/write.hpp>
-#include <boost/asio/read_until.hpp>
+#include "send_command.hpp"
 
 #include <memory>
 #include <atomic>
@@ -25,20 +23,8 @@ void EthernetClient::connect(std::string const & host, std::uint16_t port, unsig
 
 void EthernetClient::start(int keep_alive, ResultCallback<std::string> const & callback) {
 	encodeStartRequest(std::ostream(&write_buffer_), keep_alive);
+	sendStartCommand(socket_, read_buffer_, write_buffer_, callback);
 
-	auto write_handler = [this, callback] (boost::system::error_code const & error, std::size_t bytes_transferred) {
-		if (error) return callback(error);
-		write_buffer_.consume(bytes_transferred);
-
-		auto read_handler = [this, callback] (boost::system::error_code const & error, std::size_t bytes_transferred) {
-			if (error) return callback(error);
-			string_view data = {boost::asio::buffer_cast<char const *>(read_buffer_.data()), bytes_transferred};
-			callback(decodeResponse(data));
-		};
-		boost::asio::async_read_until(socket_, read_buffer_, ResponseMatcher{}, read_handler);
-	};
-
-	boost::asio::async_write(socket_, write_buffer_.data(), write_handler);
 }
 
 }}
