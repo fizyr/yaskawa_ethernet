@@ -88,8 +88,7 @@ void EthernetClient::connect(std::string const & host, std::string const & port,
 }
 
 void EthernetClient::start(int keep_alive, ResultCallback<std::string> const & callback) {
-	std::ostream stream(&write_buffer_);
-	encodeStartRequest(stream, keep_alive);
+	encodeStartRequest(std::ostream(&write_buffer_), keep_alive);
 
 	auto write_handler = [this, callback] (boost::system::error_code const & error, std::size_t bytes_transferred) {
 		if (error) return callback(error);
