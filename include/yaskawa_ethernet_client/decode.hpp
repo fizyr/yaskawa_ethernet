@@ -21,6 +21,11 @@ struct ResponseMatcher {
 
 	bool consume(char c) {
 		if (type == Type::unknown) {
+			if (c == '\r') {
+				type = Type::cr;
+				return true;
+			}
+
 			prefix.push_back(c);
 			if (prefix == "OK:" || prefix == "NG:" || prefix == "ERROR:") {
 				type = Type::crlf;
