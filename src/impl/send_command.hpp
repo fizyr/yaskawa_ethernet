@@ -34,16 +34,15 @@ namespace impl {
 		return result;
 	}
 
-	/// Class representing a command session.
+	/// Class representing a CONNECT command session.
 	/**
 	 * The session consists of the following actions:
-	 *   - Write command and data.
-	 *   - Read command response.
-	 *   - Read response data.
+	 * - Write command.
+	 * - Read command response.
 	 */
 	template<typename Socket, typename Callback>
-	class StartSession : public std::enable_shared_from_this<StartSession<Socket, Callback>> {
-		using Ptr = std::shared_ptr<StartSession>;
+	class StartRequestContext : public std::enable_shared_from_this<StartRequestContext<Socket, Callback>> {
+		using Ptr = std::shared_ptr<StartRequestContext>;
 		Socket * socket;
 		boost::asio::streambuf * read_buffer;
 		boost::asio::streambuf * write_buffer;
@@ -52,7 +51,7 @@ namespace impl {
 
 	public:
 		/// Construct a command session.
-		StartSession(Socket & socket, boost::asio::streambuf & read_buffer, boost::asio::streambuf & write_buffer, Callback callback) :
+		StartRequestContext(Socket & socket, boost::asio::streambuf & read_buffer, boost::asio::streambuf & write_buffer, Callback callback) :
 			socket(&socket),
 			read_buffer(&read_buffer),
 			write_buffer(&write_buffer),
@@ -60,7 +59,7 @@ namespace impl {
 
 		/// Start the session by writing the command.
 		void start() {
-			auto callback = std::bind(&StartSession::onWriteCommand, this, this->shared_from_this(), std::placeholders::_1, std::placeholders::_2);
+			auto callback = std::bind(&StartRequestContext::onWriteCommand, this, this->shared_from_this(), std::placeholders::_1, std::placeholders::_2);
 			boost::asio::async_write(*socket, write_buffer->data(), callback);
 		}
 
@@ -70,7 +69,7 @@ namespace impl {
 			write_buffer->consume(bytes_transferred);
 			if (error) callback(ErrorOr<std::string>(error));
 
-			auto callback = std::bind(&StartSession::onReadResponse, this, this->shared_from_this(), std::placeholders::_1, std::placeholders::_2);
+			auto callback = std::bind(&StartRequestContext::onReadResponse, this, this->shared_from_this(), std::placeholders::_1, std::placeholders::_2);
 			boost::asio::async_read_until(*socket, *read_buffer, ResponseMatcher{}, callback);
 		}
 
@@ -85,9 +84,9 @@ namespace impl {
 	/// Class representing a command session.
 	/**
 	 * The session consists of the following actions:
-	 *   - Write command and data.
-	 *   - Read command response.
-	 *   - Read response data.
+	 * - Write command and data.
+	 * - Read command response.
+	 * - Read response data.
 	 */
 	template<typename T, typename Socket, typename Decoder, typename Callback>
 	class CommandSession : public std::enable_shared_from_this<CommandSession<T, Socket, Decoder, Callback>> {
@@ -143,14 +142,27 @@ namespace impl {
 	};
 }
 
-/// Send a command and receive the reply asynchronously.
+/// Send a START request and receive the reply asynchronously.
+/**
+ * The START request must already be present in the write buffer.
+ *
+ * Sending a START request includes two phases:
+ * - Write command.
+ * - Read command response.
+ */
 template<typename Socket, typename Callback>
-void sendStartCommand(Socket & socket, boost::asio::streambuf & read_buffer, boost::asio::streambuf & write_buffer, Callback callback) {
-	auto session = std::make_shared<impl::StartSession<Socket, Callback>>(socket, read_buffer, write_buffer, callback);
+void sendStartRequest(Socket & socket, boost::asio::streambuf & read_buffer, boost::asio::streambuf & write_buffer, Callback callback) {
+	auto session = std::make_shared<impl::StartRequestContext<Socket, Callback>>(socket, read_buffer, write_buffer, callback);
 	session->start();
 }
 
-/// Send a command and receive the reply asynchronously.
+/// Send the command currently in the the write buffer and receive the reply asynchronously.
+/**
+ * Sending a command includes three phases:
+ * - Write command and data.
+ * - Read command response.
+ * - Read response data.
+ */
 template<typename T, typename Socket, typename Decoder, typename Callback>
 void sendCommand(Socket & socket, boost::asio::streambuf & read_buffer, boost::asio::streambuf & write_buffer, Decoder decoder, Callback callback) {
 	auto session = std::make_shared<impl::CommandSession<T, Socket, Decoder, Callback>>(socket, read_buffer, write_buffer, decoder, callback);

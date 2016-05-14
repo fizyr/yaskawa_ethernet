@@ -1,5 +1,5 @@
 #include "encode.hpp"
-#include "encode_parameters.hpp"
+#include "impl/encode_parameters.hpp"
 
 #include <sstream>
 

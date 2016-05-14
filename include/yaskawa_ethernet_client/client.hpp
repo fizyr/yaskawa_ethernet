@@ -1,5 +1,5 @@
 #pragma once
-#include "messages.hpp"
+#include "error.hpp"
 
 #include <boost/asio/io_service.hpp>
 #include <boost/asio/ip/tcp.hpp>

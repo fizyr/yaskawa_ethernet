@@ -1,8 +1,6 @@
 #include "decode.hpp"
 #include "error.hpp"
 
-#include <boost/utility/string_ref.hpp>
-
 #include <algorithm>
 #include <utility>
 

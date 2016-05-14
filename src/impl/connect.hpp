@@ -21,10 +21,10 @@ class ConnectionAttempt : public std::enable_shared_from_this<ConnectionAttempt<
 	/// The callback to invoke on success, failure or timeout.
 	Callback callback;
 
-	/// The resolver to perform the query with.
+	/// Resolver to perform the query with.
 	Resolver resolver;
 
-	/// The timer to keep track of the timeout with.
+	/// Timer to keep track of the timeout with.
 	boost::asio::steady_timer timer;
 
 	/// Flag to remember if the callback has been invoked already.

@@ -23,6 +23,11 @@ namespace {
 		}
 	};
 
+	/// Encode a number of parameters.
+	/**
+	 * Each parameter is serialized writing it to the output stream.
+	 * Paremeters are seperated by a space, and the list is terminated by a '\r'.
+	 */
 	template<typename... T>
 	void encodeParameters(std::ostream & stream, T const & ... params) {
 		EncodeParametersImp<T...>::addParameters(stream, params...);
