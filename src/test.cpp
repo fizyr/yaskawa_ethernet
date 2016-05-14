@@ -6,6 +6,16 @@
 
 dr::yaskawa::EthernetClient * client;
 
+void onReadByte(dr::yaskawa::ErrorOr<std::uint8_t> const & response) {
+	auto error = response.errorDetails();
+	if (error.code) {
+		std::cout << "Error " << error.code.category().name() << ":" << error.code.value() << ": " << error.code.message() << ": " << error.message << "\n";
+		return;
+	}
+
+	std::cout << "Read byte variable with value " << int(response.get()) << "\n";
+}
+
 void onStart(dr::yaskawa::ErrorOr<std::string> const & response) {
 	auto error = response.errorDetails();
 	if (error.code) {
@@ -14,6 +24,7 @@ void onStart(dr::yaskawa::ErrorOr<std::string> const & response) {
 	}
 
 	std::cout << "Start request succeeded: " << response.get() << "\n";
+	client->readByteVariable(0, onReadByte);
 }
 
 void onConnect(boost::system::error_code const & error) {

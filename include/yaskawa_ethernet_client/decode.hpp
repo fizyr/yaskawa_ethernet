@@ -1,3 +1,4 @@
+#pragma once
 #include "messages.hpp"
 #include "string_view.hpp"
 #include <boost/asio/read_until.hpp>
@@ -49,6 +50,7 @@ struct ResponseMatcher {
 
 /// Decode a response message.
 ErrorOr<std::string> decodeResponse(string_view message);
+ErrorOr<std::uint8_t> decodeReadByteVariableData(string_view message);
 
 }}
 

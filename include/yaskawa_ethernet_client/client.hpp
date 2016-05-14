@@ -51,10 +51,10 @@ public:
 
 	void start(int keep_alive, ResultCallback<std::string> const & callback);
 
-	void readByteVariable(ResultCallback<std::uint8_t> const & callback);
-	void readIntegerVariable(ResultCallback<int> const & callback);
-	void readDoubleVariable(ResultCallback<double> const & callback);
-	void readStringVariable(ResultCallback<double> const & callback);
+	void readByteVariable(int index, ResultCallback<std::uint8_t> const & callback);
+	void readIntegerVariable(int index, ResultCallback<int> const & callback);
+	void readDoubleVariable(int index, ResultCallback<double> const & callback);
+	void readStringVariable(int index, ResultCallback<std::string> const & callback);
 
 	void writeVariable(Callback const & callback);
 };

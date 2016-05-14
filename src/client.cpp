@@ -24,7 +24,11 @@ void EthernetClient::connect(std::string const & host, std::uint16_t port, unsig
 void EthernetClient::start(int keep_alive, ResultCallback<std::string> const & callback) {
 	encodeStartRequest(std::ostream(&write_buffer_), keep_alive);
 	sendStartCommand(socket_, read_buffer_, write_buffer_, callback);
+}
 
+void EthernetClient::readByteVariable(int index, ResultCallback<std::uint8_t> const & callback) {
+	encodeReadVariable(std::ostream(&write_buffer_), VariableType::byte_type, index);
+	sendCommand<std::uint8_t>(socket_, read_buffer_, write_buffer_, decodeReadByteVariableData, callback);
 }
 
 }}
