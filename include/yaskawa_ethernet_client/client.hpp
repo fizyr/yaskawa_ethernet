@@ -21,6 +21,7 @@ public:
 private:
 	Socket socket_;
 	boost::asio::streambuf read_buffer_;
+	boost::asio::streambuf write_buffer_;
 
 public:
 	EthernetClient(boost::asio::io_service & ios);

@@ -88,13 +88,12 @@ void EthernetClient::connect(std::string const & host, std::string const & port,
 }
 
 void EthernetClient::start(int keep_alive, ResultCallback<Response> const & callback) {
-	auto buffer = std::make_shared<boost::asio::streambuf>();
-	std::ostream stream(buffer.get());
+	std::ostream stream(&write_buffer_);
 	encodeStartRequest(stream, keep_alive);
 
-	auto write_handler = [this, callback, buffer] (boost::system::error_code const & error, std::size_t bytes_transferred) {
+	auto write_handler = [this, callback] (boost::system::error_code const & error, std::size_t bytes_transferred) {
 		if (error) return callback(error);
-		buffer->consume(bytes_transferred);
+		write_buffer_.consume(bytes_transferred);
 
 		auto read_handler = [this, callback] (boost::system::error_code const & error, std::size_t bytes_transferred) {
 			if (error) return callback(error);
@@ -104,7 +103,7 @@ void EthernetClient::start(int keep_alive, ResultCallback<Response> const & call
 		boost::asio::async_read_until(socket_, read_buffer_, ResponseMatcher{}, read_handler);
 	};
 
-	boost::asio::async_write(socket_, buffer->data(), write_handler);
+	boost::asio::async_write(socket_, write_buffer_.data(), write_handler);
 }
 
 }}
