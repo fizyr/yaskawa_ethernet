@@ -29,6 +29,6 @@ int main() {
 	boost::asio::io_service ios;
 	dr::yaskawa::EthernetClient client(ios);
 	::client = &client;
-	client.connect("localhost", "1080", onConnect);
+	client.connect("localhost", 1080, 1500, onConnect);
 	ios.run();
 }

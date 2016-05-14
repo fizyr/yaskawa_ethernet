@@ -1,11 +1,13 @@
+#pragma once
+#include "messages.hpp"
+
 #include <boost/asio/io_service.hpp>
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/streambuf.hpp>
-#include <boost/asio/steady_timer.hpp>
 
 #include <functional>
-
-#include "messages.hpp"
+#include <cstdint>
+#include <string>
 
 namespace dr {
 namespace yaskawa {
@@ -29,7 +31,7 @@ public:
 	/// Open a connection.
 	void connect(
 		std::string const & host,   ///< Hostname or IP address to connect to.
-		std::string const & port,   ///< Port or service name to connect to.
+		std::string const & port,   ///< Port number or service name to connect to.
 		unsigned int timeout,       ///< Timeout for the connection attempt in milliseconds.
 		Callback const & callback   ///< Callback to call when the connection attempt finished.
 	);
@@ -37,7 +39,8 @@ public:
 	/// Open a connection.
 	void connect(
 		std::string const & host,   ///< Hostname or IP address to connect to.
-		std::string const & port,   ///< Port or service name to connect to.
+		std::uint16_t port,         ///< Port number to connect to.
+		unsigned int timeout,       ///< Timeout for the connection attempt in milliseconds.
 		Callback const & callback   ///< Callback to call when the connection attempt finished.
 	);
 
