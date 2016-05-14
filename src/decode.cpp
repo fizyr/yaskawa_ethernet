@@ -36,21 +36,21 @@ namespace {
 	}
 }
 
-ErrorOr<Response> decodeResponse(string_view message) {
+ErrorOr<std::string> decodeResponse(string_view message) {
 	// The response is terminated by a CRLF, so ignore that bit.
 	message = stripResponseFrame(message);
 
 	if (startsWith(message, "NG:"_v)) {
 		char const * start = std::find_if_not(message.begin() + 3, message.end(), isSpace);
-		return Response{false, std::string(start, message.end())};
+		return {boost::system::error_code{errc::command_failed}, std::string(start, message.end())};
 	}
 
 	if (startsWith(message, "OK:"_v)) {
 		char const * start = std::find_if_not(message.begin() + 3, message.end(), isSpace);
-		return Response{true, std::string(start, message.end())};
+		return {std::string(start, message.end())};
 	}
 
-	return boost::system::error_code{errc::malformed_response};
+	return {boost::system::error_code{errc::malformed_response}, "Response did not start with `NG:' or `OK:'"};
 }
 
 

@@ -5,6 +5,8 @@
 namespace dr {
 namespace yaskawa {
 
+ErrorDetails ErrorDetails::empty = ErrorDetails{};
+
 namespace {
 	impl::YaskawaCategory yaskawa_category_;
 }
@@ -16,6 +18,7 @@ char const * impl::YaskawaCategory::name() const noexcept {
 std::string impl::YaskawaCategory::message(int error) const noexcept {
 	switch (errc::errc_t(error)) {
 		case errc::malformed_response:    return "malformed message";
+		case errc::command_failed:        return "command failed";
 	}
 
 	return "unknown error: " + std::to_string(error);

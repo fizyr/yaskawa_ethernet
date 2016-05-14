@@ -87,7 +87,7 @@ void EthernetClient::connect(std::string const & host, std::string const & port,
 	}
 }
 
-void EthernetClient::start(int keep_alive, ResultCallback<Response> const & callback) {
+void EthernetClient::start(int keep_alive, ResultCallback<std::string> const & callback) {
 	std::ostream stream(&write_buffer_);
 	encodeStartRequest(stream, keep_alive);
 

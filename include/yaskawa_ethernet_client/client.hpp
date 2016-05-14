@@ -46,7 +46,7 @@ public:
 
 	boost::asio::io_service & ios() { return socket_.get_io_service(); }
 
-	void start(int keep_alive, ResultCallback<Response> const & callback);
+	void start(int keep_alive, ResultCallback<std::string> const & callback);
 
 	void readByteVariable(ResultCallback<std::uint8_t> const & callback);
 	void readIntegerVariable(ResultCallback<int> const & callback);

@@ -6,17 +6,14 @@
 
 dr::yaskawa::EthernetClient * client;
 
-void onStart(dr::yaskawa::ErrorOr<dr::yaskawa::Response> const & response) {
-	auto error = response.error();
-	if (error) {
-		std::cout << "Error " << error.category().name() << ":" << error.value() << ": " << error.message() << "\n";
+void onStart(dr::yaskawa::ErrorOr<std::string> const & response) {
+	auto error = response.errorDetails();
+	if (error.code) {
+		std::cout << "Error " << error.code.category().name() << ":" << error.code.value() << ": " << error.code.message() << ": " << error.message << "\n";
 		return;
 	}
-	if (response.get()) {
-		std::cout << "Start request succeeded: " << response.get().message << "\n";
-	} else {
-		std::cout << "Start request failed: " << response.get().message << "\n";
-	}
+
+	std::cout << "Start request succeeded: " << response.get() << "\n";
 }
 
 void onConnect(boost::system::error_code const & error) {

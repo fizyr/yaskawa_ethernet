@@ -9,6 +9,14 @@
 namespace dr {
 namespace yaskawa {
 
+/// Struct holding details on an error.
+struct ErrorDetails {
+	boost::system::error_code code;
+	std::string message;
+
+	static ErrorDetails empty;
+};
+
 /// Get a reference to the Yaskawa error category.
 impl::YaskawaCategory const & yaskawa_category();
 
@@ -16,6 +24,7 @@ impl::YaskawaCategory const & yaskawa_category();
 namespace errc {
 	enum errc_t {
 		malformed_response  = 0x01,
+		command_failed      = 0x02,
 	};
 
 	inline impl::YaskawaError make_error_code(errc_t code)      { return {code}; }

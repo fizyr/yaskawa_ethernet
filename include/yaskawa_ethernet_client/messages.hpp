@@ -1,4 +1,6 @@
 #pragma once
+#include "error.hpp"
+
 #include <boost/system/error_code.hpp>
 #include <boost/system/system_error.hpp>
 #include <boost/variant.hpp>
@@ -11,10 +13,14 @@ namespace yaskawa {
 
 template<typename T>
 class ErrorOr {
-	boost::variant<boost::system::error_code, T> data_;
+	boost::variant<ErrorDetails, T> data_;
 
 public:
-	ErrorOr(boost::system::error_code const & error) : data_{error} {}
+	ErrorOr(ErrorDetails const & details) : data_(details) {};
+	ErrorOr(ErrorDetails      && details) : data_(std::move(details)) {};
+	ErrorOr(boost::system::error_code const & error) : ErrorOr(ErrorDetails{error, ""}) {}
+	ErrorOr(boost::system::error_code const & error, std::string const & message) : ErrorOr(ErrorDetails{error, message}) {}
+	ErrorOr(boost::system::error_code const & error, std::string      && message) : ErrorOr(ErrorDetails{error, std::move(message)}) {}
 
 	ErrorOr(T const & value) : data_{value} {}
 	ErrorOr(T      && value) : data_{std::move(value)} {}
@@ -23,20 +29,26 @@ public:
 		return data_.which() == 1;
 	}
 
+	ErrorDetails const & errorDetails() const {
+		if (valid()) return ErrorDetails::empty;
+		return boost::get<ErrorDetails>(data_);
+	}
+
 	boost::system::error_code error() const {
-		if (valid()) return boost::system::error_code{};
-		return boost::get<boost::system::error_code>(data_);
+		return errorDetails().code;
+	}
+
+	std::string const & errorMessage() const {
+		return errorDetails().message;
 	}
 
 	T const & get() const {
-		boost::system::error_code error = this->error();
-		if (error) throw boost::system::system_error(error);
+		if (!valid()) throw boost::system::system_error(error(), errorMessage());
 		return boost::get<T>(data_);
 	}
 
 	T & get() {
-		boost::system::error_code error = this->error();
-		if (error) throw boost::system::system_error(error);
+		if (!valid()) throw boost::system::system_error(error(), errorMessage());
 		return boost::get<T>(data_);
 	}
 
@@ -51,13 +63,6 @@ enum class VariableType {
 	base_axis_position_type    = 5,
 	station_axis_position_type = 6,
 	string_type                = 7,
-};
-
-struct Response {
-	bool success;
-	std::string message;
-
-	explicit operator bool() const { return success; }
 };
 
 }}

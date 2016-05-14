@@ -48,7 +48,7 @@ struct ResponseMatcher {
 };
 
 /// Decode a response message.
-ErrorOr<Response> decodeResponse(string_view message);
+ErrorOr<std::string> decodeResponse(string_view message);
 
 }}
 
