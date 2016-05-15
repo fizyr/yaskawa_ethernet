@@ -1,8 +1,9 @@
 #pragma once
 #include "../error.hpp"
+#include "../commands.hpp"
 
 #include <boost/asio/io_service.hpp>
-#include <boost/asio/ip/tcp.hpp>
+#include <boost/asio/ip/udp.hpp>
 #include <boost/asio/streambuf.hpp>
 
 #include <functional>
@@ -11,11 +12,11 @@
 
 namespace dr {
 namespace yaskawa {
-namespace tcp {
+namespace udp {
 
 class Client {
 public:
-	using Socket   = boost::asio::ip::tcp::socket;
+	using Socket   = boost::asio::ip::udp::socket;
 	using Callback = std::function<void (boost::system::error_code const & error)>;
 
 	template<typename T>
@@ -51,15 +52,8 @@ public:
 
 	boost::asio::io_service & ios() { return socket_.get_io_service(); }
 
-	void start(int keep_alive, ResultCallback<std::string> const & callback);
-
-	void readByteVariable(int index, ResultCallback<std::uint8_t> const & callback);
-	void readInt16Variable(int index, ResultCallback<std::int16_t> const & callback);
-	void readInt32Variable(int index, ResultCallback<std::int32_t> const & callback);
-	void readRobotPositionVariable(int index, ResultCallback<double> const & callback);
-	void readStringVariable(int index, ResultCallback<std::string> const & callback);
-
-	void writeByteVariable(int index, std::uint8_t value, ResultCallback<void> const & callback);
+	void readByteVariable(ReadByteVariable::Request request, ResultCallback<ReadByteVariable::Response> const & callback);
+	void writeByteVariable(WriteByteVariable::Request request, ResultCallback<WriteByteVariable::Response> const & callback);
 };
 
 }}}

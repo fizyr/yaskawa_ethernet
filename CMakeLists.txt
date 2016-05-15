@@ -21,13 +21,17 @@ add_library(${PROJECT_NAME}
 	src/tcp/encode.cpp
 	src/tcp/decode.cpp
 	src/tcp/client.cpp
+	src/udp/protocol.cpp
+	src/udp/client.cpp
 	src/error.cpp
 )
 
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
-add_executable(${PROJECT_NAME}_test src/test.cpp)
-target_link_libraries(${PROJECT_NAME}_test ${PROJECT_NAME})
+add_executable(${PROJECT_NAME}_tcp_test src/tcp_test.cpp)
+target_link_libraries(${PROJECT_NAME}_tcp_test ${PROJECT_NAME})
+add_executable(${PROJECT_NAME}_udp_test src/udp_test.cpp)
+target_link_libraries(${PROJECT_NAME}_udp_test ${PROJECT_NAME})
 
 install(TARGETS ${PROJECT_NAME}
 	ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
