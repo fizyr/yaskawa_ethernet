@@ -1,11 +1,14 @@
-#include "decode.hpp"
+#include "tcp/decode.hpp"
 #include "error.hpp"
 
 #include <algorithm>
 #include <utility>
+#include <vector>
+#include <cstdint>
 
 namespace dr {
 namespace yaskawa {
+namespace tcp {
 
 namespace {
 
@@ -76,7 +79,25 @@ namespace {
 
 		return std::make_pair(begin - input.begin(), result);
 	}
+
+	/// Split a string view in whitespace seperated parts.
+	std::vector<string_view> splitData(string_view data) {
+		std::vector<string_view> result;
+
+		char const * begin = data.begin();
+		while (begin < data.end()) {
+			begin = std::find_if_not(begin, data.end(), isSpace);
+			if (begin == data.end()) break;
+
+			char const * end = std::find_if(begin, data.end(), isSpace);
+			result.emplace_back(begin, end - begin);
+			begin = end;
+		}
+
+		return result;
+	}
 }
+
 
 ErrorOr<std::string> decodeResponse(string_view message) {
 	// The response is terminated by a CRLF, so ignore that bit.
@@ -116,4 +137,4 @@ ErrorOr<void> decodeEmptyData(string_view message) {
 	return ErrorOr<void>{};
 }
 
-}}
+}}}

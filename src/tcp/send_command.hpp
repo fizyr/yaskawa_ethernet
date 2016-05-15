@@ -1,7 +1,7 @@
 #pragma once
-#include "decode.hpp"
 #include "error.hpp"
 #include "string_view.hpp"
+#include "tcp/decode.hpp"
 
 #include <boost/asio/read_until.hpp>
 #include <boost/asio/streambuf.hpp>
@@ -14,6 +14,7 @@
 
 namespace dr {
 namespace yaskawa {
+namespace tcp {
 
 namespace impl {
 	/// Parse a message from a streambuf and remove it from the buffer.
@@ -169,4 +170,4 @@ void sendCommand(Socket & socket, boost::asio::streambuf & read_buffer, boost::a
 	session->start();
 }
 
-}}
+}}}

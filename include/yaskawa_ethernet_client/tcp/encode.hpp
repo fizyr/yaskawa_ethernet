@@ -1,10 +1,12 @@
 #pragma once
-#include "messages.hpp"
+#include "../types.hpp"
 
+#include <cstdint>
 #include <ostream>
 
 namespace dr {
 namespace yaskawa {
+namespace tcp {
 
 /// Encode a START request.
 void encodeStartRequest(std::ostream & out, int keep_alive);
@@ -22,4 +24,4 @@ inline void encodeReadVariable(std::ostream && out, VariableType type, int index
 void encodeWriteByteVariable(std::ostream & out, int index, std::uint8_t value);
 inline void encodeWriteByteVariable(std::ostream && out, int index, std::uint8_t value) { encodeWriteByteVariable(out, index, value); }
 
-}}
+}}}

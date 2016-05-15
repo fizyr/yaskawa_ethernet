@@ -1,10 +1,10 @@
-#include "client.hpp"
+#include "tcp/client.hpp"
 
 #include <boost/asio/io_service.hpp>
 
 #include <iostream>
 
-dr::yaskawa::EthernetClient * client;
+dr::yaskawa::tcp::Client * client;
 
 void onReadByte(dr::yaskawa::ErrorOr<std::uint8_t> const & response) {
 	auto error = response.errorDetails();
@@ -38,7 +38,7 @@ void onConnect(boost::system::error_code const & error) {
 
 int main() {
 	boost::asio::io_service ios;
-	dr::yaskawa::EthernetClient client(ios);
+	dr::yaskawa::tcp::Client client(ios);
 	::client = &client;
 	client.connect("localhost", 1080, 1500, onConnect);
 	ios.run();

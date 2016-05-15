@@ -18,9 +18,9 @@ dr_include_directories(
 )
 
 add_library(${PROJECT_NAME}
-	src/encode.cpp
-	src/decode.cpp
-	src/client.cpp
+	src/tcp/encode.cpp
+	src/tcp/decode.cpp
+	src/tcp/client.cpp
 	src/error.cpp
 )
 

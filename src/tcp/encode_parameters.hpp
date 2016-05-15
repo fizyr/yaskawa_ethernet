@@ -3,6 +3,7 @@
 
 namespace dr {
 namespace yaskawa {
+namespace tcp {
 
 namespace {
 	template<typename... T>
@@ -34,4 +35,4 @@ namespace {
 	}
 }
 
-}}
+}}}

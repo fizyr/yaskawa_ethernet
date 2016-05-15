@@ -1,10 +1,11 @@
-#include "encode.hpp"
-#include "impl/encode_parameters.hpp"
+#include "tcp/encode.hpp"
+#include "encode_parameters.hpp"
 
 #include <sstream>
 
 namespace dr {
 namespace yaskawa {
+namespace tcp {
 
 void encodeStartRequest(std::ostream & out, int keep_alive) {
 	if (keep_alive == 0) {
@@ -36,4 +37,4 @@ void encodeWriteByteVariable(std::ostream & out, int index, std::uint8_t value) 
 	encodeCommandWithParams(out, "LOADV", int(VariableType::byte_type), index, value);
 }
 
-}}
+}}}

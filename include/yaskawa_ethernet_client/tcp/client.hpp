@@ -1,5 +1,5 @@
 #pragma once
-#include "error.hpp"
+#include "../error.hpp"
 
 #include <boost/asio/io_service.hpp>
 #include <boost/asio/ip/tcp.hpp>
@@ -11,8 +11,9 @@
 
 namespace dr {
 namespace yaskawa {
+namespace tcp {
 
-class EthernetClient {
+class Client {
 public:
 	using Socket   = boost::asio::ip::tcp::socket;
 	using Callback = std::function<void (boost::system::error_code const & error)>;
@@ -26,7 +27,7 @@ private:
 	boost::asio::streambuf write_buffer_;
 
 public:
-	EthernetClient(boost::asio::io_service & ios);
+	Client(boost::asio::io_service & ios);
 
 	/// Open a connection.
 	void connect(
@@ -60,4 +61,4 @@ public:
 	void writeByteVariable(int index, std::uint8_t value, ResultCallback<void> const & callback);
 };
 
-}}
+}}}
