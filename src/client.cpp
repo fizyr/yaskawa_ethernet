@@ -31,4 +31,9 @@ void EthernetClient::readByteVariable(int index, ResultCallback<std::uint8_t> co
 	sendCommand<std::uint8_t>(socket_, read_buffer_, write_buffer_, decodeReadByteVariableData, callback);
 }
 
+void EthernetClient::writeByteVariable(int index, std::uint8_t value, ResultCallback<void> const & callback) {
+	encodeWriteByteVariable(std::ostream(&write_buffer_), index, value);
+	sendCommand<void>(socket_, read_buffer_, write_buffer_, decodeEmptyData, callback);
+}
+
 }}

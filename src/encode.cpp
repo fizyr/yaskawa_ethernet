@@ -32,4 +32,8 @@ void encodeReadVariable(std::ostream & out, VariableType type, int index) {
 	encodeCommandWithParams(out, "SAVEV", int(type), index);
 }
 
+void encodeWriteByteVariable(std::ostream & out, int index, std::uint8_t value) {
+	encodeCommandWithParams(out, "LOADV", int(VariableType::byte_type), index, value);
+}
+
 }}

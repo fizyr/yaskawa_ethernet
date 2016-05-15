@@ -52,11 +52,12 @@ public:
 	void start(int keep_alive, ResultCallback<std::string> const & callback);
 
 	void readByteVariable(int index, ResultCallback<std::uint8_t> const & callback);
-	void readIntegerVariable(int index, ResultCallback<int> const & callback);
-	void readDoubleVariable(int index, ResultCallback<double> const & callback);
+	void readInt16Variable(int index, ResultCallback<std::int16_t> const & callback);
+	void readInt32Variable(int index, ResultCallback<std::int32_t> const & callback);
+	void readRobotPositionVariable(int index, ResultCallback<double> const & callback);
 	void readStringVariable(int index, ResultCallback<std::string> const & callback);
 
-	void writeVariable(Callback const & callback);
+	void writeByteVariable(int index, std::uint8_t value, ResultCallback<void> const & callback);
 };
 
 }}

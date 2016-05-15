@@ -15,7 +15,11 @@ void encodeCommand(std::ostream & out, std::string const & command, std::size_t 
 inline void encodeCommand(std::ostream && out, std::string const & command, std::size_t size) { encodeCommand(out, command, size); }
 
 /// Encode a read variable request.
-void encodeReadVariable(std::ostream & out, VariableType type, int number);
-inline void encodeReadVariable(std::ostream && out, VariableType type, int number) { encodeReadVariable(out, type, number); }
+void encodeReadVariable(std::ostream & out, VariableType type, int index);
+inline void encodeReadVariable(std::ostream && out, VariableType type, int index) { encodeReadVariable(out, type, index); }
+
+/// Encode a read variable request.
+void encodeWriteByteVariable(std::ostream & out, int index, std::uint8_t value);
+inline void encodeWriteByteVariable(std::ostream && out, int index, std::uint8_t value) { encodeWriteByteVariable(out, index, value); }
 
 }}

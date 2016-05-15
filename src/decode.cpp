@@ -111,5 +111,9 @@ ErrorOr<std::uint8_t> decodeReadByteVariableData(string_view message) {
 	return uint8_t(result);
 }
 
+ErrorOr<void> decodeEmptyData(string_view message) {
+	if (message != "0000\r\n"_v) return {boost::system::error_code{errc::malformed_response}, "expected empty response, received something else"};
+	return ErrorOr<void>{};
+}
 
 }}

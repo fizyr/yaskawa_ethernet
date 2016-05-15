@@ -16,6 +16,11 @@ using ResponseMatcher = impl::ResponseMatcher;
 
 /// Decode a response message.
 ErrorOr<std::string> decodeResponse(string_view message);
+
+/// Decode an empty data response.
+ErrorOr<void> decodeEmptyData(string_view message);
+
+/// Decode a read byte variable response.
 ErrorOr<std::uint8_t> decodeReadByteVariableData(string_view message);
 
 }}
