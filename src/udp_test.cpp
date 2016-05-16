@@ -21,14 +21,14 @@ void onConnect(boost::system::error_code const & error) {
 		std::cout << "Error " << error.category().name() << ":" << error.value() << ": " << error.message() << "\n";
 		return;
 	}
-	std::cout << "Connected.\n";
-	client->readByteVariable({0}, 1500, onReadByte);
+	std::cout << "Connected to " << client->socket().remote_endpoint() << " .\n";
+	client->readByteVariable({1}, 1500, onReadByte);
 }
 
 int main() {
 	boost::asio::io_service ios;
 	dr::yaskawa::udp::Client client(ios);
 	::client = &client;
-	client.connect("localhost", 1080, 1500, onConnect);
+	client.connect("10.0.0.2", 10040, 1500, onConnect);
 	ios.run();
 }

@@ -51,6 +51,9 @@ public:
 	/// Close the connection.
 	void close();
 
+	Socket & socket() { return socket_; }
+	Socket const  & socket() const { return socket_; }
+
 	boost::asio::io_service & ios() { return socket_.get_io_service(); }
 
 	void readByteVariable(ReadByteVariable::Request request, unsigned int timeout, ResultCallback<ReadByteVariable::Response> const & callback);
