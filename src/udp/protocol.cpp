@@ -71,7 +71,14 @@ namespace {
 		out.insert(out.end(), 2, 0);
 	}
 
-	RequestHeader makeRobotRequestHeader(std::uint16_t payload_size, std::uint16_t command, std::uint16_t instance, std::uint8_t attribute, std::uint8_t service, std::uint8_t request_id = 0) {
+	RequestHeader makeRobotRequestHeader(
+		std::uint16_t payload_size,
+		std::uint16_t command,
+		std::uint16_t instance,
+		std::uint8_t attribute,
+		std::uint8_t service,
+		std::uint8_t request_id = 0
+	) {
 		RequestHeader header;
 		header.payload_size = payload_size;
 		header.division     = Division::robot;
@@ -89,8 +96,25 @@ namespace {
 		return {boost::system::error_code{errc::malformed_response}, std::move(message)};
 	}
 
-	DetailedError commandFailed(std::string && message) {
-		return {boost::system::error_code{errc::command_failed}, std::move(message)};
+	DetailedError maximumExceeded(std::string && field, int value, int max) {
+		return malformedResponse(
+			"received " + field + " (" + std::to_string(value) + ") "
+			"exceeds maximum value (" + std::to_string(max) + ")"
+		);
+	}
+
+	DetailedError unexpectedValue(std::string && field, int value, int expected) {
+		return malformedResponse(
+			"received " + field + " (" + std::to_string(value) + ") "
+			"does not match the expected value (" + std::to_string(expected) + ")"
+		);
+	}
+
+	DetailedError commandFailed(int status, int extra_status) {
+		return {boost::system::error_code{errc::command_failed},
+			"command failed with status " + std::to_string(status)
+			+ " and additional status " + std::to_string(extra_status)
+		};
 	}
 
 	ErrorOr<ResponseHeader> decodeResponseHeader(string_view & data) {
@@ -98,27 +122,35 @@ namespace {
 		ResponseHeader result;
 
 		// Make sure we can parse the header safely.
-		if (data.size() < header_size) return malformedResponse("response (" + std::to_string(data.size()) + " bytes) does not contain enough data for a header (" + std::to_string(header_size) + " bytes)");
+		if (data.size() < header_size) return malformedResponse(
+			"response (" + std::to_string(data.size()) + " bytes) "
+			"does not contain enough data for a header "
+			"(" + std::to_string(header_size) + " bytes)"
+		);
 
 		// Check the magic bytes.
-		if (data.substr(0, 4) != "YERC") return  malformedResponse("response does not start with magic bytes `YERC'");
+		if (data.substr(0, 4) != "YERC") return malformedResponse("response does not start with magic bytes `YERC'");
 		data.remove_prefix(4);
 
 		// Check the header size.
 		std::uint16_t parsed_header_size = readLittleEndian<std::uint16_t>(data);
-		if (parsed_header_size != header_size) return malformedResponse("header size (" + std::to_string(parsed_header_size) + ") does not match expected (" + std::to_string(header_size) + ")");
+		if (parsed_header_size != header_size) return unexpectedValue("header size", parsed_header_size, header_size);
 
 		// Get payload size and make sure the message is complete.
 		result.payload_size = readLittleEndian<std::uint16_t>(data);
-		if (result.payload_size > max_payaload_size) return malformedResponse("received payload size (" + std::to_string(result.payload_size) + ") exceeds the maximum size (" + std::to_string(max_payaload_size) + ")");
-		if (original.size() != header_size + result.payload_size) return malformedResponse("number of received bytes (" + std::to_string(original.size()) + ") does not match the message size according to the header (" + std::to_string(header_size + result.payload_size) + ")");
+		if (result.payload_size > max_payaload_size) return maximumExceeded("payload size", result.payload_size, max_payaload_size);
+		if (original.size() != header_size + result.payload_size) return malformedResponse(
+			"number of received bytes (" + std::to_string(original.size()) + ") "
+			"does not match the message size according to the header "
+			"(" + std::to_string(header_size + result.payload_size) + ")"
+		);
 
 		data.remove_prefix(1);
 		result.division = Division(readLittleEndian<std::uint8_t>(data));
 
 		// Make sure the ack value is correct.
 		std::uint8_t ack = readLittleEndian<std::uint8_t>(data);
-		if (ack != 1) return malformedResponse("response message ACK value (" + std::to_string(ack) + ") does not match the expected value (1)");
+		if (ack != 1) return unexpectedValue("ACK value", ack, 1);
 		result.ack = true;
 
 		// Parse request ID and block number.
@@ -140,7 +172,7 @@ namespace {
 		// Padding.
 		data.remove_prefix(2);
 
-		if (result.status != 0) return commandFailed("command failed with status " + std::to_string(result.status) + " and additional status " + std::to_string(result.extra_status));
+		if (result.status != 0) return commandFailed(result.status, result.extra_status);
 		return result;
 	}
 }
@@ -155,7 +187,7 @@ template<> std::vector<std::uint8_t> encode<ReadByteVariable::Request>(ReadByteV
 template<> ErrorOr<ReadByteVariable::Response> decode<ReadByteVariable::Response>(string_view message) {
 	ErrorOr<ResponseHeader> header = decodeResponseHeader(message);
 	if (!header.valid()) return header.error();
-	if (header.get().payload_size != 4) return malformedResponse("payload size (" + std::to_string(header.get().payload_size) + ") does not match the expected size (4)");
+	if (header.get().payload_size != 4) return unexpectedValue("payload size", header.get().payload_size, 4);
 	return ReadByteVariable::Response{readLittleEndian<std::uint8_t>(message)};
 }
 
@@ -171,7 +203,7 @@ template<> std::vector<std::uint8_t> encode<WriteByteVariable::Request>(WriteByt
 template<> ErrorOr<WriteByteVariable::Response> decode<WriteByteVariable::Response>(string_view message) {
 	ErrorOr<ResponseHeader> header = decodeResponseHeader(message);
 	if (!header.valid()) return header.error();
-	if (header.get().payload_size != 0) return malformedResponse("payload size (" + std::to_string(header.get().payload_size) + ") does not match the expected size (0)");
+	if (header.get().payload_size != 0) return unexpectedValue("payload size", header.get().payload_size, 0);
 	return WriteByteVariable::Response{};
 }
 
