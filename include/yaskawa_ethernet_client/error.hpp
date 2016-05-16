@@ -14,23 +14,46 @@ namespace dr {
 namespace yaskawa {
 
 /// Struct holding details on an error.
-struct ErrorDetails {
-	boost::system::error_code code;
-	std::string message;
+class DetailedError : public boost::system::error_code {
+	std::string details_;
 
-	static ErrorDetails empty;
+public:
+	using boost::system::error_code::error_code;
+	DetailedError() = default;
+
+	DetailedError(boost::system::error_code const & error, std::string const & details) : boost::system::error_code(error), details_(details) {}
+	DetailedError(boost::system::error_code const & error, std::string      && details) : boost::system::error_code(error), details_(std::move(details)) {}
+
+	std::string detailed_message() const {
+		if (details_.empty()) return message();
+		return boost::system::error_code::message() + ": " + details_;
+	}
+
+	std::string const & details() const noexcept { return details_; }
+
+	void clear() {
+		boost::system::error_code::clear();
+		details_.clear();
+	}
+
+	boost::system::system_error to_system_error() const {
+		if (details_.empty()) return boost::system::system_error(*this);
+		return boost::system::system_error(*this, details_);
+	}
+
+	static DetailedError empty;
 };
 
 template<typename T>
 class ErrorOr {
-	boost::variant<ErrorDetails, T> data_;
+	boost::variant<DetailedError, T> data_;
 
 public:
-	ErrorOr(ErrorDetails const & details) : data_(details) {};
-	ErrorOr(ErrorDetails      && details) : data_(std::move(details)) {};
-	ErrorOr(boost::system::error_code const & error) : ErrorOr(ErrorDetails{error, ""}) {}
-	ErrorOr(boost::system::error_code const & error, std::string const & message) : ErrorOr(ErrorDetails{error, message}) {}
-	ErrorOr(boost::system::error_code const & error, std::string      && message) : ErrorOr(ErrorDetails{error, std::move(message)}) {}
+	ErrorOr(DetailedError const & details) : data_(details) {};
+	ErrorOr(DetailedError      && details) : data_(std::move(details)) {};
+	ErrorOr(boost::system::error_code const & error) : ErrorOr(DetailedError{error, ""}) {}
+	ErrorOr(boost::system::error_code const & error, std::string const & message) : ErrorOr(DetailedError{error, message}) {}
+	ErrorOr(boost::system::error_code const & error, std::string      && message) : ErrorOr(DetailedError{error, std::move(message)}) {}
 
 	ErrorOr(T const & value) : data_{value} {}
 	ErrorOr(T      && value) : data_{std::move(value)} {}
@@ -39,62 +62,55 @@ public:
 		return data_.which() == 1;
 	}
 
-	ErrorDetails const & errorDetails() const {
-		if (valid()) return ErrorDetails::empty;
-		return boost::get<ErrorDetails>(data_);
+	DetailedError const & error() const {
+		if (valid()) return DetailedError::empty;
+		return boost::get<DetailedError>(data_);
 	}
 
-	boost::system::error_code error() const {
-		return errorDetails().code;
+	std::string errorMessage() const {
+		return error().detailed_message();
 	}
 
-	std::string const & errorMessage() const {
-		return errorDetails().message;
-	}
 
 	T const & get() const {
-		if (!valid()) throw boost::system::system_error(error(), errorMessage());
+		if (!valid()) throw error().to_system_error();
 		return boost::get<T>(data_);
 	}
 
 	T & get() {
-		if (!valid()) throw boost::system::system_error(error(), errorMessage());
+		if (!valid()) throw error().to_system_error();
 		return boost::get<T>(data_);
 	}
 };
 
 template<>
 class ErrorOr<void> {
-	ErrorDetails data_;
+	DetailedError data_;
 
 public:
-	ErrorOr(ErrorDetails const & details) : data_(details) {};
-	ErrorOr(ErrorDetails      && details) : data_(std::move(details)) {};
-	ErrorOr(boost::system::error_code const & error) : ErrorOr(ErrorDetails{error, ""}) {}
-	ErrorOr(boost::system::error_code const & error, std::string const & message) : ErrorOr(ErrorDetails{error, message}) {}
-	ErrorOr(boost::system::error_code const & error, std::string      && message) : ErrorOr(ErrorDetails{error, std::move(message)}) {}
+	ErrorOr(DetailedError const & details) : data_(details) {};
+	ErrorOr(DetailedError      && details) : data_(std::move(details)) {};
+	ErrorOr(boost::system::error_code const & error) : ErrorOr(DetailedError{error, ""}) {}
+	ErrorOr(boost::system::error_code const & error, std::string const & message) : ErrorOr(DetailedError{error, message}) {}
+	ErrorOr(boost::system::error_code const & error, std::string      && message) : ErrorOr(DetailedError{error, std::move(message)}) {}
 
 	ErrorOr() {}
 
 	bool valid() const {
-		return !data_.code;
+		return !data_;
 	}
 
-	ErrorDetails const & errorDetails() const {
-		if (valid()) return ErrorDetails::empty;
+	DetailedError const & error() const {
+		if (valid()) return DetailedError::empty;
 		return data_;
 	}
 
-	boost::system::error_code error() const {
-		return errorDetails().code;
-	}
-
-	std::string const & errorMessage() const {
-		return errorDetails().message;
+	std::string errorMessage() const {
+		return error().detailed_message();
 	}
 
 	void get() const {
-		if (!valid()) throw boost::system::system_error(error(), errorMessage());
+		if (!valid()) throw error().to_system_error();
 	}
 };
 

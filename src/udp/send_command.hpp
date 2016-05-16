@@ -51,7 +51,7 @@ protected:
 	/// Called when the command and data have been written.
 	void onWriteCommand(Ptr, boost::system::error_code const & error, std::size_t) {
 		write_buffer.clear();
-		if (error) callback(ErrorOr<Response>(error));
+		if (error) return callback(ErrorOr<Response>(error));
 
 		read_buffer.resize(512, boost::container::default_init);
 		auto callback = std::bind(&CommandSession::onReadResponse, this, this->shared_from_this(), std::placeholders::_1, std::placeholders::_2);
@@ -61,7 +61,7 @@ protected:
 	/// Called when the command response has been read.
 	void onReadResponse(Ptr, boost::system::error_code const & error, std::size_t bytes_transferred) {
 		read_buffer.resize(bytes_transferred);
-		if (error) callback(ErrorOr<Response>(error));
+		if (error) return callback(ErrorOr<Response>(error));
 		ErrorOr<Response> response = decode<Response>(string_view{reinterpret_cast<char *>(read_buffer.data()), read_buffer.size()});
 		callback(response);
 	}

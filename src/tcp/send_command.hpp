@@ -128,7 +128,7 @@ namespace impl {
 		void onReadResponse(Ptr, boost::system::error_code const & error, std::size_t bytes_transferred) {
 			if (error) callback(ErrorOr<T>(error));
 			ErrorOr<std::string> response = parseFromBuffer(*read_buffer, bytes_transferred, decodeResponse);
-			if (!response.valid()) return callback(response.errorDetails());
+			if (!response.valid()) return callback(response.error());
 
 			auto callback = std::bind(&CommandSession::onReadData, this, this->shared_from_this(), std::placeholders::_1, std::placeholders::_2);
 			boost::asio::async_read_until(*socket, *read_buffer, ResponseMatcher{}, callback);

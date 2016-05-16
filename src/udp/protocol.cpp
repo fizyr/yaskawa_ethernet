@@ -86,11 +86,11 @@ namespace {
 		return header;
 	}
 
-	ErrorDetails malformedResponse(std::string && message) {
+	DetailedError malformedResponse(std::string && message) {
 		return {boost::system::error_code{errc::malformed_response}, std::move(message)};
 	}
 
-	ErrorDetails commandFailed(std::string && message) {
+	DetailedError commandFailed(std::string && message) {
 		return {boost::system::error_code{errc::command_failed}, std::move(message)};
 	}
 
@@ -159,7 +159,7 @@ template<> std::vector<std::uint8_t> encode<ReadByteVariable::Request>(ReadByteV
 
 template<> ErrorOr<ReadByteVariable::Response> decode<ReadByteVariable::Response>(string_view message) {
 	ErrorOr<ResponseHeader> header = decodeResponseHeader(message);
-	if (!header.valid()) return header.errorDetails();
+	if (!header.valid()) return header.error();
 	if (header.get().payload_size != 4) return malformedResponse("payload size (" + std::to_string(header.get().payload_size) + ") does not match the expected size (4)");
 	return ReadByteVariable::Response{readBigEndian<std::uint8_t>(message)};
 }
@@ -175,7 +175,7 @@ template<> std::vector<std::uint8_t> encode<WriteByteVariable::Request>(WriteByt
 
 template<> ErrorOr<WriteByteVariable::Response> decode<WriteByteVariable::Response>(string_view message) {
 	ErrorOr<ResponseHeader> header = decodeResponseHeader(message);
-	if (!header.valid()) return header.errorDetails();
+	if (!header.valid()) return header.error();
 	if (header.get().payload_size != 0) return malformedResponse("payload size (" + std::to_string(header.get().payload_size) + ") does not match the expected size (0)");
 	return WriteByteVariable::Response{};
 }
