@@ -40,6 +40,11 @@ public:
 		socket(&socket),
 		callback(std::move(callback)) {}
 
+	/// Construct a command session.
+	CommandSession(Socket & socket, Callback const & callback) :
+		socket(&socket),
+		callback(callback) {}
+
 	/// Start the session by writing the command.
 	void start(Request const & request) {
 		write_buffer = encode(request);
@@ -69,7 +74,7 @@ protected:
 
 template<typename Command, typename Socket, typename Callback>
 void sendCommand(typename Command::Request const & request, Socket & socket, Callback && callback) {
-	auto session = std::make_shared<impl::CommandSession<Command, Socket, Callback>>(socket, std::forward<Callback>(callback));
+	auto session = std::make_shared<impl::CommandSession<Command, Socket, typename std::decay<Callback>::type>>(socket, std::forward<Callback>(callback));
 	session->start(request);
 }
 
