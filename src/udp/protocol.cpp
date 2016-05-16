@@ -59,8 +59,7 @@ namespace {
 		writeBigEndian<std::uint32_t>(out, header.block_number);
 
 		// Reserved.
-		writeBigEndian<std::uint32_t>(out, 0);
-		writeBigEndian<std::uint32_t>(out, 99999999);
+		out.insert(out.end(), 8, '9');
 
 		// Subrequest details
 		writeBigEndian<std::uint16_t>(out, header.command);

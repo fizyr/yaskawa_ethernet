@@ -22,7 +22,7 @@ void onConnect(boost::system::error_code const & error) {
 		return;
 	}
 	std::cout << "Connected.\n";
-	client->readByteVariable({0}, onReadByte);
+	client->readByteVariable({0}, 1500, onReadByte);
 }
 
 int main() {

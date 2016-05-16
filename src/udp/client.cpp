@@ -21,12 +21,12 @@ void Client::connect(std::string const & host, std::uint16_t port, unsigned int 
 	connect(host, std::to_string(port), timeout, callback);
 }
 
-void Client::readByteVariable(ReadByteVariable::Request request, ResultCallback<ReadByteVariable::Response> const & callback) {
-	impl::sendCommand<ReadByteVariable>(request, socket_, callback);
+void Client::readByteVariable(ReadByteVariable::Request request, unsigned int timeout, ResultCallback<ReadByteVariable::Response> const & callback) {
+	impl::sendCommand<ReadByteVariable>(request, timeout, request_id_++, socket_, callback);
 }
 
-void Client::writeByteVariable(WriteByteVariable::Request request, ResultCallback<WriteByteVariable::Response> const & callback) {
-	impl::sendCommand<WriteByteVariable>(request, socket_, callback);
+void Client::writeByteVariable(WriteByteVariable::Request request, unsigned int timeout, ResultCallback<WriteByteVariable::Response> const & callback) {
+	impl::sendCommand<WriteByteVariable>(request, timeout, request_id_++, socket_, callback);
 }
 
 }}}

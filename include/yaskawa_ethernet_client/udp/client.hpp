@@ -24,6 +24,7 @@ public:
 
 private:
 	Socket socket_;
+	std::uint8_t request_id_ = 0;
 	boost::asio::streambuf read_buffer_;
 	boost::asio::streambuf write_buffer_;
 	std::ostream write_stream_{&write_buffer_};
@@ -52,8 +53,8 @@ public:
 
 	boost::asio::io_service & ios() { return socket_.get_io_service(); }
 
-	void readByteVariable(ReadByteVariable::Request request, ResultCallback<ReadByteVariable::Response> const & callback);
-	void writeByteVariable(WriteByteVariable::Request request, ResultCallback<WriteByteVariable::Response> const & callback);
+	void readByteVariable(ReadByteVariable::Request request, unsigned int timeout, ResultCallback<ReadByteVariable::Response> const & callback);
+	void writeByteVariable(WriteByteVariable::Request request, unsigned int timeout, ResultCallback<WriteByteVariable::Response> const & callback);
 };
 
 }}}
