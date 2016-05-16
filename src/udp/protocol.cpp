@@ -19,14 +19,14 @@ namespace {
 	T readBigEndian(std::uint8_t const * data) {
 		static_assert(std::is_integral<T>::value, "T must be an integral type.");
 		T result = 0;
-		for (unsigned int i = 1; i <= sizeof(T); ++i) {
-			result |= *data << (sizeof(T) - i) * 8;
+		for (unsigned int i = 0; i < sizeof(T); ++i) {
+			result |= data[i] << (sizeof(T) - i - 1) * 8;
 		}
 		return result;
 	}
 
 	template<typename T>
-	T readBigEndian(string_view data) {
+	T readBigEndian(string_view & data) {
 		data.remove_prefix(sizeof(T));
 		return readBigEndian<T>(reinterpret_cast<std::uint8_t const *>(data.data() - sizeof(T)));
 	}
@@ -68,7 +68,7 @@ namespace {
 		out.push_back(header.service);
 
 		// Padding.
-		out.insert(out.end(), 4, 0);
+		out.insert(out.end(), 2, 0);
 	}
 
 	RequestHeader makeRobotRequestHeader(std::uint16_t payload_size, std::uint16_t command, std::uint16_t instance, std::uint8_t attribute, std::uint8_t service, std::uint8_t request_id = 0) {
@@ -105,13 +105,16 @@ namespace {
 		data.remove_prefix(4);
 
 		// Check the header size.
-		std::uint16_t parsed_header_size = readBigEndian<std::uint16_t>(data.data());
-		if (parsed_header_size != header_size) return malformedResponse("header size(" + std::to_string(parsed_header_size) + ") does not match expected (" + std::to_string(header_size) + ")");
+		std::uint16_t parsed_header_size = readBigEndian<std::uint16_t>(data);
+		if (parsed_header_size != header_size) return malformedResponse("header size (" + std::to_string(parsed_header_size) + ") does not match expected (" + std::to_string(header_size) + ")");
 
 		// Get payload size and make sure the message is complete.
 		result.payload_size = readBigEndian<std::uint16_t>(data);
 		if (result.payload_size > max_payaload_size) return malformedResponse("received payload size (" + std::to_string(result.payload_size) + ") exceeds the maximum size (" + std::to_string(max_payaload_size) + ")");
 		if (original.size() != header_size + result.payload_size) return malformedResponse("number of received bytes (" + std::to_string(original.size()) + ") does not match the message size according to the header (" + std::to_string(header_size + result.payload_size) + ")");
+
+		data.remove_prefix(1);
+		result.division = Division(readBigEndian<std::uint8_t>(data));
 
 		// Make sure the ack value is correct.
 		std::uint8_t ack = readBigEndian<std::uint8_t>(data);
@@ -131,18 +134,11 @@ namespace {
 
 		// Parse extra status field. Holy shit.
 		std::uint8_t additional_status_size = readBigEndian<std::uint8_t>(data);
-		if (additional_status_size > 2) return malformedResponse("response specifies additional status size (" + std::to_string(additional_status_size) + "), allowed values are 0, 1 and 2");
-		if (additional_status_size == 1) {
-			result.extra_status = readBigEndian<std::uint8_t>(data);
-		} else if (additional_status_size == 2) {
-			result.extra_status = readBigEndian<std::uint16_t>(data);
-		} else {
-			result.extra_status = 0;
-		}
-		data.remove_prefix(2 - additional_status_size);
+		data.remove_prefix(2);
+		result.extra_status = readBigEndian<std::uint16_t>(data);
 
 		// Padding.
-		data.remove_prefix(3);
+		data.remove_prefix(2);
 
 		if (result.status != 0) return commandFailed("command failed with status " + std::to_string(result.status) + " and additional status " + std::to_string(result.extra_status));
 		return result;
