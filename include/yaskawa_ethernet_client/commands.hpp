@@ -23,4 +23,9 @@ struct WriteByteVariable {
 	struct Response {};
 };
 
+struct ReadStats {
+	struct Request {};
+	struct Response {};
+};
+
 }}

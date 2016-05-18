@@ -29,4 +29,8 @@ void Client::writeByteVariable(WriteByteVariable::Request request, unsigned int 
 	impl::sendCommand<WriteByteVariable>(request, timeout, request_id_++, socket_, callback);
 }
 
+void Client::readStats(unsigned int timeout, ResultCallback<ReadStats::Response> const & callback) {
+	impl::sendCommand<ReadStats>({}, timeout, request_id_++, socket_, callback);
+};
+
 }}}

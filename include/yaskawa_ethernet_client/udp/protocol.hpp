@@ -19,4 +19,7 @@ template<> ErrorOr<ReadByteVariable::Response> decode<ReadByteVariable::Response
 template<> std::vector<std::uint8_t> encode<WriteByteVariable::Request>(WriteByteVariable::Request const &, std::uint8_t request_id);
 template<> ErrorOr<WriteByteVariable::Response> decode<WriteByteVariable::Response>(string_view message);
 
+template<> std::vector<std::uint8_t> encode<ReadStats::Request>(ReadStats::Request const &, std::uint8_t request_id);
+template<> ErrorOr<ReadStats::Response> decode<ReadStats::Response>(string_view message);
+
 }}}

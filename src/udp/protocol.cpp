@@ -207,4 +207,20 @@ template<> ErrorOr<WriteByteVariable::Response> decode<WriteByteVariable::Respon
 	return WriteByteVariable::Response{};
 }
 
+template<>
+std::vector<std::uint8_t> encode<ReadStats::Request>(ReadStats::Request const &, std::uint8_t request_id) {
+	std::vector<std::uint8_t> result;
+	RequestHeader header = makeRobotRequestHeader(0, commands::robot::read_status_information, 1, 0, service::get_all, request_id);
+	encodeRequestHeader(result, header);
+	return result;
+}
+
+template<>
+ErrorOr<ReadStats::Response> decode<ReadStats::Response>(string_view message) {
+	ErrorOr<ResponseHeader> header = decodeResponseHeader(message);
+	if (!header.valid()) return header.error();
+	if (header.get().payload_size != 0) return unexpectedValue("payload size", header.get().payload_size, 0);
+	return ReadStats::Response{};
+}
+
 }}}

@@ -40,6 +40,6 @@ int main() {
 	boost::asio::io_service ios;
 	dr::yaskawa::tcp::Client client(ios);
 	::client = &client;
-	client.connect("localhost", 1080, 1500, onConnect);
+	client.connect("10.0.0.2", 80, 1500, onConnect);
 	ios.run();
 }
