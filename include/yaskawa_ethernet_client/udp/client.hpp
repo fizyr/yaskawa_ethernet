@@ -56,9 +56,8 @@ public:
 
 	boost::asio::io_service & ios() { return socket_.get_io_service(); }
 
-	void readByteVariable(ReadByteVariable::Request request, unsigned int timeout, ResultCallback<ReadByteVariable::Response> const & callback);
-	void writeByteVariable(WriteByteVariable::Request request, unsigned int timeout, ResultCallback<WriteByteVariable::Response> const & callback);
-	void readStats(unsigned int timeout, ResultCallback<ReadStats::Response> const & callback);
+	void readByteVariable(ReadInt8Variable::Request request, unsigned int timeout, ResultCallback<ReadInt8Variable::Response> const & callback);
+	void writeByteVariable(WriteInt8Variable::Request request, unsigned int timeout, ResultCallback<WriteInt8Variable::Response> const & callback);
 };
 
 }}}

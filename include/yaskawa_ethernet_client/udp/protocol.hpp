@@ -13,13 +13,10 @@ namespace udp {
 template<typename T> std::vector<std::uint8_t> encode(T const & message, std::uint8_t request_id = 0);
 template<typename T> ErrorOr<T> decode(string_view message);
 
-template<> std::vector<std::uint8_t> encode<ReadByteVariable::Request>(ReadByteVariable::Request const &, std::uint8_t request_id);
-template<> ErrorOr<ReadByteVariable::Response> decode<ReadByteVariable::Response>(string_view message);
+template<> std::vector<std::uint8_t> encode<ReadInt8Variable::Request>(ReadInt8Variable::Request const &, std::uint8_t request_id);
+template<> ErrorOr<ReadInt8Variable::Response> decode<ReadInt8Variable::Response>(string_view message);
 
-template<> std::vector<std::uint8_t> encode<WriteByteVariable::Request>(WriteByteVariable::Request const &, std::uint8_t request_id);
-template<> ErrorOr<WriteByteVariable::Response> decode<WriteByteVariable::Response>(string_view message);
-
-template<> std::vector<std::uint8_t> encode<ReadStats::Request>(ReadStats::Request const &, std::uint8_t request_id);
-template<> ErrorOr<ReadStats::Response> decode<ReadStats::Response>(string_view message);
+template<> std::vector<std::uint8_t> encode<WriteInt8Variable::Request>(WriteInt8Variable::Request const &, std::uint8_t request_id);
+template<> ErrorOr<WriteInt8Variable::Response> decode<WriteInt8Variable::Response>(string_view message);
 
 }}}

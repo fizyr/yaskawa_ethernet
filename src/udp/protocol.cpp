@@ -177,21 +177,21 @@ namespace {
 	}
 }
 
-template<> std::vector<std::uint8_t> encode<ReadByteVariable::Request>(ReadByteVariable::Request const & request, std::uint8_t request_id) {
+template<> std::vector<std::uint8_t> encode<ReadInt8Variable::Request>(ReadInt8Variable::Request const & request, std::uint8_t request_id) {
 	std::vector<std::uint8_t> result;
 	RequestHeader header = makeRobotRequestHeader(0, commands::robot::read_int8_variable, request.index, 1, service::get_all, request_id);
 	encodeRequestHeader(result, header);
 	return result;
 }
 
-template<> ErrorOr<ReadByteVariable::Response> decode<ReadByteVariable::Response>(string_view message) {
+template<> ErrorOr<ReadInt8Variable::Response> decode<ReadInt8Variable::Response>(string_view message) {
 	ErrorOr<ResponseHeader> header = decodeResponseHeader(message);
 	if (!header.valid()) return header.error();
 	if (header.get().payload_size != 4) return unexpectedValue("payload size", header.get().payload_size, 4);
-	return ReadByteVariable::Response{readLittleEndian<std::uint8_t>(message)};
+	return ReadInt8Variable::Response{readLittleEndian<std::uint8_t>(message)};
 }
 
-template<> std::vector<std::uint8_t> encode<WriteByteVariable::Request>(WriteByteVariable::Request const & request, std::uint8_t request_id) {
+template<> std::vector<std::uint8_t> encode<WriteInt8Variable::Request>(WriteInt8Variable::Request const & request, std::uint8_t request_id) {
 	std::vector<std::uint8_t> result;
 	RequestHeader header = makeRobotRequestHeader(4, commands::robot::read_int8_variable, request.index, 1, service::set_single, request_id);
 	encodeRequestHeader(result, header);
@@ -200,27 +200,11 @@ template<> std::vector<std::uint8_t> encode<WriteByteVariable::Request>(WriteByt
 	return result;
 }
 
-template<> ErrorOr<WriteByteVariable::Response> decode<WriteByteVariable::Response>(string_view message) {
+template<> ErrorOr<WriteInt8Variable::Response> decode<WriteInt8Variable::Response>(string_view message) {
 	ErrorOr<ResponseHeader> header = decodeResponseHeader(message);
 	if (!header.valid()) return header.error();
 	if (header.get().payload_size != 0) return unexpectedValue("payload size", header.get().payload_size, 0);
-	return WriteByteVariable::Response{};
-}
-
-template<>
-std::vector<std::uint8_t> encode<ReadStats::Request>(ReadStats::Request const &, std::uint8_t request_id) {
-	std::vector<std::uint8_t> result;
-	RequestHeader header = makeRobotRequestHeader(0, commands::robot::read_status_information, 1, 0, service::get_all, request_id);
-	encodeRequestHeader(result, header);
-	return result;
-}
-
-template<>
-ErrorOr<ReadStats::Response> decode<ReadStats::Response>(string_view message) {
-	ErrorOr<ResponseHeader> header = decodeResponseHeader(message);
-	if (!header.valid()) return header.error();
-	if (header.get().payload_size != 0) return unexpectedValue("payload size", header.get().payload_size, 0);
-	return ReadStats::Response{};
+	return WriteInt8Variable::Response{};
 }
 
 }}}

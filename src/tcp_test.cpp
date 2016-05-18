@@ -6,7 +6,7 @@
 
 dr::yaskawa::tcp::Client * client;
 
-void onReadByte(dr::yaskawa::ErrorOr<std::uint8_t> const & response) {
+void onReadByte(dr::yaskawa::ErrorOr<std::uint8_t> response) {
 	auto error = response.error();
 	if (error) {
 		std::cout << "Error " << error.category().name() << ":" << error.value() << ": " << error.detailed_message() << "\n";
@@ -16,15 +16,15 @@ void onReadByte(dr::yaskawa::ErrorOr<std::uint8_t> const & response) {
 	std::cout << "Read byte variable with value " << int(response.get()) << "\n";
 }
 
-void onStart(dr::yaskawa::ErrorOr<std::string> const & response) {
+void onStart(dr::yaskawa::ErrorOr<dr::yaskawa::tcp::CommandResponse> response) {
 	auto error = response.error();
 	if (error) {
 		std::cout << "Error " << error.category().name() << ":" << error.value() << ": " << error.detailed_message() << "\n";
 		return;
 	}
 
-	std::cout << "Start request succeeded: " << response.get() << "\n";
-	client->readByteVariable(0, onReadByte);
+	std::cout << "Start request succeeded: " << response.get().message << "\n";
+	client->sendCommand<dr::yaskawa::ReadInt8Variable>({1}, onReadByte);
 }
 
 void onConnect(boost::system::error_code const & error) {

@@ -18,11 +18,10 @@ dr_include_directories(
 )
 
 add_library(${PROJECT_NAME}
-	src/tcp/encode.cpp
-	src/tcp/decode.cpp
 	src/tcp/client.cpp
-	src/udp/protocol.cpp
+	src/tcp/protocol.cpp
 	src/udp/client.cpp
+	src/udp/protocol.cpp
 	src/error.cpp
 )
 

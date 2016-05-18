@@ -6,7 +6,7 @@
 
 dr::yaskawa::udp::Client * client;
 
-void onReadByte(dr::yaskawa::ErrorOr<dr::yaskawa::ReadByteVariable::Response> const & response) {
+void onReadByte(dr::yaskawa::ErrorOr<dr::yaskawa::ReadInt8Variable::Response> const & response) {
 	auto error = response.error();
 	if (error) {
 		std::cout << "Error " << error.category().name() << ":" << error.value() << ": " << error.detailed_message() << "\n";

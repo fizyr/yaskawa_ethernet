@@ -21,16 +21,12 @@ void Client::connect(std::string const & host, std::uint16_t port, unsigned int 
 	connect(host, std::to_string(port), timeout, callback);
 }
 
-void Client::readByteVariable(ReadByteVariable::Request request, unsigned int timeout, ResultCallback<ReadByteVariable::Response> const & callback) {
-	impl::sendCommand<ReadByteVariable>(request, timeout, request_id_++, socket_, callback);
+void Client::readByteVariable(ReadInt8Variable::Request request, unsigned int timeout, ResultCallback<ReadInt8Variable::Response> const & callback) {
+	impl::sendCommand<ReadInt8Variable>(request, timeout, request_id_++, socket_, callback);
 }
 
-void Client::writeByteVariable(WriteByteVariable::Request request, unsigned int timeout, ResultCallback<WriteByteVariable::Response> const & callback) {
-	impl::sendCommand<WriteByteVariable>(request, timeout, request_id_++, socket_, callback);
+void Client::writeByteVariable(WriteInt8Variable::Request request, unsigned int timeout, ResultCallback<WriteInt8Variable::Response> const & callback) {
+	impl::sendCommand<WriteInt8Variable>(request, timeout, request_id_++, socket_, callback);
 }
-
-void Client::readStats(unsigned int timeout, ResultCallback<ReadStats::Response> const & callback) {
-	impl::sendCommand<ReadStats>({}, timeout, request_id_++, socket_, callback);
-};
 
 }}}

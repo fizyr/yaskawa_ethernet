@@ -1,4 +1,6 @@
 #pragma once
+#include "commands.hpp"
+#include "send_command.hpp"
 #include "../error.hpp"
 
 #include <boost/asio/io_service.hpp>
@@ -51,15 +53,13 @@ public:
 
 	boost::asio::io_service & ios() { return socket_.get_io_service(); }
 
-	void start(int keep_alive, ResultCallback<std::string> const & callback);
+	void start(int keep_alive, ResultCallback<CommandResponse> const & callback);
 
-	void readByteVariable(int index, ResultCallback<std::uint8_t> const & callback);
-	void readInt16Variable(int index, ResultCallback<std::int16_t> const & callback);
-	void readInt32Variable(int index, ResultCallback<std::int32_t> const & callback);
-	void readRobotPositionVariable(int index, ResultCallback<double> const & callback);
-	void readStringVariable(int index, ResultCallback<std::string> const & callback);
-
-	void writeByteVariable(int index, std::uint8_t value, ResultCallback<void> const & callback);
+	/// Send a command over the server.
+	template<typename Command, typename Callback>
+	void sendCommand(typename Command::Request const & request, Callback && callback) {
+		tcp::sendCommand<Command>(request, socket_, read_buffer_, write_buffer_, std::forward<Callback>(callback));
+	}
 };
 
 }}}
