@@ -204,7 +204,7 @@ template<> ErrorOr<WriteInt8Variable::Response> decode<WriteInt8Variable::Respon
 	ErrorOr<ResponseHeader> header = decodeResponseHeader(message);
 	if (!header.valid()) return header.error();
 	if (header.get().payload_size != 0) return unexpectedValue("payload size", header.get().payload_size, 0);
-	return WriteInt8Variable::Response{};
+	return ErrorOr<void>{};
 }
 
 }}}

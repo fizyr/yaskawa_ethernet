@@ -28,7 +28,7 @@ namespace impl {
 	template<typename T>
 	struct WriteVariable {
 		struct Request { int index; T value; };
-		struct Response {};
+		using Response = void;
 	};
 }
 

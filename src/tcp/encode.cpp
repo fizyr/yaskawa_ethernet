@@ -1,4 +1,5 @@
-#include "tcp/encode.hpp"
+#include "tcp/protocol.hpp"
+#include "types.hpp"
 #include "encode_parameters.hpp"
 
 #include <sstream>
@@ -27,14 +28,47 @@ namespace {
 		encodeCommand(out, command, buffer.tellp());
 		out << buffer.rdbuf();
 	}
+
+	void encodeReadVariable(std::ostream & out, VariableType type, int index) {
+		encodeCommandWithParams(out, "SAVEV", int(type), index);
+	}
+
+	template<typename T>
+	void encodeWriteVariable(std::ostream & out, VariableType type, int index, T value) {
+		encodeCommandWithParams(out, "LOADV", int(type), index, value);
+	}
 }
 
-void encodeReadVariable(std::ostream & out, VariableType type, int index) {
-	encodeCommandWithParams(out, "SAVEV", int(type), index);
+template<> void encode<ReadInt8Variable::Request> (std::ostream & out, ReadInt8Variable::Request request) {
+	encodeReadVariable(out, VariableType::byte_type, request);
 }
 
-void encodeWriteByteVariable(std::ostream & out, int index, std::uint8_t value) {
-	encodeCommandWithParams(out, "LOADV", int(VariableType::byte_type), index, value);
+template<> void encode<ReadInt16Variable::Request> (std::ostream & out, ReadInt16Variable::Request request) {
+	encodeReadVariable(out, VariableType::integer_type, request);
+}
+
+template<> void encode<ReadInt32Variable::Request> (std::ostream & out, ReadInt32Variable::Request request) {
+	encodeReadVariable(out, VariableType::double_type, request);
+}
+
+template<> void encode<ReadFloat32Variable::Request>(std::ostream & out, ReadFloat32Variable::Request request) {
+	encodeReadVariable(out, VariableType::real_type, request);
+}
+
+template<> void encode<WriteInt8Variable::Request> (std::ostream & out, WriteInt8Variable::Request request) {
+	encodeWriteVariable(out, VariableType::byte_type, request.index, request.value);
+}
+
+template<> void encode<WriteInt16Variable::Request> (std::ostream & out, WriteInt16Variable::Request request) {
+	encodeWriteVariable(out, VariableType::integer_type, request.index, request.value);
+}
+
+template<> void encode<WriteInt32Variable::Request> (std::ostream & out, WriteInt32Variable::Request request) {
+	encodeWriteVariable(out, VariableType::double_type, request.index, request.value);
+}
+
+template<> void encode<WriteFloat32Variable::Request> (std::ostream & out, WriteFloat32Variable::Request request) {
+	encodeWriteVariable(out, VariableType::real_type, request.index, request.value);
 }
 
 }}}

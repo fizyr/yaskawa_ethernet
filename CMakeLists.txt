@@ -19,7 +19,8 @@ dr_include_directories(
 
 add_library(${PROJECT_NAME}
 	src/tcp/client.cpp
-	src/tcp/protocol.cpp
+	src/tcp/encode.cpp
+	src/tcp/decode.cpp
 	src/udp/client.cpp
 	src/udp/protocol.cpp
 	src/error.cpp
