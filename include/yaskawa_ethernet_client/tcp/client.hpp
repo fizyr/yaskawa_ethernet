@@ -60,6 +60,12 @@ public:
 	void sendCommand(typename Command::Request const & request, Callback && callback) {
 		tcp::sendCommand<Command>(request, socket_, read_buffer_, write_buffer_, std::forward<Callback>(callback));
 	}
+
+	/// Start the connection.
+	template<typename Callback>
+	void start(int keep_alive, Callback && callback) {
+		sendCommand<StartCommand>(StartCommand::Request{keep_alive}, std::forward<Callback>(callback));
+	}
 };
 
 }}}
