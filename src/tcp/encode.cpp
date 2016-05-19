@@ -15,70 +15,70 @@ namespace {
 	}
 
 	template<typename... T>
-	void encodeCommandWithParams(std::ostream & out, std::string const & command, T const & ...params) {
-		std::stringstream buffer;
-		encodeParameters(buffer, params...);
-		encodeCommand(out, command, buffer.tellp());
-		out << buffer.rdbuf();
+	void encodeCommandWithParams(std::ostream & command_out, std::ostream & params_out, std::string const & command, T const & ...params) {
+		std::size_t start_size = params_out.tellp();
+		encodeParameters(params_out, params...);
+		encodeCommand(command_out, command, std::size_t(params_out.tellp()) - start_size);
 	}
 
-	void encodeReadVariable(std::ostream & out, VariableType type, int index) {
-		encodeCommandWithParams(out, "SAVEV", int(type), index);
+	void encodeReadVariable(std::ostream & command_out, std::ostream & params_out, VariableType type, int index) {
+		encodeCommandWithParams(command_out, params_out, "SAVEV", int(type), index);
 	}
 
 	template<typename T>
-	void encodeWriteVariable(std::ostream & out, VariableType type, int index, T value) {
-		encodeCommandWithParams(out, "LOADV", int(type), index, value);
+	void encodeWriteVariable(std::ostream & command_out, std::ostream & params_out, VariableType type, int index, T value) {
+		encodeCommandWithParams(command_out, params_out, "LOADV", int(type), index, value);
 	}
 }
 
 template<>
-void encode<StartCommand::Request>(std::ostream & out, StartCommand::Request request) {
+void encode<StartCommand::Request>(std::ostream & command_out, std::ostream & params_out, StartCommand::Request request) {
+	(void) params_out;
 	if (request.keep_alive == 0) {
-		out << "CONNECT Robot_access\r\n";
+		command_out << "CONNECT Robot_access\r\n";
 	} else {
-		out << "CONNECT Robot_access Keep-Alive:" << request.keep_alive << "\r\n";
+		command_out << "CONNECT Robot_access Keep-Alive:" << request.keep_alive << "\r\n";
 	}
 }
 
 template<>
-void encode<ReadInt8Variable::Request> (std::ostream & out, ReadInt8Variable::Request request) {
-	encodeReadVariable(out, VariableType::byte_type, request);
+void encode<ReadInt8Variable::Request> (std::ostream & command_out, std::ostream & params_out, ReadInt8Variable::Request request) {
+	encodeReadVariable(command_out, params_out, VariableType::byte_type, request);
 }
 
 template<>
-void encode<ReadInt16Variable::Request> (std::ostream & out, ReadInt16Variable::Request request) {
-	encodeReadVariable(out, VariableType::integer_type, request);
+void encode<ReadInt16Variable::Request> (std::ostream & command_out, std::ostream & params_out, ReadInt16Variable::Request request) {
+	encodeReadVariable(command_out, params_out, VariableType::integer_type, request);
 }
 
 template<>
-void encode<ReadInt32Variable::Request> (std::ostream & out, ReadInt32Variable::Request request) {
-	encodeReadVariable(out, VariableType::double_type, request);
+void encode<ReadInt32Variable::Request> (std::ostream & command_out, std::ostream & params_out, ReadInt32Variable::Request request) {
+	encodeReadVariable(command_out, params_out, VariableType::double_type, request);
 }
 
 template<>
-void encode<ReadFloat32Variable::Request>(std::ostream & out, ReadFloat32Variable::Request request) {
-	encodeReadVariable(out, VariableType::real_type, request);
+void encode<ReadFloat32Variable::Request>(std::ostream & command_out, std::ostream & params_out, ReadFloat32Variable::Request request) {
+	encodeReadVariable(command_out, params_out, VariableType::real_type, request);
 }
 
 template<>
-void encode<WriteInt8Variable::Request> (std::ostream & out, WriteInt8Variable::Request request) {
-	encodeWriteVariable(out, VariableType::byte_type, request.index, request.value);
+void encode<WriteInt8Variable::Request> (std::ostream & command_out, std::ostream & params_out, WriteInt8Variable::Request request) {
+	encodeWriteVariable(command_out, params_out, VariableType::byte_type, request.index, request.value);
 }
 
 template<>
-void encode<WriteInt16Variable::Request> (std::ostream & out, WriteInt16Variable::Request request) {
-	encodeWriteVariable(out, VariableType::integer_type, request.index, request.value);
+void encode<WriteInt16Variable::Request> (std::ostream & command_out, std::ostream & params_out, WriteInt16Variable::Request request) {
+	encodeWriteVariable(command_out, params_out, VariableType::integer_type, request.index, request.value);
 }
 
 template<>
-void encode<WriteInt32Variable::Request> (std::ostream & out, WriteInt32Variable::Request request) {
-	encodeWriteVariable(out, VariableType::double_type, request.index, request.value);
+void encode<WriteInt32Variable::Request> (std::ostream & command_out, std::ostream & params_out, WriteInt32Variable::Request request) {
+	encodeWriteVariable(command_out, params_out, VariableType::double_type, request.index, request.value);
 }
 
 template<>
-void encode<WriteFloat32Variable::Request> (std::ostream & out, WriteFloat32Variable::Request request) {
-	encodeWriteVariable(out, VariableType::real_type, request.index, request.value);
+void encode<WriteFloat32Variable::Request> (std::ostream & command_out, std::ostream & params_out, WriteFloat32Variable::Request request) {
+	encodeWriteVariable(command_out, params_out, VariableType::real_type, request.index, request.value);
 }
 
 }}}

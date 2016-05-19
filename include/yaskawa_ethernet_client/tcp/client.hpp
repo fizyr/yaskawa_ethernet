@@ -26,8 +26,6 @@ public:
 private:
 	Socket socket_;
 	boost::asio::streambuf read_buffer_;
-	boost::asio::streambuf write_buffer_;
-	std::ostream write_stream_{&write_buffer_};
 
 public:
 	Client(boost::asio::io_service & ios);
@@ -53,12 +51,10 @@ public:
 
 	boost::asio::io_service & ios() { return socket_.get_io_service(); }
 
-	void start(int keep_alive, ResultCallback<CommandResponse> const & callback);
-
 	/// Send a command over the server.
 	template<typename Command, typename Callback>
 	void sendCommand(typename Command::Request const & request, Callback && callback) {
-		tcp::sendCommand<Command>(request, socket_, read_buffer_, write_buffer_, std::forward<Callback>(callback));
+		tcp::sendCommand<Command>(request, socket_, read_buffer_, std::forward<Callback>(callback));
 	}
 
 	/// Start the connection.
