@@ -23,6 +23,10 @@ public:
 	using reverse_iterator        = std::reverse_iterator<iterator>;
 	using const_reverse_iterator  = std::reverse_iterator<const_iterator>;
 
+	using const_T    = const T;
+	using nonconst_T = typename std::remove_const<T>::type;
+	static constexpr bool is_const = std::is_const<T>::value;
+
 	static constexpr size_type npos = size_type(-1);
 
 private:
@@ -37,6 +41,14 @@ public:
 
 	array_view(array_view<T> const & other) = default;
 	array_view(array_view<T>      && other) = default;
+
+	/// Construct from a vector of T.
+	template<bool Enable = !is_const, typename = typename std::enable_if<Enable>::type>
+	explicit array_view(std::vector<T> & other) : data_{other.data()}, size_{other.size()} {};
+
+	/// Construct from a vector of non-const T.
+	template<bool Enable = is_const, typename = typename std::enable_if<Enable>::type>
+	explicit array_view(std::vector<T> const & other) : data_{other.data()}, size_{other.size()} {};
 
 	/// Implicit conversion to array_view<T const>.
 	operator array_view<T const> () noexcept {
