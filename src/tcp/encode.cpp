@@ -63,7 +63,7 @@ void encode<ReadFloat32Variable::Request>(boost::asio::streambuf & command_out, 
 
 template<>
 void encode<WriteInt8Variable::Request> (boost::asio::streambuf & command_out, boost::asio::streambuf & params_out, WriteInt8Variable::Request request) {
-	encodeWriteVariable(command_out, params_out, VariableType::byte_type, request.index, request.value);
+	encodeWriteVariable(command_out, params_out, VariableType::byte_type, request.index, int(request.value));
 }
 
 template<>
