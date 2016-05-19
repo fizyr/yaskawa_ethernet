@@ -13,6 +13,23 @@
 namespace dr {
 namespace yaskawa {
 
+/// Get a reference to the Yaskawa error category.
+impl::YaskawaCategory const & yaskawa_category();
+
+/// Protocol error code constants.
+namespace errc {
+	enum errc_t {
+		malformed_response  = 0x01,
+		command_failed      = 0x02,
+	};
+
+	inline impl::YaskawaError make_error_code(errc_t code)      { return {code}; }
+	inline impl::YaskawaError make_error_condition(errc_t code) { return {code}; }
+}
+
+/// Enum type for protocol error codes.
+using errc_t = errc::errc_t;
+
 /// Struct holding details on an error.
 class DetailedError : public boost::system::error_code {
 	std::string details_;
@@ -119,23 +136,6 @@ public:
 		if (!valid()) throw error().to_system_error();
 	}
 };
-
-/// Get a reference to the Yaskawa error category.
-impl::YaskawaCategory const & yaskawa_category();
-
-/// Protocol error code constants.
-namespace errc {
-	enum errc_t {
-		malformed_response  = 0x01,
-		command_failed      = 0x02,
-	};
-
-	inline impl::YaskawaError make_error_code(errc_t code)      { return {code}; }
-	inline impl::YaskawaError make_error_condition(errc_t code) { return {code}; }
-}
-
-/// Enum type for protocol error codes.
-using errc_t = errc::errc_t;
 
 }}
 
