@@ -79,6 +79,10 @@ namespace {
 		return malformedResponse("received " + std::to_string(actual) + " data components, expected " + std::to_string(expected));
 	}
 
+	DetailedError wrongArgCount(int actual, int min, int max) {
+		return malformedResponse("received " + std::to_string(actual) + " data components, expected between " + std::to_string(min) + " and " + std::to_string(max));
+	}
+
 	template<typename T>
 	ErrorOr<T> parseInt(string_view data, T min = std::numeric_limits<T>::min(), T max = std::numeric_limits<T>::max()) {
 		if (data.empty()) return malformedResponse("empty integer value received");
@@ -156,6 +160,62 @@ namespace {
 		if (params.size() != 1) return wrongArgCount(params.size(), 1);
 		return parseInt<T>(params[0]);
 	}
+
+	ErrorOr<JointPulsePosition> decodePulsePosition(array_view<string_view> params) {
+		if (params.size() < 7 || params.size() > 8) return malformedResponse("wrong number of parameters (" + std::to_string(params.size()) + ") to describe a pulse position");
+
+		// Params contain the joints and tool type.
+		// So 8 params means a 7 axis robot.
+		JointPulsePosition result(params.size() > 7);
+
+		// Parse joint pulse values.
+		for (std::size_t i = 0; i < params.size() - 1; ++i) {
+			ErrorOr<int> value = parseInt<int>(params[i]); if (!value.valid()) return value.error();
+			result.joints()[i] = value.get();
+		}
+
+		// Parse tool type.
+		ErrorOr<int> value = parseInt<int>(params.back()); if (!value.valid()) return value.error();
+		result.tool() = value.get();
+	}
+
+	ErrorOr<CartesianPosition> decodeCartesianPosition(array_view<string_view> params) {
+		if (params.size() != 8) return malformedResponse("wrong number of parameters (" + std::to_string(params.size()) + ") to describe a cartesian position");
+
+		CartesianPosition result;
+
+		// Parse coordinate system.
+		ErrorOr<int> coordinate_system = parseInt<int>(params[0], 0, 19);
+		if (!coordinate_system.valid()) return coordinate_system.error();
+		result.system() = CoordinateSystem(coordinate_system.get());
+
+		// Parse X, Y, Z position.
+		for (int i = 0; i < 3; ++i) {
+			ErrorOr<float> value = parseFloat<float>(params[1 + i]); if (!value.valid()) return value.error();
+			result.data()[i] = value.get() * 1000;
+		}
+
+		// Parse Rx, Ry, Rz rotations.
+		for (int i = 0; i < 3; ++i) {
+			ErrorOr<float> value = parseFloat<float>(params[1 + i]); if (!value.valid()) return value.error();
+			result.data()[i] = value.get() * 10000;
+		}
+
+		// Parse pose type.
+		ErrorOr<int> pose_type = parseInt<int>(params[0], 0, 0x3f);
+		if (!pose_type.valid()) return pose_type.error();
+		result.type() = pose_type.get();
+
+		return result;
+	}
+
+	ErrorOr<Position> decodePosition(array_view<string_view> params) {
+		if (params.size() < 8 || params.size() > 9) return malformedResponse("wrong number of parameters " + std::to_string(params.size()) + " to describe a position");
+		ErrorOr<int> type = parseInt<int>(params[0]); if (!type.valid()) return type.error();
+		if (type.get() == 0) return decodePulsePosition(params.subview(1));
+		if (type.get() == 1) return decodeCartesianPosition(params.subview(1));
+		return malformedResponse("unexpected position type (" + std::to_string(type.get()) + "), expected 0 or 1");
+	}
 }
 
 
@@ -208,6 +268,16 @@ ErrorOr<ReadFloat32Variable::Response> decode<ReadFloat32Variable::Response>(str
 	std::vector<string_view> params = splitData(stripDataFrame(message));
 	if (params.size() != 1) return wrongArgCount(params.size(), 1);
 	return parseFloat<float>(params[0]);
+}
+
+template<>
+ErrorOr<ReadPositionVariable::Response> decode<ReadPositionVariable::Response>(string_view message) {
+	DetailedError error = parseErrorMessage(message);
+	if (error) return error;
+
+	std::vector<string_view> params = splitData(stripDataFrame(message));
+	if (params.size() < 8 && params.size() > 9) return wrongArgCount(params.size(), 8, 9);
+	return decodePosition(array_view<string_view>{params});
 }
 
 }}}

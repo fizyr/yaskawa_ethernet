@@ -1,4 +1,6 @@
 #pragma once
+#include "types.hpp"
+
 #include <cstdint>
 
 namespace dr {
@@ -20,7 +22,8 @@ namespace impl {
 
 			Response() {}
 			Response(T value) : value{value} {}
-			operator T() { return value; }
+			operator T       & ()       { return value; }
+			operator T const & () const { return value; }
 		};
 	};
 
@@ -36,6 +39,7 @@ using ReadInt8Variable     = impl::ReadVariable<std::uint8_t>;
 using ReadInt16Variable    = impl::ReadVariable<std::uint16_t>;
 using ReadInt32Variable    = impl::ReadVariable<std::uint32_t>;
 using ReadFloat32Variable  = impl::ReadVariable<float>;
+using ReadPositionVariable = impl::ReadVariable<Position>;
 using WriteInt8Variable    = impl::WriteVariable<std::uint8_t>;
 using WriteInt16Variable   = impl::WriteVariable<std::uint16_t>;
 using WriteInt32Variable   = impl::WriteVariable<std::uint32_t>;

@@ -47,6 +47,8 @@ enum class CoordinateSystem {
 };
 
 class PoseType : public std::bitset<5> {
+public:
+	PoseType() = default;
 	PoseType(std::uint8_t type) noexcept : std::bitset<5>(type) {}
 	PoseType(bool flip, bool lower_arm, bool high_r, bool high_t, bool high_s) :
 		std::bitset<5>{flip * 0x01u | lower_arm * 0x02u |  high_r * 0x04u | high_t * 0x08u | high_s * 0x10u} {}
@@ -93,6 +95,8 @@ private:
 	PoseType type_;
 
 public:
+	CartesianPosition() = default;
+
 	std::array<int, 6>       & data()       noexcept { return data_; }
 	std::array<int, 6> const & data() const noexcept { return data_; }
 
@@ -103,6 +107,15 @@ public:
 	PoseType   type() const noexcept { return type_; }
 };
 
-using Position = boost::variant<JointPulsePosition>;
+class Position {
+	using Variant =  boost::variant<JointPulsePosition, CartesianPosition>;
+	Variant data_;
+
+public:
+	Position(JointPulsePosition const & position) : data_(position) {}
+	Position(JointPulsePosition      && position) : data_(std::move(position)) {}
+	Position(CartesianPosition  const & position) : data_(position) {}
+	Position(CartesianPosition       && position) : data_(std::move(position)) {}
+};
 
 }}
