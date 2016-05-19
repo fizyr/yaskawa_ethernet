@@ -35,8 +35,6 @@ namespace impl {
 		boost::asio::streambuf * read_buffer;
 		boost::asio::streambuf command_buffer;
 		boost::asio::streambuf data_buffer;
-		std::ostream command_stream{&command_buffer};
-		std::ostream data_stream{&data_buffer};
 
 		Callback callback;
 
@@ -49,7 +47,7 @@ namespace impl {
 
 		/// Start the session by writing the command.
 		void start(Request const & request) {
-			encode(command_stream, data_stream, request);
+			encode(command_buffer, data_buffer, request);
 			auto callback = std::bind(&CommandSession::onWriteCommand, this, this->shared_from_this(), std::placeholders::_1, std::placeholders::_2);
 			boost::asio::async_write(*socket, command_buffer.data(), callback);
 		}
@@ -90,7 +88,7 @@ namespace impl {
 			if (!decoded.valid()) return callback(decoded.error());
 
 			// If the command has data, write it.
-			if (data_stream.tellp()) {
+			if (data_buffer.size()) {
 				auto callback = std::bind(&CommandSession::onWriteData, this, this->shared_from_this(), std::placeholders::_1, std::placeholders::_2);
 				boost::asio::async_write(*socket, data_buffer.data(), callback);
 

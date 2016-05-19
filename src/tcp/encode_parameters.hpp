@@ -1,5 +1,8 @@
 #pragma once
+#include <boost/asio/streambuf.hpp>
+
 #include <ostream>
+#include <utility>
 
 namespace dr {
 namespace yaskawa {
@@ -11,15 +14,15 @@ namespace {
 
 	template<typename Head, typename... Tail>
 	struct EncodeParametersImp<Head, Tail...> {
-		static void addParameters(std::ostream & stream, Head const & head, Tail const & ... tail) {
+		static void addParameters(std::ostream && stream, Head const & head, Tail const & ... tail) {
 			stream << head << ',';
-			EncodeParametersImp<Tail...>::addParameters(stream, tail...);
+			EncodeParametersImp<Tail...>::addParameters(std::move(stream), tail...);
 		}
 	};
 
 	template<typename Head>
 	struct EncodeParametersImp<Head> {
-		static void addParameters(std::ostream & stream, Head const & head) {
+		static void addParameters(std::ostream && stream, Head const & head) {
 			stream << head << '\r';
 		}
 	};
@@ -30,8 +33,8 @@ namespace {
 	 * Paremeters are seperated by a space, and the list is terminated by a '\r'.
 	 */
 	template<typename... T>
-	void encodeParameters(std::ostream & stream, T const & ... params) {
-		EncodeParametersImp<T...>::addParameters(stream, params...);
+	void encodeParameters(boost::asio::streambuf & buffer, T const & ... params) {
+		EncodeParametersImp<T...>::addParameters(std::ostream{&buffer}, params...);
 	}
 }
 
