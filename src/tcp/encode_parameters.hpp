@@ -12,7 +12,7 @@ namespace {
 	template<typename Head, typename... Tail>
 	struct EncodeParametersImp<Head, Tail...> {
 		static void addParameters(std::ostream & stream, Head const & head, Tail const & ... tail) {
-			stream << head << ' ';
+			stream << head << ',';
 			EncodeParametersImp<Tail...>::addParameters(stream, tail...);
 		}
 	};

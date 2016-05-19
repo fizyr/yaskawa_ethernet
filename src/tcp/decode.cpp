@@ -54,12 +54,11 @@ namespace {
 
 		char const * begin = data.begin();
 		while (begin < data.end()) {
+			char const * end = std::find(begin, data.end(), ',');
 			begin = std::find_if_not(begin, data.end(), isSpace);
-			if (begin == data.end()) break;
-
-			char const * end = std::find_if(begin, data.end(), isSpace);
 			result.emplace_back(begin, end - begin);
-			begin = end;
+			if (begin == data.end()) break;
+			begin = end + 1;
 		}
 
 		return result;
