@@ -25,10 +25,17 @@ void onConnect(boost::system::error_code const & error) {
 	client->readByteVariable({1}, 1500, onReadByte);
 }
 
-int main() {
+int main(int argc, char * * argv) {
 	boost::asio::io_service ios;
 	dr::yaskawa::udp::Client client(ios);
 	::client = &client;
-	client.connect("10.0.0.2", 10040, 1500, onConnect);
+
+	std::string host = "10.0.0.2";
+	std::string port = "10040";
+
+	if (argc > 1) host = argv[1];
+	if (argc > 2) port = argv[2];
+
+	client.connect(host, port, 1500, onConnect);
 	ios.run();
 }

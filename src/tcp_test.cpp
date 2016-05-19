@@ -36,10 +36,17 @@ void onConnect(boost::system::error_code const & error) {
 	client->start(-1, onStart);
 }
 
-int main() {
+int main(int argc, char * * argv) {
 	boost::asio::io_service ios;
 	dr::yaskawa::tcp::Client client(ios);
 	::client = &client;
-	client.connect("10.0.0.2", 80, 1500, onConnect);
+
+	std::string host = "10.0.0.2";
+	std::string port = "80";
+
+	if (argc > 1) host = argv[1];
+	if (argc > 2) port = argv[2];
+
+	client.connect(host, port, 1500, onConnect);
 	ios.run();
 }
