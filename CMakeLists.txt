@@ -1,20 +1,20 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.1.0)
 project(yaskawa_ethernet_client)
 
-find_package(catkin REQUIRED COMPONENTS
-	dr_base
-)
+set(CMAKE_CXXFLAGS "${CMAKE_CXXFLAGS} -Wall -Wextra -Wpedantic")
+
+option(WERROR on)
+if (WERROR)
+	set(CMAKE_CXXFLAGS "${CMAKE_CXXFLAGS} -Werror")
+endif()
 
 find_package(Boost REQUIRED COMPONENTS system)
+set(THREADS_PREFER_PTHREAD_FLAG ON)
+find_package(Threads REQUIRED)
 
-catkin_package(
-	INCLUDE_DIRS include
-	LIBRARIES ${PROJECT_NAME}
-)
-
-dr_include_directories(
+include_directories(
 	include/${PROJECT_NAME}
-	${INCLUDE_DIRS}
+	SYSTEM ${INCLUDE_DIRS}
 )
 
 add_library(${PROJECT_NAME}
@@ -29,17 +29,19 @@ add_library(${PROJECT_NAME}
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
 add_executable(${PROJECT_NAME}_tcp_test src/tcp_test.cpp)
-target_link_libraries(${PROJECT_NAME}_tcp_test ${PROJECT_NAME})
+target_link_libraries(${PROJECT_NAME}_tcp_test Threads::Threads ${PROJECT_NAME})
 add_executable(${PROJECT_NAME}_udp_test src/udp_test.cpp)
-target_link_libraries(${PROJECT_NAME}_udp_test ${PROJECT_NAME})
+target_link_libraries(${PROJECT_NAME}_udp_test Threads::Threads ${PROJECT_NAME})
+
+include(GNUInstallDirs)
 
 install(TARGETS ${PROJECT_NAME}
-	ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-	LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-	RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+	ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+	RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 
 install(
 	DIRECTORY include
-	DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+	DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 )
