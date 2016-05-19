@@ -28,9 +28,8 @@ struct ResponseMatcher {
 			prefix.push_back(c);
 			if (prefix == "OK:" || prefix == "NG:" || prefix == "ERROR:") {
 				type = Type::crlf;
-			} else if (prefix == "0000\r\n") {
+			} else if (prefix == "0000") {
 				type = Type::crlf;
-				return true;
 			} else if (prefix.size() >= 6) {
 				type = Type::cr;
 			}
