@@ -58,8 +58,11 @@ public:
 	ErrorOr(T const & value) : data_{value} {}
 	ErrorOr(T      && value) : data_{std::move(value)} {}
 
-	template<typename T2, typename N = typename std::enable_if<std::is_convertible<T2, T>::value>::type>
-	ErrorOr(ErrorOr<T2> && other) : data_{T{std::forward<ErrorOr<T2>>(other).get()}} {};
+	template<typename T2, typename N = typename std::enable_if<std::is_convertible<T, T2>::value>::type>
+	operator ErrorOr<T2> () {
+		if (!valid()) return ErrorOr<T2>{error()};
+		return ErrorOr<T2>{T2(get())};
+	}
 
 	bool valid() const {
 		return data_.which() == 1;
