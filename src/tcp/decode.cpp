@@ -38,6 +38,13 @@ namespace {
 		return std::equal(prefix.begin(), prefix.end(), string.begin());
 	}
 
+	/// Strip a prefix from a message.
+	bool stripPrefix(string_view & message, string_view prefix) {
+		if (!startsWith(message, prefix)) return false;
+		message.remove_prefix(prefix.size());
+		return true;
+	}
+
 	/// Strip the framing (a trailing CRLF) from a regular response message.
 	string_view stripResponseFrame(string_view message) {
 		return {message.begin(), message.size() - 2};
@@ -135,8 +142,16 @@ namespace {
 		return result;
 	}
 
+	DetailedError parseErrorMessage(string_view message) {
+		if (!stripPrefix(message, "ERROR: "_v)) return {};
+		return DetailedError{errc::command_failed, stripResponseFrame(message).to_string()};
+	}
+
 	template<typename T>
 	ErrorOr<T> decodeIntMessage(string_view message) {
+		DetailedError error = parseErrorMessage(message);
+		if (error) return error;
+
 		std::vector<string_view> params = splitData(stripDataFrame(message));
 		if (params.size() != 1) return wrongArgCount(params.size(), 1);
 		return parseInt<T>(params[0]);
@@ -148,12 +163,12 @@ template<>
 ErrorOr<CommandResponse> decode<CommandResponse>(string_view message) {
 	message = stripResponseFrame(message);
 
-	if (startsWith(message, "NG:"_v)) {
+	if (startsWith(message, "NG: "_v)) {
 		char const * start = std::find_if_not(message.begin() + 3, message.end(), isSpace);
 		return DetailedError{errc::command_failed, std::string(start, message.end())};
 	}
 
-	if (startsWith(message, "OK:"_v)) {
+	if (startsWith(message, "OK: "_v)) {
 		char const * start = std::find_if_not(message.begin() + 3, message.end(), isSpace);
 		return CommandResponse{std::string(start, message.end())};
 	}
@@ -163,6 +178,9 @@ ErrorOr<CommandResponse> decode<CommandResponse>(string_view message) {
 
 template<>
 ErrorOr<void> decode<void>(string_view message) {
+	DetailedError error = parseErrorMessage(message);
+	if (error) return error;
+
 	if (message != "0000\r\n"_v) return {boost::system::error_code{errc::malformed_response}, "expected empty response, received something else"};
 	return ErrorOr<void>{};
 }
@@ -184,6 +202,9 @@ ErrorOr<ReadInt32Variable::Response> decode<ReadInt32Variable::Response>(string_
 
 template<>
 ErrorOr<ReadFloat32Variable::Response> decode<ReadFloat32Variable::Response>(string_view message) {
+	DetailedError error = parseErrorMessage(message);
+	if (error) return error;
+
 	std::vector<string_view> params = splitData(stripDataFrame(message));
 	if (params.size() != 1) return wrongArgCount(params.size(), 1);
 	return parseFloat<float>(params[0]);
