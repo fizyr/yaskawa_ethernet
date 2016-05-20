@@ -164,9 +164,8 @@ namespace {
 		result.service = readLittleEndian<std::uint8_t>(data);
 		result.status  = readLittleEndian<std::uint8_t>(data);
 
-		// Parse extra status field. Holy shit.
-		std::uint8_t additional_status_size = readLittleEndian<std::uint8_t>(data);
-		data.remove_prefix(1);
+		// Ignore added status size, just treat it as two byte value.
+		data.remove_prefix(2);
 		result.extra_status = readLittleEndian<std::uint16_t>(data);
 
 		// Padding.
