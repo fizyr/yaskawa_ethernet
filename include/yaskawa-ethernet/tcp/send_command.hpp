@@ -1,7 +1,7 @@
 #pragma once
-#include "error.hpp"
-#include "string_view.hpp"
-#include "tcp/protocol.hpp"
+#include "../error.hpp"
+#include "../string_view.hpp"
+#include "protocol.hpp"
 
 #include <boost/asio/read_until.hpp>
 #include <boost/asio/streambuf.hpp>

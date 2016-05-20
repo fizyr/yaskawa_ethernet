@@ -1,4 +1,4 @@
-#include "tcp/client.hpp"
+#include <yaskawa-ethernet/tcp/client.hpp>
 
 #include <boost/asio/io_service.hpp>
 

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.1.0)
-project(yaskawa_ethernet_client)
+project(yaskawa-ethernet)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -Wall -Wextra -Wpedantic")
 
@@ -9,13 +9,9 @@ if (WERROR)
 endif()
 
 find_package(Boost REQUIRED COMPONENTS system)
+
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
-
-include_directories(
-	include/${PROJECT_NAME}
-	SYSTEM ${INCLUDE_DIRS}
-)
 
 add_library(${PROJECT_NAME}
 	src/tcp/client.cpp
@@ -26,12 +22,16 @@ add_library(${PROJECT_NAME}
 	src/error.cpp
 )
 
-target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+target_include_directories(${PROJECT_NAME} PRIVATE include/${PROJECT_NAME})
+target_include_directories(${PROJECT_NAME} INTERFACE include)
+target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC ${INCLUDE_DIRS})
+
+target_link_libraries(${PROJECT_NAME} PUBLIC Threads::Threads ${Boost_LIBRARIES})
 
 add_executable(${PROJECT_NAME}_tcp_test src/tcp_test.cpp)
-target_link_libraries(${PROJECT_NAME}_tcp_test Threads::Threads ${PROJECT_NAME})
 add_executable(${PROJECT_NAME}_udp_test src/udp_test.cpp)
-target_link_libraries(${PROJECT_NAME}_udp_test Threads::Threads ${PROJECT_NAME})
+target_link_libraries(${PROJECT_NAME}_tcp_test ${PROJECT_NAME})
+target_link_libraries(${PROJECT_NAME}_udp_test ${PROJECT_NAME})
 
 include(GNUInstallDirs)
 

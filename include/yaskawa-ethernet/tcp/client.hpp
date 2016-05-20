@@ -1,7 +1,7 @@
 #pragma once
-#include "commands.hpp"
-#include "send_command.hpp"
+#include "../commands.hpp"
 #include "../error.hpp"
+#include "send_command.hpp"
 
 #include <boost/asio/io_service.hpp>
 #include <boost/asio/ip/tcp.hpp>
