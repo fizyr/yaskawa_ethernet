@@ -8,11 +8,14 @@ if (WERROR)
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
 endif()
 
-find_package(Boost REQUIRED COMPONENTS system)
+option(BUILD_SHARED_LIBS "build shared libraries" on)
 
+# Depencencies
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
+find_package(Boost REQUIRED COMPONENTS system)
 
+# Library
 add_library(${PROJECT_NAME}
 	src/tcp/client.cpp
 	src/tcp/encode.cpp
@@ -21,18 +24,17 @@ add_library(${PROJECT_NAME}
 	src/udp/protocol.cpp
 	src/error.cpp
 )
-
-target_include_directories(${PROJECT_NAME} PRIVATE include/${PROJECT_NAME})
-target_include_directories(${PROJECT_NAME} INTERFACE include)
+target_include_directories(${PROJECT_NAME} INTERFACE include PRIVATE include/${PROJECT_NAME})
 target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC ${INCLUDE_DIRS})
-
 target_link_libraries(${PROJECT_NAME} PUBLIC Threads::Threads ${Boost_LIBRARIES})
 
+# Test executables
 add_executable(${PROJECT_NAME}_tcp_test src/tcp_test.cpp)
 add_executable(${PROJECT_NAME}_udp_test src/udp_test.cpp)
 target_link_libraries(${PROJECT_NAME}_tcp_test ${PROJECT_NAME})
 target_link_libraries(${PROJECT_NAME}_udp_test ${PROJECT_NAME})
 
+# Install
 include(GNUInstallDirs)
 
 install(TARGETS ${PROJECT_NAME}
