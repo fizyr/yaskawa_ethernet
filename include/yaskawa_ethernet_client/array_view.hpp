@@ -44,11 +44,11 @@ public:
 
 	/// Construct from a vector of T.
 	template<bool Enable = !is_const, typename = typename std::enable_if<Enable>::type>
-	explicit array_view(std::vector<T> & other) : data_{other.data()}, size_{other.size()} {};
+	explicit array_view(std::vector<T> & other) : data_{other.data()}, size_{other.size()} {}
 
 	/// Construct from a vector of non-const T.
 	template<bool Enable = is_const, typename = typename std::enable_if<Enable>::type>
-	explicit array_view(std::vector<T> const & other) : data_{other.data()}, size_{other.size()} {};
+	explicit array_view(std::vector<T> const & other) : data_{other.data()}, size_{other.size()} {}
 
 	/// Implicit conversion to array_view<T const>.
 	operator array_view<T const> () noexcept {

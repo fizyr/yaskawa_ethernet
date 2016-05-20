@@ -11,7 +11,7 @@ namespace dr {
 namespace yaskawa {
 namespace udp {
 
-Client::Client(boost::asio::io_service & ios) : socket_(ios) {};
+Client::Client(boost::asio::io_service & ios) : socket_(ios) {}
 
 void Client::connect(std::string const & host, std::string const & port, unsigned int timeout, Callback const & callback) {
 	asyncResolveConnect({host, port}, timeout, socket_, callback);
