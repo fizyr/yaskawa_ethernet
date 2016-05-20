@@ -17,6 +17,7 @@ namespace impl {
 			Request(int index) : index{index} {}
 			operator int() { return index; }
 		};
+
 		struct Response {
 			T value;
 

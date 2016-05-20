@@ -19,7 +19,7 @@ enum class VariableType {
 };
 
 enum class PositionType {
-	joints    = 0,
+	pulse     = 0,
 	cartesian = 1,
 };
 
@@ -46,11 +46,11 @@ enum class CoordinateSystem {
 	master = 19,
 };
 
-class PoseType : public std::bitset<5> {
+class CartesianPoseType : public std::bitset<5> {
 public:
-	PoseType() = default;
-	PoseType(std::uint8_t type) noexcept : std::bitset<5>(type) {}
-	PoseType(bool flip, bool lower_arm, bool high_r, bool high_t, bool high_s) :
+	CartesianPoseType() = default;
+	CartesianPoseType(std::uint8_t type) noexcept : std::bitset<5>(type) {}
+	CartesianPoseType(bool flip, bool lower_arm, bool high_r, bool high_t, bool high_s) :
 		std::bitset<5>{flip * 0x01u | lower_arm * 0x02u |  high_r * 0x04u | high_t * 0x08u | high_s * 0x10u} {}
 
 	bool      flip()     const noexcept { return (*this)[0]; }
@@ -67,16 +67,16 @@ public:
 	operator std::uint8_t () const noexcept { return to_ulong(); }
 };
 
-class JointPulsePosition {
+class PulsePosition {
 private:
 	std::array<int, 7> joints_;
 	bool axis7_;
 	int tool_;
 
 public:
-	JointPulsePosition(bool axis7, int tool = 0) noexcept : axis7_{axis7}, tool_(tool) {}
-	JointPulsePosition(std::array<int, 7> const & array, int tool = 0) noexcept : joints_{array}, axis7_{true}, tool_(tool) {}
-	JointPulsePosition(std::array<int, 6> const & array, int tool = 0) noexcept :
+	PulsePosition(bool axis7, int tool = 0) noexcept : axis7_{axis7}, tool_(tool) {}
+	PulsePosition(std::array<int, 7> const & array, int tool = 0) noexcept : joints_{array}, axis7_{true}, tool_(tool) {}
+	PulsePosition(std::array<int, 6> const & array, int tool = 0) noexcept :
 		joints_{{array[0], array[1], array[2], array[3], array[4], array[5], 0}},
 		axis7_{false},
 		tool_(tool) {}
@@ -92,7 +92,7 @@ class CartesianPosition {
 private:
 	std::array<int, 6> data_;
 	CoordinateSystem system_;
-	PoseType type_;
+	CartesianPoseType type_;
 
 public:
 	CartesianPosition() = default;
@@ -103,19 +103,31 @@ public:
 	CoordinateSystem & system()       noexcept { return system_; }
 	CoordinateSystem   system() const noexcept { return system_; }
 
-	PoseType & type()       noexcept { return type_; }
-	PoseType   type() const noexcept { return type_; }
+	CartesianPoseType & type()       noexcept { return type_; }
+	CartesianPoseType   type() const noexcept { return type_; }
 };
 
 class Position {
-	using Variant =  boost::variant<JointPulsePosition, CartesianPosition>;
+	using Variant =  boost::variant<PulsePosition, CartesianPosition>;
 	Variant data_;
 
 public:
-	Position(JointPulsePosition const & position) : data_(position) {}
-	Position(JointPulsePosition      && position) : data_(std::move(position)) {}
+	Position(PulsePosition const & position) : data_(position) {}
+	Position(PulsePosition      && position) : data_(std::move(position)) {}
 	Position(CartesianPosition  const & position) : data_(position) {}
 	Position(CartesianPosition       && position) : data_(std::move(position)) {}
+
+	PositionType type() const { return PositionType(data_.which()); }
+	bool isPulse()     const { return type() == PositionType::pulse;     }
+	bool isCartesian() const { return type() == PositionType::cartesian; }
+
+	PulsePosition const & pulse() const { return boost::get<PulsePosition const &>(data_); }
+	PulsePosition       & pulse()       { return boost::get<PulsePosition &>(data_);       }
+
+	CartesianPosition const & cartesian() const { return boost::get<CartesianPosition const &>(data_); }
+	CartesianPosition       & cartesian()       { return boost::get<CartesianPosition &>(data_);       }
+
+
 };
 
 }}

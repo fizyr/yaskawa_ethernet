@@ -175,12 +175,12 @@ namespace {
 		return parseInt<T>(params[0]);
 	}
 
-	ErrorOr<JointPulsePosition> decodePulsePosition(array_view<string_view> params) {
+	ErrorOr<PulsePosition> decodePulsePosition(array_view<string_view> params) {
 		if (params.size() < 7 || params.size() > 8) return malformedResponse("wrong number of parameters (" + std::to_string(params.size()) + ") to describe a pulse position");
 
 		// Params contain the joints and tool type.
 		// So 8 params means a 7 axis robot.
-		JointPulsePosition result(params.size() > 7);
+		PulsePosition result(params.size() > 7);
 
 		// Parse joint pulse values.
 		for (std::size_t i = 0; i < params.size() - 1; ++i) {
