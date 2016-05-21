@@ -93,7 +93,7 @@ void encode<ReadFloat32Variable::Request>(boost::asio::streambuf & command_out, 
 
 template<>
 void encode<ReadPositionVariable::Request>(boost::asio::streambuf & command_out, boost::asio::streambuf & params_out, ReadPositionVariable::Request request) {
-	encodeReadVariable(command_out, params_out, VariableType::robot_axis_position_type, request);
+	encodeReadVariable(command_out, params_out, VariableType::robot_position_type, request);
 }
 
 template<>
@@ -118,7 +118,7 @@ void encode<WriteFloat32Variable::Request> (boost::asio::streambuf & command_out
 
 template<>
 void encode<WritePositionVariable::Request> (boost::asio::streambuf & command_out, boost::asio::streambuf & params_out, WritePositionVariable::Request request) {
-	encodeWriteVariable(command_out, params_out, VariableType::real_type, request.index, request.value);
+	encodeWriteVariable(command_out, params_out, VariableType::robot_position_type, request.index, request.value);
 }
 
 }}}
