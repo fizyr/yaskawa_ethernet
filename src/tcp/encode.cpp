@@ -40,19 +40,20 @@ namespace {
 	}
 
 	std::ostream & operator<<(std::ostream & stream, CartesianPosition const & position) {
-		stream << int(position.system()) << ",";
+		stream << int(position.system) << ",";
 		for (int i = 0; i < 3; ++i) {
-			stream << std::setprecision(3) << std::fixed << position.data()[i] / 1000.0 << ",";
+			stream << std::setprecision(3) << std::fixed << position[i] << ",";
 		}
 		for (int i = 3; i < 6; ++i) {
-			stream << std::setprecision(4) << std::fixed << position.data()[i] / 10000.0 << ",";
+			stream << std::setprecision(4) << std::fixed << position[i] << ",";
 		}
-		stream << int(position.type());
+		stream << int(position.type) << "," << int(position.tool);
 		return stream;
 
 	}
 
 	std::ostream & operator<<(std::ostream & stream, Position const & position) {
+		stream << int(position.type()) << ",";
 		switch (position.type()) {
 			case PositionType::pulse:     return stream << position.pulse();
 			case PositionType::cartesian: return stream << position.cartesian();

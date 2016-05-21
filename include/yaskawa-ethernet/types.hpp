@@ -88,23 +88,31 @@ public:
 	int   tool() const noexcept { return tool_; }
 };
 
-class CartesianPosition {
-private:
-	std::array<int, 6> data_;
-	CoordinateSystem system_;
-	CartesianPoseType type_;
+struct CartesianPosition : std::array<double, 6> {
+	CoordinateSystem system;
+	CartesianPoseType type;
+	int tool;
 
-public:
 	CartesianPosition() = default;
 
-	std::array<int, 6>       & data()       noexcept { return data_; }
-	std::array<int, 6> const & data() const noexcept { return data_; }
+	CartesianPosition(
+		std::array<double, 6> const & data,
+		CoordinateSystem system = CoordinateSystem::base,
+		CartesianPoseType type = {},
+		int tool = 0
+	) :
+		std::array<double, 6>(data),
+		system{system},
+		type{type},
+		tool(tool) {}
 
-	CoordinateSystem & system()       noexcept { return system_; }
-	CoordinateSystem   system() const noexcept { return system_; }
-
-	CartesianPoseType & type()       noexcept { return type_; }
-	CartesianPoseType   type() const noexcept { return type_; }
+	CartesianPosition(
+		double x, double y, double z,
+		double rx, double ry, double rz,
+		CoordinateSystem system = CoordinateSystem::base,
+		CartesianPoseType type = {},
+		int tool = 0
+	) : CartesianPosition{{{x, y, z, rx, ry, rz}}, system, type, tool} {}
 };
 
 class Position {

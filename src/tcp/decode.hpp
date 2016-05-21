@@ -196,37 +196,36 @@ namespace {
 	}
 
 	ErrorOr<CartesianPosition> decodeCartesianPosition(array_view<string_view> params) {
-		if (params.size() != 8) return malformedResponse("wrong number of parameters (" + std::to_string(params.size()) + ") to describe a cartesian position");
+		if (params.size() != 9) return malformedResponse("wrong number of parameters (" + std::to_string(params.size()) + ") to describe a cartesian position");
 
 		CartesianPosition result;
 
 		// Parse coordinate system.
 		ErrorOr<int> coordinate_system = parseInt<int>(params[0], 0, 19);
 		if (!coordinate_system.valid()) return coordinate_system.error();
-		result.system() = CoordinateSystem(coordinate_system.get());
+		result.system = CoordinateSystem(coordinate_system.get());
 
-		// Parse X, Y, Z position.
-		for (int i = 0; i < 3; ++i) {
+		// Parse X, Y, Z, Rx, Ry, Rz components.
+		for (int i = 0; i < 6; ++i) {
 			ErrorOr<float> value = parseFloat<float>(params[1 + i]); if (!value.valid()) return value.error();
-			result.data()[i] = value.get() * 1000;
-		}
-
-		// Parse Rx, Ry, Rz rotations.
-		for (int i = 0; i < 3; ++i) {
-			ErrorOr<float> value = parseFloat<float>(params[1 + i]); if (!value.valid()) return value.error();
-			result.data()[i] = value.get() * 10000;
+			result[i] = value.get();
 		}
 
 		// Parse pose type.
 		ErrorOr<int> pose_type = parseInt<int>(params[0], 0, 0x3f);
 		if (!pose_type.valid()) return pose_type.error();
-		result.type() = pose_type.get();
+		result.type = pose_type.get();
+
+		// Parse tool type.
+		ErrorOr<int> tool = parseInt<int>(params[0], 0, 15);
+		if (!tool.valid()) return tool.error();
+		result.tool = tool.get();
 
 		return result;
 	}
 
 	ErrorOr<Position> decodePosition(array_view<string_view> params) {
-		if (params.size() < 8 || params.size() > 9) return malformedResponse("wrong number of parameters " + std::to_string(params.size()) + " to describe a position");
+		if (params.size() < 8 || params.size() > 10) return malformedResponse("wrong number of parameters " + std::to_string(params.size()) + " to describe a position");
 		ErrorOr<int> type = parseInt<int>(params[0]); if (!type.valid()) return type.error();
 		if (type.get() == 0) return decodePulsePosition(params.subview(1));
 		if (type.get() == 1) return decodeCartesianPosition(params.subview(1));
