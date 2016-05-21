@@ -49,7 +49,12 @@ public:
 	/// Close the connection.
 	void close();
 
+	/// Get the IO service.
 	boost::asio::io_service & ios() { return socket_.get_io_service(); }
+
+	/// Get the socket used by the client.
+	Socket       & socket()       { return socket_; }
+	Socket const & socket() const { return socket_; }
 
 	/// Send a command over the server.
 	template<typename Command, typename Callback>

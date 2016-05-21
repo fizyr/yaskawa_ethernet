@@ -51,10 +51,12 @@ public:
 	/// Close the connection.
 	void close();
 
-	Socket & socket() { return socket_; }
-	Socket const  & socket() const { return socket_; }
-
+	/// Get the IO service used by the client.
 	boost::asio::io_service & ios() { return socket_.get_io_service(); }
+
+	/// Get the socket used by the client.
+	Socket        & socket()       { return socket_; }
+	Socket const  & socket() const { return socket_; }
 
 	void readByteVariable(ReadInt8Variable::Request request, unsigned int timeout, ResultCallback<ReadInt8Variable::Response> const & callback);
 	void writeByteVariable(WriteInt8Variable::Request request, unsigned int timeout, ResultCallback<WriteInt8Variable::Response> const & callback);
