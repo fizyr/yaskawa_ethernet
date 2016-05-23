@@ -113,6 +113,19 @@ struct CartesianPosition : std::array<double, 6> {
 		CartesianPoseType type = {},
 		int tool = 0
 	) : CartesianPosition{{{x, y, z, rx, ry, rz}}, system, type, tool} {}
+
+	double    x() const { return (*this)[0]; }
+	double &  x()       { return (*this)[0]; }
+	double    y() const { return (*this)[1]; }
+	double &  y()       { return (*this)[1]; }
+	double    z() const { return (*this)[2]; }
+	double &  z()       { return (*this)[2]; }
+	double   rx() const { return (*this)[3]; }
+	double & rx()       { return (*this)[3]; }
+	double   ry() const { return (*this)[4]; }
+	double & ry()       { return (*this)[4]; }
+	double   rz() const { return (*this)[5]; }
+	double & rz()       { return (*this)[5]; }
 };
 
 class Position {
