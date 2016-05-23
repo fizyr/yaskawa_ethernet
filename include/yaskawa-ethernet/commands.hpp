@@ -37,13 +37,13 @@ namespace impl {
 }
 
 using ReadInt8Variable      = impl::ReadVariable<std::uint8_t>;
-using ReadInt16Variable     = impl::ReadVariable<std::uint16_t>;
-using ReadInt32Variable     = impl::ReadVariable<std::uint32_t>;
+using ReadInt16Variable     = impl::ReadVariable<std::int16_t>;
+using ReadInt32Variable     = impl::ReadVariable<std::int32_t>;
 using ReadFloat32Variable   = impl::ReadVariable<float>;
 using ReadPositionVariable  = impl::ReadVariable<Position>;
 using WriteInt8Variable     = impl::WriteVariable<std::uint8_t>;
-using WriteInt16Variable    = impl::WriteVariable<std::uint16_t>;
-using WriteInt32Variable    = impl::WriteVariable<std::uint32_t>;
+using WriteInt16Variable    = impl::WriteVariable<std::int16_t>;
+using WriteInt32Variable    = impl::WriteVariable<std::int32_t>;
 using WriteFloat32Variable  = impl::WriteVariable<float>;
 using WritePositionVariable = impl::WriteVariable<Position>;
 

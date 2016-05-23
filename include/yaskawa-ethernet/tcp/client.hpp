@@ -1,7 +1,7 @@
 #pragma once
+#include "protocol.hpp"
 #include "../commands.hpp"
 #include "../error.hpp"
-#include "send_command.hpp"
 
 #include <boost/asio/io_service.hpp>
 #include <boost/asio/ip/tcp.hpp>
@@ -56,17 +56,20 @@ public:
 	Socket       & socket()       { return socket_; }
 	Socket const & socket() const { return socket_; }
 
-	/// Send a command over the server.
-	template<typename Command, typename Callback>
-	void sendCommand(typename Command::Request const & request, Callback && callback) {
-		tcp::sendCommand<Command>(request, socket_, read_buffer_, std::forward<Callback>(callback));
-	}
-
 	/// Start the connection.
-	template<typename Callback>
-	void start(int keep_alive, Callback && callback) {
-		sendCommand<StartCommand>(StartCommand::Request{keep_alive}, std::forward<Callback>(callback));
-	}
+	void start(int keep_alive, ResultCallback<CommandResponse> function);
+
+	void readInt8Variable    (int index, ResultCallback<std::uint8_t> callback);
+	void readInt16Variable   (int index, ResultCallback<std::int16_t> callback);
+	void readInt32Variable   (int index, ResultCallback<std::int32_t> callback);
+	void readFloat32Variable (int index, ResultCallback<float>        callback);
+	void readPositionVariable(int index, ResultCallback<Position>     callback);
+
+	void writeInt8Variable    (int index, std::uint8_t value, ResultCallback<void> callback);
+	void writeInt16Variable   (int index, std::int16_t value, ResultCallback<void> callback);
+	void writeInt32Variable   (int index, std::int32_t value, ResultCallback<void> callback);
+	void writeFloat32Variable (int index, float        value, ResultCallback<void> callback);
+	void writePositionVariable(int index, Position     value, ResultCallback<void> callback);
 };
 
 }}}

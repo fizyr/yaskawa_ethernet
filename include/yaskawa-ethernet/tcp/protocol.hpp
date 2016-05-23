@@ -1,8 +1,8 @@
 #pragma once
+#include "impl/response_matcher.hpp"
 #include "../commands.hpp"
 #include "../error.hpp"
 #include "../string_view.hpp"
-#include "impl/response_matcher.hpp"
 
 #include <boost/asio/streambuf.hpp>
 
