@@ -15,6 +15,9 @@ set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 find_package(Boost REQUIRED COMPONENTS system)
 
+find_package(PkgConfig)
+pkg_search_module(Eigen3 REQUIRED eigen3)
+
 # Library
 add_library(${PROJECT_NAME}
 	src/tcp/client.cpp
@@ -23,9 +26,10 @@ add_library(${PROJECT_NAME}
 	src/udp/client.cpp
 	src/udp/protocol.cpp
 	src/error.cpp
+	src/eigen.cpp
 )
 target_include_directories(${PROJECT_NAME} INTERFACE include PRIVATE include/${PROJECT_NAME})
-target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC ${INCLUDE_DIRS})
+target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC ${Eigen3_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
 target_link_libraries(${PROJECT_NAME} PUBLIC Threads::Threads ${Boost_LIBRARIES})
 
 # Test executables
