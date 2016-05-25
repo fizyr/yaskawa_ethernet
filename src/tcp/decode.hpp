@@ -128,31 +128,17 @@ namespace {
 	}
 
 	template<typename T>
-	ErrorOr<T> parseFloat(string_view data, T min = std::numeric_limits<T>::min(), T max = std::numeric_limits<T>::max()) {
+	ErrorOr<T> parseFloat(string_view data, T min = std::numeric_limits<T>::lowest(), T max = std::numeric_limits<T>::max()) {
 		if (data.empty()) return malformedResponse("empty floating point value received");
-		long int integral            = 0;
-		long int fractional          = 0;
-		long int fractional_exponent = 0;
-		long int exponent            = 0;
 
-		integral = readInt(data, true);
-		if (!data.empty() && data[0] == '.') {
-			data.remove_prefix(1);
-			std::size_t old_size = data.size();
-			fractional           = readInt(data, false);
-			fractional_exponent  = old_size - data.size();
-		}
-
-		if (!data.empty() && isExponentStart(data[0])) {
-			data.remove_prefix(1);
-			exponent = readInt(data, true);
-		}
+		std::string buffer{data};
+		char * end;
+		double result = std::strtod(buffer.data(), &end);
+		data.remove_prefix(end - buffer.data());
 
 		if (!data.empty()) {
 			return malformedResponse(std::string("invalid character encountered in floating point value: `") + data[0] + "' (" + std::to_string(data[0]) + ")");
 		}
-
-		long double result = integral * std::pow(10, exponent) + fractional * std::pow(10, exponent - fractional_exponent);
 
 		if (result < min) return malformedResponse("received value (" + std::to_string(result) + ") exceeds the lowest allowed value (" + std::to_string(min) + ")");
 		if (result > max) return malformedResponse("received value (" + std::to_string(result) + ") exceeds the highest allowed value (" + std::to_string(min) + ")");
