@@ -36,11 +36,6 @@ namespace {
 		return x == '+' || x == '-';
 	}
 
-	/// Check if a character indicates the start of the exponent of a floating point value.
-	bool isExponentStart(char x) {
-		return x == 'e' || x == 'E';
-	}
-
 	/// Check if a string starts with a given prefix.
 	bool startsWith(string_view string, string_view prefix) {
 		if (string.size() < prefix.size()) return false;

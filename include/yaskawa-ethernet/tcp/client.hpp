@@ -59,20 +59,20 @@ public:
 	/// Start the connection.
 	void start(int keep_alive, ResultCallback<CommandResponse> function);
 
-	void readInt8Variable    (int index, ResultCallback<std::uint8_t> callback);
-	void readInt16Variable   (int index, ResultCallback<std::int16_t> callback);
-	void readInt32Variable   (int index, ResultCallback<std::int32_t> callback);
-	void readFloat32Variable (int index, ResultCallback<float>        callback);
-	void readPositionVariable(int index, ResultCallback<Position>     callback);
-
-	void writeInt8Variable    (int index, std::uint8_t value, ResultCallback<void> callback);
-	void writeInt16Variable   (int index, std::int16_t value, ResultCallback<void> callback);
-	void writeInt32Variable   (int index, std::int32_t value, ResultCallback<void> callback);
-	void writeFloat32Variable (int index, float        value, ResultCallback<void> callback);
-	void writePositionVariable(int index, Position     value, ResultCallback<void> callback);
-
 	void readPulsePosition(ResultCallback<PulsePosition> callback);
 	void readCartesianPosition(CoordinateSystem system, ResultCallback<CartesianPosition> callback);
+
+	void readByteVariable     (int index, ResultCallback<std::uint8_t> callback);
+	void readIntVariable      (int index, ResultCallback<std::int16_t> callback);
+	void readDoubleIntVariable(int index, ResultCallback<std::int32_t> callback);
+	void readRealVariable     (int index, ResultCallback<float>        callback);
+	void readPositionVariable (int index, ResultCallback<Position>     callback);
+
+	void writeByteVariable     (int index, std::uint8_t value, ResultCallback<void> callback);
+	void writeIntVariable      (int index, std::int16_t value, ResultCallback<void> callback);
+	void writeDoubleIntVariable(int index, std::int32_t value, ResultCallback<void> callback);
+	void writeRealVariable     (int index, float        value, ResultCallback<void> callback);
+	void writePositionVariable(int index, Position     value, ResultCallback<void> callback);
 };
 
 }}}

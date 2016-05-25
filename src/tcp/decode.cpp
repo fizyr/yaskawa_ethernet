@@ -9,8 +9,7 @@ namespace dr {
 namespace yaskawa {
 namespace tcp {
 
-template<>
-ErrorOr<CommandResponse> decode<CommandResponse>(string_view message) {
+ErrorOr<CommandResponse> decodeCommandResponse(string_view message) {
 	message = stripResponseFrame(message);
 
 	if (startsWith(message, "NG: "_v)) {
@@ -26,8 +25,7 @@ ErrorOr<CommandResponse> decode<CommandResponse>(string_view message) {
 	return DetailedError{errc::malformed_response, "response does not start with `NG:' or `OK:'"};
 }
 
-template<>
-ErrorOr<void> decode<void>(string_view message) {
+ErrorOr<void> decodeEmptyData(string_view message) {
 	DetailedError error = parseErrorMessage(message);
 	if (error) return error;
 
@@ -35,43 +33,7 @@ ErrorOr<void> decode<void>(string_view message) {
 	return ErrorOr<void>{};
 }
 
-template<>
-ErrorOr<ReadInt8Variable::Response> decode<ReadInt8Variable::Response>(string_view message) {
-	return decodeIntMessage<std::uint8_t>(message);
-}
-
-template<>
-ErrorOr<ReadInt16Variable::Response> decode<ReadInt16Variable::Response>(string_view message) {
-	return decodeIntMessage<std::uint16_t>(message);
-}
-
-template<>
-ErrorOr<ReadInt32Variable::Response> decode<ReadInt32Variable::Response>(string_view message) {
-	return decodeIntMessage<std::uint32_t>(message);
-}
-
-template<>
-ErrorOr<ReadFloat32Variable::Response> decode<ReadFloat32Variable::Response>(string_view message) {
-	DetailedError error = parseErrorMessage(message);
-	if (error) return error;
-
-	std::vector<string_view> params = splitData(stripDataFrame(message));
-	if (params.size() != 1) return wrongArgCount(params.size(), 1);
-	return parseFloat<float>(params[0]);
-}
-
-template<>
-ErrorOr<ReadPositionVariable::Response> decode<ReadPositionVariable::Response>(string_view message) {
-	DetailedError error = parseErrorMessage(message);
-	if (error) return error;
-
-	std::vector<string_view> params = splitData(stripDataFrame(message));
-	if (params.size() < 8 && params.size() > 9) return wrongArgCount(params.size(), 8, 9);
-	return decodePosition(array_view<string_view>{params});
-}
-
-template<>
-ErrorOr<ReadPulsePosition::Response> decode<ReadPulsePosition::Response>(string_view message) {
+ErrorOr<PulsePosition> decodeReadPulsePosition(string_view message) {
 	DetailedError error = parseErrorMessage(message);
 	if (error) return error;
 
@@ -80,12 +42,41 @@ ErrorOr<ReadPulsePosition::Response> decode<ReadPulsePosition::Response>(string_
 	return decodePulsePosition({params.data(), 6u + unsigned(params.size() > 12)}, false);
 }
 
-template<>
-ErrorOr<ReadCartesianPosition::Response> decode<ReadCartesianPosition::Response>(string_view message) {
+ErrorOr<CartesianPosition> decodeReadCartesianPosition(string_view message) {
 	DetailedError error = parseErrorMessage(message);
 	if (error) return error;
 	std::vector<string_view> params = splitData(stripDataFrame(message));
 	return decodeCartesianPosition(array_view<string_view>{params}, false);
+}
+
+ErrorOr<std::uint8_t> decodeReadByteVariable(string_view message) {
+	return decodeIntMessage<std::uint8_t>(message);
+}
+
+ErrorOr<std::int16_t> decodeReadIntVariable(string_view message) {
+	return decodeIntMessage<std::uint16_t>(message);
+}
+
+ErrorOr<std::int32_t> decodeReadDoubleIntVariable(string_view message) {
+	return decodeIntMessage<std::uint32_t>(message);
+}
+
+ErrorOr<float> decodeReadRealVariable(string_view message) {
+	DetailedError error = parseErrorMessage(message);
+	if (error) return error;
+
+	std::vector<string_view> params = splitData(stripDataFrame(message));
+	if (params.size() != 1) return wrongArgCount(params.size(), 1);
+	return parseFloat<float>(params[0]);
+}
+
+ErrorOr<Position> decodeReadPositionVariable(string_view message) {
+	DetailedError error = parseErrorMessage(message);
+	if (error) return error;
+
+	std::vector<string_view> params = splitData(stripDataFrame(message));
+	if (params.size() < 8 && params.size() > 9) return wrongArgCount(params.size(), 8, 9);
+	return decodePosition(array_view<string_view>{params});
 }
 
 }}}

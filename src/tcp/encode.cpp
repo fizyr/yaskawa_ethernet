@@ -22,10 +22,6 @@ namespace {
 		encodeCommand(command_out, command, params_out.size() - start_size);
 	}
 
-	void encodeReadVariable(boost::asio::streambuf & command_out, boost::asio::streambuf & params_out, VariableType type, int index) {
-		encodeCommandWithParams(command_out, params_out, "SAVEV", int(type), index);
-	}
-
 	template<typename T>
 	void encodeWriteVariable(boost::asio::streambuf & command_out, boost::asio::streambuf & params_out, VariableType type, int index, T value) {
 		encodeCommandWithParams(command_out, params_out, "LOADV", int(type), index, value);
@@ -62,74 +58,65 @@ namespace {
 	}
 }
 
-template<>
-void encode<StartCommand::Request>(boost::asio::streambuf & command_out, boost::asio::streambuf & params_out, StartCommand::Request request) {
-	(void) params_out;
-	if (request.keep_alive == 0) {
+void encodeStartCommand(boost::asio::streambuf & command_out, int keep_alive) {
+	if (keep_alive == 0) {
 		std::ostream{&command_out} << "CONNECT Robot_access\r\n";
 	} else {
-		std::ostream{&command_out} << "CONNECT Robot_access Keep-Alive:" << request.keep_alive << "\r\n";
+		std::ostream{&command_out} << "CONNECT Robot_access Keep-Alive:" << keep_alive << "\r\n";
 	}
 }
 
-template<>
-void encode<ReadInt8Variable::Request> (boost::asio::streambuf & command_out, boost::asio::streambuf & params_out, ReadInt8Variable::Request request) {
-	encodeReadVariable(command_out, params_out, VariableType::byte_type, request);
-}
 
-template<>
-void encode<ReadInt16Variable::Request> (boost::asio::streambuf & command_out, boost::asio::streambuf & params_out, ReadInt16Variable::Request request) {
-	encodeReadVariable(command_out, params_out, VariableType::integer_type, request);
-}
-
-template<>
-void encode<ReadInt32Variable::Request> (boost::asio::streambuf & command_out, boost::asio::streambuf & params_out, ReadInt32Variable::Request request) {
-	encodeReadVariable(command_out, params_out, VariableType::double_type, request);
-}
-
-template<>
-void encode<ReadFloat32Variable::Request>(boost::asio::streambuf & command_out, boost::asio::streambuf & params_out, ReadFloat32Variable::Request request) {
-	encodeReadVariable(command_out, params_out, VariableType::real_type, request);
-}
-
-template<>
-void encode<ReadPositionVariable::Request>(boost::asio::streambuf & command_out, boost::asio::streambuf & params_out, ReadPositionVariable::Request request) {
-	encodeReadVariable(command_out, params_out, VariableType::robot_position_type, request);
-}
-
-template<>
-void encode<WriteInt8Variable::Request> (boost::asio::streambuf & command_out, boost::asio::streambuf & params_out, WriteInt8Variable::Request request) {
-	encodeWriteVariable(command_out, params_out, VariableType::byte_type, request.index, int(request.value));
-}
-
-template<>
-void encode<WriteInt16Variable::Request> (boost::asio::streambuf & command_out, boost::asio::streambuf & params_out, WriteInt16Variable::Request request) {
-	encodeWriteVariable(command_out, params_out, VariableType::integer_type, request.index, request.value);
-}
-
-template<>
-void encode<WriteInt32Variable::Request> (boost::asio::streambuf & command_out, boost::asio::streambuf & params_out, WriteInt32Variable::Request request) {
-	encodeWriteVariable(command_out, params_out, VariableType::double_type, request.index, request.value);
-}
-
-template<>
-void encode<WriteFloat32Variable::Request> (boost::asio::streambuf & command_out, boost::asio::streambuf & params_out, WriteFloat32Variable::Request request) {
-	encodeWriteVariable(command_out, params_out, VariableType::real_type, request.index, request.value);
-}
-
-template<>
-void encode<WritePositionVariable::Request> (boost::asio::streambuf & command_out, boost::asio::streambuf & params_out, WritePositionVariable::Request request) {
-	encodeWriteVariable(command_out, params_out, VariableType::robot_position_type, request.index, request.value);
-}
-
-template<>
-void encode<ReadPulsePosition::Request>(boost::asio::streambuf & command_out, boost::asio::streambuf &, ReadPulsePosition::Request) {
+void encodeReadPulsePosition(boost::asio::streambuf & command_out, boost::asio::streambuf &) {
 	encodeCommand(command_out, "RPOSJ", 0);
 }
 
-template<>
-void encode<ReadCartesianPosition::Request>(boost::asio::streambuf & command_out, boost::asio::streambuf & params_out, ReadCartesianPosition::Request request) {
-	encodeCommandWithParams(command_out, params_out, "RPOSC", int(request.system), 0);
+void encodeReadCartesianPosition(boost::asio::streambuf & command_out, boost::asio::streambuf & params_out, CoordinateSystem system) {
+	encodeCommandWithParams(command_out, params_out, "RPOSC", int(system), 0);
+}
+
+void encodeReadVariable(boost::asio::streambuf & command_out, boost::asio::streambuf & params_out, VariableType type, unsigned int index) {
+	encodeCommandWithParams(command_out, params_out, "SAVEV", int(type), index);
+}
+
+void encodeReadByteVariable(boost::asio::streambuf & command_out, boost::asio::streambuf & params_out, unsigned int index) {
+	encodeReadVariable(command_out, params_out, VariableType::byte_type, index);
+}
+
+void encodeReadIntVariable(boost::asio::streambuf & command_out, boost::asio::streambuf & params_out, unsigned int index) {
+	encodeReadVariable(command_out, params_out, VariableType::integer_type, index);
+}
+
+void encodeReadDoubleIntVariable(boost::asio::streambuf & command_out, boost::asio::streambuf & params_out, unsigned int index) {
+	encodeReadVariable(command_out, params_out, VariableType::double_type, index);
+}
+
+void encodeReadRealVariable(boost::asio::streambuf & command_out, boost::asio::streambuf & params_out, unsigned int index) {
+	encodeReadVariable(command_out, params_out, VariableType::real_type, index);
+}
+
+void encodeReadPositionVariable(boost::asio::streambuf & command_out, boost::asio::streambuf & params_out, unsigned int index) {
+	encodeReadVariable(command_out, params_out, VariableType::robot_position_type, index);
+}
+
+void encodeWriteByteVariable(boost::asio::streambuf & command_out, boost::asio::streambuf & params_out, unsigned int index, std::uint8_t value) {
+	encodeWriteVariable(command_out, params_out, VariableType::byte_type, index, int(value));
+}
+
+void encodeWriteIntVariable(boost::asio::streambuf & command_out, boost::asio::streambuf & params_out, unsigned int index, std::int16_t value) {
+	encodeWriteVariable(command_out, params_out, VariableType::integer_type, index, value);
+}
+
+void encodeWriteDoubleIntVariable(boost::asio::streambuf & command_out, boost::asio::streambuf & params_out, unsigned int index, std::int32_t value) {
+	encodeWriteVariable(command_out, params_out, VariableType::double_type, index, value);
+}
+
+void encodeWriteRealVariable(boost::asio::streambuf & command_out, boost::asio::streambuf & params_out, unsigned int index, float value) {
+	encodeWriteVariable(command_out, params_out, VariableType::real_type, index, value);
+}
+
+void encodeWritePositionVariable(boost::asio::streambuf & command_out, boost::asio::streambuf & params_out, unsigned int index, Position const & value) {
+	encodeWriteVariable(command_out, params_out, VariableType::robot_position_type, index, value);
 }
 
 }}}

@@ -27,7 +27,7 @@ void onReadByte(dr::yaskawa::ErrorOr<std::uint8_t> response) {
 
 	++read_count;
 	std::cout << "Read byte variable with value " << int(response.get()) << "\n";
-	client->readInt8Variable(1, onReadByte);
+	client->readByteVariable(1, onReadByte);
 }
 
 void onStart(dr::yaskawa::ErrorOr<dr::yaskawa::tcp::CommandResponse> response) {
@@ -38,7 +38,7 @@ void onStart(dr::yaskawa::ErrorOr<dr::yaskawa::tcp::CommandResponse> response) {
 	}
 
 	std::cout << "Start request succeeded: " << response.get().message << "\n";
-	client->readInt8Variable(1, onReadByte);
+	client->readByteVariable(1, onReadByte);
 	timer->async_wait(onTimeout);
 }
 

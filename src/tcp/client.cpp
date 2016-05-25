@@ -11,6 +11,15 @@ namespace dr {
 namespace yaskawa {
 namespace tcp {
 
+namespace {
+	template<typename Encoder, typename Decoder, typename Callback, typename Socket, typename ...Args>
+	void sendCommand(Encoder && encoder, Decoder && decoder, Callback && callback, Socket & socket, boost::asio::streambuf & read_buffer, Args && ...args) {
+		auto session = makeCommandSesssion(std::forward<Decoder>(decoder), std::forward<Callback>(callback), socket, read_buffer);
+		std::forward<Encoder>(encoder)(session->command_buffer, session->data_buffer, std::forward<Args>(args)...);
+		session->send();
+	}
+}
+
 Client::Client(boost::asio::io_service & ios) : socket_(ios) {}
 
 void Client::connect(std::string const & host, std::string const & port, unsigned int timeout, Callback const & callback) {
@@ -22,43 +31,13 @@ void Client::connect(std::string const & host, std::uint16_t port, unsigned int 
 }
 
 void Client::start(int keep_alive, ResultCallback<CommandResponse> callback) {
-	sendCommand<StartCommand>({keep_alive}, socket_, read_buffer_, callback);
-}
-
-void Client::readInt8Variable(int index, ResultCallback<std::uint8_t> callback) {
-	sendCommand<ReadInt8Variable>({index}, socket_, read_buffer_, callback);
-}
-void Client::readInt16Variable(int index, ResultCallback<std::int16_t> callback) {
-	sendCommand<ReadInt16Variable>({index}, socket_, read_buffer_, callback);
-}
-void Client::readInt32Variable(int index, ResultCallback<std::int32_t> callback) {
-	sendCommand<ReadInt32Variable>({index}, socket_, read_buffer_, callback);
-}
-void Client::readFloat32Variable(int index, ResultCallback<float> callback) {
-	sendCommand<ReadFloat32Variable>({index}, socket_, read_buffer_, callback);
-}
-void Client::readPositionVariable(int index, ResultCallback<Position> callback) {
-	sendCommand<ReadPositionVariable>({index}, socket_, read_buffer_, callback);
-}
-
-void Client::writeInt8Variable (int index, std::uint8_t value, ResultCallback<void> callback) {
-	sendCommand<WriteInt8Variable>({index, value}, socket_, read_buffer_, callback);
-}
-void Client::writeInt16Variable(int index, std::int16_t value, ResultCallback<void> callback) {
-	sendCommand<WriteInt16Variable>({index, value}, socket_, read_buffer_, callback);
-}
-void Client::writeInt32Variable(int index, std::int32_t value, ResultCallback<void> callback) {
-	sendCommand<WriteInt32Variable>({index, value}, socket_, read_buffer_, callback);
-}
-void Client::writeFloat32Variable(int index, float value, ResultCallback<void> callback) {
-	sendCommand<WriteFloat32Variable>({index, value}, socket_, read_buffer_, callback);
-}
-void Client::writePositionVariable(int index, Position value, ResultCallback<void> callback) {
-	sendCommand<WritePositionVariable>({index, value}, socket_, read_buffer_, callback);
+	auto session = makeStartCommandSesssion(callback, socket_, read_buffer_);
+	encodeStartCommand(session->command_buffer, keep_alive);
+	session->send();
 }
 
 void Client::readPulsePosition(ResultCallback<PulsePosition> callback) {
-	sendCommand<ReadPulsePosition>({}, socket_, read_buffer_, callback);
+	sendCommand(encodeReadPulsePosition, decodeReadPulsePosition, callback, socket_, read_buffer_);
 }
 void Client::readCartesianPosition(CoordinateSystem system, ResultCallback<CartesianPosition> callback) {
 	auto wrapped = [callback, system] (ErrorOr<CartesianPosition> && position) {
@@ -67,7 +46,39 @@ void Client::readCartesianPosition(CoordinateSystem system, ResultCallback<Carte
 		}
 		callback(position);
 	};
-	sendCommand<ReadCartesianPosition>({system}, socket_, read_buffer_, wrapped);
+	sendCommand(encodeReadCartesianPosition, decodeReadCartesianPosition, wrapped, socket_, read_buffer_, system);
+}
+
+void Client::readByteVariable(int index, ResultCallback<std::uint8_t> callback) {
+	sendCommand(encodeReadByteVariable, decodeReadByteVariable, callback, socket_, read_buffer_, index);
+}
+void Client::readIntVariable(int index, ResultCallback<std::int16_t> callback) {
+	sendCommand(encodeReadIntVariable, decodeReadIntVariable, callback, socket_, read_buffer_, index);
+}
+void Client::readDoubleIntVariable(int index, ResultCallback<std::int32_t> callback) {
+	sendCommand(encodeReadDoubleIntVariable, decodeReadDoubleIntVariable, callback, socket_, read_buffer_, index);
+}
+void Client::readRealVariable(int index, ResultCallback<float> callback) {
+	sendCommand(encodeReadRealVariable, decodeReadRealVariable, callback, socket_, read_buffer_, index);
+}
+void Client::readPositionVariable(int index, ResultCallback<Position> callback) {
+	sendCommand(encodeReadPositionVariable, decodeReadPositionVariable, callback, socket_, read_buffer_, index);
+}
+
+void Client::writeByteVariable (int index, std::uint8_t value, ResultCallback<void> callback) {
+	sendCommand(encodeWriteByteVariable, decodeEmptyData, callback, socket_, read_buffer_, index, value);
+}
+void Client::writeIntVariable(int index, std::int16_t value, ResultCallback<void> callback) {
+	sendCommand(encodeWriteIntVariable, decodeEmptyData, callback, socket_, read_buffer_, index, value);
+}
+void Client::writeDoubleIntVariable(int index, std::int32_t value, ResultCallback<void> callback) {
+	sendCommand(encodeWriteDoubleIntVariable, decodeEmptyData, callback, socket_, read_buffer_, index, value);
+}
+void Client::writeRealVariable(int index, float value, ResultCallback<void> callback) {
+	sendCommand(encodeWriteRealVariable, decodeEmptyData, callback, socket_, read_buffer_, index, value);
+}
+void Client::writePositionVariable(int index, Position value, ResultCallback<void> callback) {
+	sendCommand(encodeWritePositionVariable, decodeEmptyData, callback, socket_, read_buffer_, index, value);
 }
 
 }}}

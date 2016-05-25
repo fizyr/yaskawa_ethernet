@@ -33,41 +33,34 @@ struct StartCommand {
  */
 using ResponseMatcher = impl::ResponseMatcher;
 
-template<typename T>
-void encode(boost::asio::streambuf & command_out, boost::asio::streambuf & params_out, T message);
+void encodeStartCommand(boost::asio::streambuf & command, int keep_alive);
 
-template<typename T>
-void encode(boost::asio::streambuf && stream, T && message) {
-	encode(stream, std::forward<T>(message));
-}
+void encodeReadPulsePosition(boost::asio::streambuf & command, boost::asio::streambuf & params);
+void encodeReadCartesianPosition(boost::asio::streambuf & command, boost::asio::streambuf & params, CoordinateSystem system);
 
-template<typename T>
-ErrorOr<T> decode(string_view data);
+void encodeReadVariable(boost::asio::streambuf & command, boost::asio::streambuf & params, VariableType type, unsigned int index);
+void encodeReadByteVariable(boost::asio::streambuf & command, boost::asio::streambuf & params, unsigned int index);
+void encodeReadIntVariable(boost::asio::streambuf & command, boost::asio::streambuf & params, unsigned int index);
+void encodeReadDoubleIntVariable(boost::asio::streambuf & command, boost::asio::streambuf & params, unsigned int index);
+void encodeReadRealVariable(boost::asio::streambuf & command, boost::asio::streambuf & params, unsigned int index);
+void encodeReadPositionVariable(boost::asio::streambuf & command, boost::asio::streambuf & params, unsigned int index);
 
-template<> void encode<StartCommand::Request>(boost::asio::streambuf &, boost::asio::streambuf &, StartCommand::Request);
-template<> ErrorOr<CommandResponse> decode<CommandResponse>(string_view);
-template<> ErrorOr<void>            decode<void>(string_view);
+void encodeWriteByteVariable(boost::asio::streambuf & command, boost::asio::streambuf & params, unsigned int index, std::uint8_t value);
+void encodeWriteIntVariable(boost::asio::streambuf & command, boost::asio::streambuf & params, unsigned int index, std::int16_t value);
+void encodeWriteDoubleIntVariable(boost::asio::streambuf & command, boost::asio::streambuf & params, unsigned int index, std::int32_t value);
+void encodeWriteRealVariable(boost::asio::streambuf & command, boost::asio::streambuf & params, unsigned int index, float value);
+void encodeWritePositionVariable(boost::asio::streambuf & command, boost::asio::streambuf & params, unsigned int index, Position const & position);
 
-template<> void encode<ReadInt8Variable::Request>     (boost::asio::streambuf & command_out, boost::asio::streambuf & params_out, ReadInt8Variable::Request request);
-template<> void encode<ReadInt16Variable::Request>    (boost::asio::streambuf & command_out, boost::asio::streambuf & params_out, ReadInt16Variable::Request request);
-template<> void encode<ReadInt32Variable::Request>    (boost::asio::streambuf & command_out, boost::asio::streambuf & params_out, ReadInt32Variable::Request request);
-template<> void encode<ReadFloat32Variable::Request>  (boost::asio::streambuf & command_out, boost::asio::streambuf & params_out, ReadFloat32Variable::Request request);
-template<> void encode<ReadPositionVariable::Request> (boost::asio::streambuf & command_out, boost::asio::streambuf & params_out, ReadPositionVariable::Request request);
-template<> ErrorOr<ReadInt8Variable::Response>     decode<ReadInt8Variable::Response>(string_view);
-template<> ErrorOr<ReadInt16Variable::Response>    decode<ReadInt16Variable::Response>(string_view);
-template<> ErrorOr<ReadInt32Variable::Response>    decode<ReadInt32Variable::Response>(string_view);
-template<> ErrorOr<ReadFloat32Variable::Response>  decode<ReadFloat32Variable::Response>(string_view);
-template<> ErrorOr<ReadPositionVariable::Response> decode<ReadPositionVariable::Response>(string_view);
+ErrorOr<CommandResponse> decodeCommandResponse(string_view);
+ErrorOr<void> decodeEmptyData(string_view);
 
-template<> void encode<WriteInt8Variable::Request>     (boost::asio::streambuf & command_out, boost::asio::streambuf & params_out, WriteInt8Variable::Request);
-template<> void encode<WriteInt16Variable::Request>    (boost::asio::streambuf & command_out, boost::asio::streambuf & params_out, WriteInt16Variable::Request);
-template<> void encode<WriteInt32Variable::Request>    (boost::asio::streambuf & command_out, boost::asio::streambuf & params_out, WriteInt32Variable::Request);
-template<> void encode<WriteFloat32Variable::Request>  (boost::asio::streambuf & command_out, boost::asio::streambuf & params_out, WriteFloat32Variable::Request);
-template<> void encode<WritePositionVariable::Request> (boost::asio::streambuf & command_out, boost::asio::streambuf & params_out, WritePositionVariable::Request request);
+ErrorOr<PulsePosition> decodeReadPulsePosition(string_view view);
+ErrorOr<CartesianPosition> decodeReadCartesianPosition(string_view view);
 
-template<> void encode<ReadPulsePosition::Request>     (boost::asio::streambuf & command_out, boost::asio::streambuf & params_out, ReadPulsePosition::Request);
-template<> void encode<ReadCartesianPosition::Request> (boost::asio::streambuf & command_out, boost::asio::streambuf & params_out, ReadCartesianPosition::Request);
-template<> ErrorOr<ReadPulsePosition::Response>      decode<ReadPulsePosition::Response> (string_view view);
-template<> ErrorOr<ReadCartesianPosition::Response>  decode<ReadCartesianPosition::Response> (string_view view);
+ErrorOr<std::uint8_t> decodeReadByteVariable(string_view);
+ErrorOr<std::int16_t> decodeReadIntVariable(string_view);
+ErrorOr<std::int32_t> decodeReadDoubleIntVariable(string_view);
+ErrorOr<float> decodeReadRealVariable(string_view);
+ErrorOr<Position> decodeReadPositionVariable(string_view);
 
 }}}

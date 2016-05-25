@@ -12,7 +12,7 @@ def FlagsForFile(filename, **kwargs):
 		'-Wextra',
 		'-Wpedantic',
 		'-fPIC',
-		'-std=c++11',
+		'-std=c++14',
 		'-isystem', os.path.join(os.environ['HOME'], '.vim/bundle/YouCompleteMe/third_party/ycmd/ycmd/../clang_includes'),
 		'-isystem', '/usr/include/eigen3',
 		'-I', '.',
