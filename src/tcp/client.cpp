@@ -57,4 +57,17 @@ void Client::writePositionVariable(int index, Position value, ResultCallback<voi
 	sendCommand<WritePositionVariable>({index, value}, socket_, read_buffer_, callback);
 }
 
+void Client::readPulsePosition(ResultCallback<PulsePosition> callback) {
+	sendCommand<ReadPulsePosition>({}, socket_, read_buffer_, callback);
+}
+void Client::readCartesianPosition(CoordinateSystem system, ResultCallback<CartesianPosition> callback) {
+	auto wrapped = [callback, system] (ErrorOr<CartesianPosition> && position) {
+		if (position.valid()) {
+			position.get().system = system;
+		}
+		callback(position);
+	};
+	sendCommand<ReadCartesianPosition>({system}, socket_, read_buffer_, wrapped);
+}
+
 }}}

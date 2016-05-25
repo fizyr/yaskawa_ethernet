@@ -7,6 +7,15 @@ namespace dr {
 namespace yaskawa {
 
 namespace impl {
+	template<typename T>
+	struct Wrapper {
+		T value;
+		Wrapper() {}
+		Wrapper(T value) : value{value} {}
+		operator T       & ()       { return value; }
+		operator T const & () const { return value; }
+	};
+
 	/// Generic ReadVariable command.
 	template<typename T>
 	struct ReadVariable {
@@ -18,14 +27,7 @@ namespace impl {
 			operator int() { return index; }
 		};
 
-		struct Response {
-			T value;
-
-			Response() {}
-			Response(T value) : value{value} {}
-			operator T       & ()       { return value; }
-			operator T const & () const { return value; }
-		};
+		struct Response : Wrapper<T> { using Wrapper<T>::Wrapper; };
 	};
 
 	/// Generic WriteVariable command.
@@ -46,5 +48,15 @@ using WriteInt16Variable    = impl::WriteVariable<std::int16_t>;
 using WriteInt32Variable    = impl::WriteVariable<std::int32_t>;
 using WriteFloat32Variable  = impl::WriteVariable<float>;
 using WritePositionVariable = impl::WriteVariable<Position>;
+
+struct ReadPulsePosition {
+	struct Request {};
+	struct Response : impl::Wrapper<PulsePosition> { using Wrapper<PulsePosition>::Wrapper; };
+};
+
+struct ReadCartesianPosition {
+	struct Request { CoordinateSystem system; };
+	struct Response : impl::Wrapper<CartesianPosition> { using Wrapper<CartesianPosition>::Wrapper; };
+};
 
 }}

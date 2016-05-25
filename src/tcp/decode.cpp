@@ -70,4 +70,22 @@ ErrorOr<ReadPositionVariable::Response> decode<ReadPositionVariable::Response>(s
 	return decodePosition(array_view<string_view>{params});
 }
 
+template<>
+ErrorOr<ReadPulsePosition::Response> decode<ReadPulsePosition::Response>(string_view message) {
+	DetailedError error = parseErrorMessage(message);
+	if (error) return error;
+
+	std::vector<string_view> params = splitData(stripDataFrame(message));
+	if (params.size() < 12 && params.size() > 13) return wrongArgCount(params.size(), 12, 13);
+	return decodePulsePosition({params.data(), 6u + unsigned(params.size() > 12)}, false);
+}
+
+template<>
+ErrorOr<ReadCartesianPosition::Response> decode<ReadCartesianPosition::Response>(string_view message) {
+	DetailedError error = parseErrorMessage(message);
+	if (error) return error;
+	std::vector<string_view> params = splitData(stripDataFrame(message));
+	return decodeCartesianPosition(array_view<string_view>{params}, false);
+}
+
 }}}

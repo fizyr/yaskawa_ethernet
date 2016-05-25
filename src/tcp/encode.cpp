@@ -122,4 +122,14 @@ void encode<WritePositionVariable::Request> (boost::asio::streambuf & command_ou
 	encodeWriteVariable(command_out, params_out, VariableType::robot_position_type, request.index, request.value);
 }
 
+template<>
+void encode<ReadPulsePosition::Request>(boost::asio::streambuf & command_out, boost::asio::streambuf &, ReadPulsePosition::Request) {
+	encodeCommand(command_out, "RPOSJ", 0);
+}
+
+template<>
+void encode<ReadCartesianPosition::Request>(boost::asio::streambuf & command_out, boost::asio::streambuf & params_out, ReadCartesianPosition::Request request) {
+	encodeCommandWithParams(command_out, params_out, "RPOSC", int(request.system), 0);
+}
+
 }}}

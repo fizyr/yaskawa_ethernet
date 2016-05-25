@@ -175,49 +175,62 @@ namespace {
 		return parseInt<T>(params[0]);
 	}
 
-	ErrorOr<PulsePosition> decodePulsePosition(array_view<string_view> params) {
-		if (params.size() < 7 || params.size() > 8) return malformedResponse("wrong number of parameters (" + std::to_string(params.size()) + ") to describe a pulse position");
+	ErrorOr<PulsePosition> decodePulsePosition(array_view<string_view> params, bool tool) {
+		if (params.size() < unsigned(6 + tool)  || params.size() > unsigned(7 + tool)) {
+			return malformedResponse("wrong number of parameters (" + std::to_string(params.size()) + ") to describe a pulse position");
+		}
 
 		// Params contain the joints and tool type.
 		// So 8 params means a 7 axis robot.
-		PulsePosition result(params.size() > 7);
+		PulsePosition result(params.size() > unsigned(6 + tool));
 
 		// Parse joint pulse values.
-		for (std::size_t i = 0; i < params.size() - 1; ++i) {
-			ErrorOr<int> value = parseInt<int>(params[i]); if (!value.valid()) return value.error();
+		for (std::size_t i = 0; i < params.size() - tool; ++i) {
+			ErrorOr<int> value = parseInt<int>(params[i]);
+			if (!value.valid()) return value.error();
 			result.joints()[i] = value.get();
 		}
 
 		// Parse tool type.
-		ErrorOr<int> value = parseInt<int>(params.back()); if (!value.valid()) return value.error();
-		result.tool() = value.get();
+		if (tool) {
+			ErrorOr<int> value = parseInt<int>(params.back());
+			if (!value.valid()) return value.error();
+			result.tool() = value.get();
+		} else {
+			result.tool() = 0;
+		}
 
 		return result;
 	}
 
-	ErrorOr<CartesianPosition> decodeCartesianPosition(array_view<string_view> params) {
-		if (params.size() != 9) return malformedResponse("wrong number of parameters (" + std::to_string(params.size()) + ") to describe a cartesian position");
+	ErrorOr<CartesianPosition> decodeCartesianPosition(array_view<string_view> params, bool system) {
+		if (params.size() != unsigned(8 + system)) return malformedResponse("wrong number of parameters (" + std::to_string(params.size()) + ") to describe a cartesian position");
 
 		CartesianPosition result;
 
 		// Parse coordinate system.
-		ErrorOr<int> coordinate_system = parseInt<int>(params[0], 0, 19);
-		if (!coordinate_system.valid()) return coordinate_system.error();
-		result.system = CoordinateSystem(coordinate_system.get());
+		if (system) {
+			ErrorOr<int> coordinate_system = parseInt<int>(params[0], 0, 19);
+			if (!coordinate_system.valid()) return coordinate_system.error();
+			result.system = CoordinateSystem(coordinate_system.get());
+		} else {
+			result.system = CoordinateSystem::base;
+		}
 
 		// Parse X, Y, Z, Rx, Ry, Rz components.
 		for (int i = 0; i < 6; ++i) {
-			ErrorOr<float> value = parseFloat<float>(params[1 + i]); if (!value.valid()) return value.error();
+			ErrorOr<float> value = parseFloat<float>(params[i + system]);
+			if (!value.valid()) return value.error();
 			result[i] = value.get();
 		}
 
 		// Parse pose type.
-		ErrorOr<int> pose_type = parseInt<int>(params[0], 0, 0x3f);
+		ErrorOr<int> pose_type = parseInt<int>(params[6 + system], 0, 0x3f);
 		if (!pose_type.valid()) return pose_type.error();
 		result.type = pose_type.get();
 
-		// Parse tool type.
-		ErrorOr<int> tool = parseInt<int>(params[0], 0, 15);
+		// Parse tool number.
+		ErrorOr<int> tool = parseInt<int>(params[7 + system], 0, 15);
 		if (!tool.valid()) return tool.error();
 		result.tool = tool.get();
 
@@ -227,8 +240,8 @@ namespace {
 	ErrorOr<Position> decodePosition(array_view<string_view> params) {
 		if (params.size() < 8 || params.size() > 10) return malformedResponse("wrong number of parameters " + std::to_string(params.size()) + " to describe a position");
 		ErrorOr<int> type = parseInt<int>(params[0]); if (!type.valid()) return type.error();
-		if (type.get() == 0) return decodePulsePosition(params.subview(1));
-		if (type.get() == 1) return decodeCartesianPosition(params.subview(1));
+		if (type.get() == 0) return decodePulsePosition(params.subview(1), true);
+		if (type.get() == 1) return decodeCartesianPosition(params.subview(1), true);
 		return malformedResponse("unexpected position type (" + std::to_string(type.get()) + "), expected 0 or 1");
 	}
 }

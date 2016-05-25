@@ -65,4 +65,9 @@ template<> void encode<WriteInt32Variable::Request>    (boost::asio::streambuf &
 template<> void encode<WriteFloat32Variable::Request>  (boost::asio::streambuf & command_out, boost::asio::streambuf & params_out, WriteFloat32Variable::Request);
 template<> void encode<WritePositionVariable::Request> (boost::asio::streambuf & command_out, boost::asio::streambuf & params_out, WritePositionVariable::Request request);
 
+template<> void encode<ReadPulsePosition::Request>     (boost::asio::streambuf & command_out, boost::asio::streambuf & params_out, ReadPulsePosition::Request);
+template<> void encode<ReadCartesianPosition::Request> (boost::asio::streambuf & command_out, boost::asio::streambuf & params_out, ReadCartesianPosition::Request);
+template<> ErrorOr<ReadPulsePosition::Response>      decode<ReadPulsePosition::Response> (string_view view);
+template<> ErrorOr<ReadCartesianPosition::Response>  decode<ReadCartesianPosition::Response> (string_view view);
+
 }}}

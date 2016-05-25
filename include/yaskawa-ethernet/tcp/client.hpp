@@ -70,6 +70,9 @@ public:
 	void writeInt32Variable   (int index, std::int32_t value, ResultCallback<void> callback);
 	void writeFloat32Variable (int index, float        value, ResultCallback<void> callback);
 	void writePositionVariable(int index, Position     value, ResultCallback<void> callback);
+
+	void readPulsePosition(ResultCallback<PulsePosition> callback);
+	void readCartesianPosition(CoordinateSystem system, ResultCallback<CartesianPosition> callback);
 };
 
 }}}
