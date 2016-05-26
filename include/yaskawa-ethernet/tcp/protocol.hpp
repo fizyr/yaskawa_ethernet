@@ -1,31 +1,17 @@
 #pragma once
 #include "impl/response_matcher.hpp"
-#include "../commands.hpp"
+#include "../types.hpp"
 #include "../error.hpp"
 #include "../string_view.hpp"
 
 #include <boost/asio/streambuf.hpp>
 
+#include <vector>
+#include <cstdint>
+
 namespace dr {
 namespace yaskawa {
 namespace tcp {
-
-struct CommandResponse {
-	std::string message;
-
-	CommandResponse() = default;
-	CommandResponse(std::string const & message) : message(message) {};
-	CommandResponse(std::string      && message) : message(std::move(message)) {};
-
-	operator std::string const & () const & { return message; }
-	operator std::string       & ()       & { return message; }
-	operator std::string      && ()      && { return std::move(message); }
-};
-
-struct StartCommand {
-	struct Request  { int keep_alive; };
-	using Response = CommandResponse;
-};
 
 /// Default constructible function object type that matches response messages.
 /**
@@ -35,8 +21,14 @@ using ResponseMatcher = impl::ResponseMatcher;
 
 void encodeStartCommand(boost::asio::streambuf & command, int keep_alive);
 
+void encodeServoOn(boost::asio::streambuf & command, boost::asio::streambuf & params, bool on);
+void encodeStartJob(boost::asio::streambuf & command, boost::asio::streambuf & params, std::string const & name);
+
 void encodeReadPulsePosition(boost::asio::streambuf & command, boost::asio::streambuf & params);
 void encodeReadCartesianPosition(boost::asio::streambuf & command, boost::asio::streambuf & params, CoordinateSystem system);
+
+void encodeReadIo(boost::asio::streambuf & command, boost::asio::streambuf & params, unsigned int start, unsigned int count);
+void encodeWriteIo(boost::asio::streambuf & command, boost::asio::streambuf & params, unsigned int start, std::vector<std::uint8_t> const & data);
 
 void encodeReadVariable(boost::asio::streambuf & command, boost::asio::streambuf & params, VariableType type, unsigned int index);
 void encodeReadByteVariable(boost::asio::streambuf & command, boost::asio::streambuf & params, unsigned int index);
@@ -51,11 +43,12 @@ void encodeWriteDoubleIntVariable(boost::asio::streambuf & command, boost::asio:
 void encodeWriteRealVariable(boost::asio::streambuf & command, boost::asio::streambuf & params, unsigned int index, float value);
 void encodeWritePositionVariable(boost::asio::streambuf & command, boost::asio::streambuf & params, unsigned int index, Position const & position);
 
-ErrorOr<CommandResponse> decodeCommandResponse(string_view);
+ErrorOr<std::string> decodeCommandResponse(string_view);
 ErrorOr<void> decodeEmptyData(string_view);
 
 ErrorOr<PulsePosition> decodeReadPulsePosition(string_view view);
 ErrorOr<CartesianPosition> decodeReadCartesianPosition(string_view view);
+ErrorOr<std::vector<std::uint8_t>> decodeReadIo(string_view);
 
 ErrorOr<std::uint8_t> decodeReadByteVariable(string_view);
 ErrorOr<std::int16_t> decodeReadIntVariable(string_view);

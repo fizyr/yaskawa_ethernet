@@ -80,13 +80,13 @@ namespace impl {
 
 		/// Called when the command response has been read.
 		/**
-		 * If the response type is CommandResponse, don't read data, just invoke the callback.
+		 * If the we're a start session, only read the response and no data..
 		 */
 		template<bool R2 = StartCommand>
 		typename std::enable_if<R2>::type
 		onReadResponse(Ptr, boost::system::error_code const & error, std::size_t bytes_transferred) {
 			if (error) callback(error);
-			ErrorOr<CommandResponse> decoded = decodeCommandResponse(string_view{boost::asio::buffer_cast<char const *>(read_buffer->data()), bytes_transferred});
+			ErrorOr<std::string> decoded = decodeCommandResponse(string_view{boost::asio::buffer_cast<char const *>(read_buffer->data()), bytes_transferred});
 			read_buffer->consume(bytes_transferred);
 			return callback(decoded);
 		}
@@ -99,7 +99,7 @@ namespace impl {
 		typename std::enable_if<not R2>::type
 		onReadResponse(Ptr, boost::system::error_code const & error, std::size_t bytes_transferred) {
 			if (error) callback(error);
-			ErrorOr<CommandResponse> decoded = decodeCommandResponse(string_view{boost::asio::buffer_cast<char const *>(read_buffer->data()), bytes_transferred});
+			ErrorOr<std::string> decoded = decodeCommandResponse(string_view{boost::asio::buffer_cast<char const *>(read_buffer->data()), bytes_transferred});
 			read_buffer->consume(bytes_transferred);
 			if (!decoded.valid()) return callback(decoded.error());
 

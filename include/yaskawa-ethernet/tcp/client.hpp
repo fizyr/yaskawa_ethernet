@@ -57,10 +57,16 @@ public:
 	Socket const & socket() const { return socket_; }
 
 	/// Start the connection.
-	void start(int keep_alive, ResultCallback<CommandResponse> function);
+	void start(int keep_alive, ResultCallback<std::string> function);
+
+	void enableServo(bool enable, ResultCallback<void> callback);
+	void startJob(std::string const & job, ResultCallback<void> callback);
 
 	void readPulsePosition(ResultCallback<PulsePosition> callback);
 	void readCartesianPosition(CoordinateSystem system, ResultCallback<CartesianPosition> callback);
+
+	void readIo(unsigned int start, unsigned int count, ResultCallback<std::vector<std::uint8_t>> callback);
+	void writeIo(unsigned int start, std::vector<std::uint8_t> const & data, ResultCallback<void> callback);
 
 	void readByteVariable     (int index, ResultCallback<std::uint8_t> callback);
 	void readIntVariable      (int index, ResultCallback<std::int16_t> callback);
@@ -72,7 +78,7 @@ public:
 	void writeIntVariable      (int index, std::int16_t value, ResultCallback<void> callback);
 	void writeDoubleIntVariable(int index, std::int32_t value, ResultCallback<void> callback);
 	void writeRealVariable     (int index, float        value, ResultCallback<void> callback);
-	void writePositionVariable(int index, Position     value, ResultCallback<void> callback);
+	void writePositionVariable (int index, Position     value, ResultCallback<void> callback);
 };
 
 }}}

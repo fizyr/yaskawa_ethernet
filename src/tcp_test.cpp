@@ -30,14 +30,14 @@ void onReadByte(dr::yaskawa::ErrorOr<std::uint8_t> response) {
 	client->readByteVariable(1, onReadByte);
 }
 
-void onStart(dr::yaskawa::ErrorOr<dr::yaskawa::tcp::CommandResponse> response) {
+void onStart(dr::yaskawa::ErrorOr<std::string> response) {
 	auto error = response.error();
 	if (error) {
 		std::cout << "Error " << error.category().name() << ":" << error.value() << ": " << error.detailed_message() << "\n";
 		return;
 	}
 
-	std::cout << "Start request succeeded: " << response.get().message << "\n";
+	std::cout << "Start request succeeded: " << response.get() << "\n";
 	client->readByteVariable(1, onReadByte);
 	timer->async_wait(onTimeout);
 }

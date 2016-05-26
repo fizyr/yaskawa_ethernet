@@ -66,6 +66,13 @@ void encodeStartCommand(boost::asio::streambuf & command_out, int keep_alive) {
 	}
 }
 
+void encodeServoOn(boost::asio::streambuf & command, boost::asio::streambuf & params, bool on) {
+	encodeCommandWithParams(command, params, "SVON", int(on));
+}
+
+void encodeStartJob(boost::asio::streambuf & command, boost::asio::streambuf & params, std::string const & job) {
+	encodeCommandWithParams(command, params, "START", job);
+}
 
 void encodeReadPulsePosition(boost::asio::streambuf & command_out, boost::asio::streambuf &) {
 	encodeCommand(command_out, "RPOSJ", 0);
@@ -73,6 +80,17 @@ void encodeReadPulsePosition(boost::asio::streambuf & command_out, boost::asio::
 
 void encodeReadCartesianPosition(boost::asio::streambuf & command_out, boost::asio::streambuf & params_out, CoordinateSystem system) {
 	encodeCommandWithParams(command_out, params_out, "RPOSC", int(system), 0);
+}
+
+void encodeReadIo(boost::asio::streambuf & command_out, boost::asio::streambuf & params_out, unsigned int start, unsigned int count) {
+	encodeCommandWithParams(command_out, params_out, "IOREAD", start, count);
+}
+
+void encodeWriteIo(boost::asio::streambuf & command_out, boost::asio::streambuf & params_out, unsigned int start, std::vector<std::uint8_t> const & data) {
+	std::ostream param_stream{&params_out};
+	param_stream << start << "," << (data.size() * 8);
+	for (auto const & byte : data) param_stream << "," << int(byte);
+	encodeCommand(command_out, "IOWRITE", params_out.size());
 }
 
 void encodeReadVariable(boost::asio::streambuf & command_out, boost::asio::streambuf & params_out, VariableType type, unsigned int index) {

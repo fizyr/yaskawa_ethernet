@@ -9,7 +9,7 @@ namespace dr {
 namespace yaskawa {
 namespace tcp {
 
-ErrorOr<CommandResponse> decodeCommandResponse(string_view message) {
+ErrorOr<std::string> decodeCommandResponse(string_view message) {
 	message = stripResponseFrame(message);
 
 	if (startsWith(message, "NG: "_v)) {
@@ -19,7 +19,7 @@ ErrorOr<CommandResponse> decodeCommandResponse(string_view message) {
 
 	if (startsWith(message, "OK: "_v)) {
 		char const * start = std::find_if_not(message.begin() + 3, message.end(), isSpace);
-		return CommandResponse{std::string(start, message.end())};
+		return std::string{start, message.end()};
 	}
 
 	return DetailedError{errc::malformed_response, "response does not start with `NG:' or `OK:'"};
@@ -47,6 +47,18 @@ ErrorOr<CartesianPosition> decodeReadCartesianPosition(string_view message) {
 	if (error) return error;
 	std::vector<string_view> params = splitData(stripDataFrame(message));
 	return decodeCartesianPosition(array_view<string_view>{params}, false);
+}
+
+ErrorOr<std::vector<std::uint8_t>> decodeReadIo(string_view message) {
+	std::vector<string_view> data = splitData(stripDataFrame(message));
+	std::vector<std::uint8_t> result;
+	result.reserve(data.size());
+	for (string_view param : data) {
+		ErrorOr<std::uint8_t> parsed = parseInt<std::uint8_t>(param);
+		if (!parsed.valid()) return parsed.error();
+		result.push_back(parsed.get());
+	}
+	return result;
 }
 
 ErrorOr<std::uint8_t> decodeReadByteVariable(string_view message) {
