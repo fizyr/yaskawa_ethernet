@@ -45,11 +45,15 @@ ErrorOr<PulsePosition> decodeReadPulsePosition(string_view message) {
 ErrorOr<CartesianPosition> decodeReadCartesianPosition(string_view message) {
 	DetailedError error = parseErrorMessage(message);
 	if (error) return error;
+
 	std::vector<string_view> params = splitData(stripDataFrame(message));
 	return decodeCartesianPosition(array_view<string_view>{params}, false);
 }
 
 ErrorOr<std::vector<std::uint8_t>> decodeReadIo(string_view message) {
+	DetailedError error = parseErrorMessage(message);
+	if (error) return error;
+
 	std::vector<string_view> data = splitData(stripDataFrame(message));
 	std::vector<std::uint8_t> result;
 	result.reserve(data.size());
