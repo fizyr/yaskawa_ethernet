@@ -46,23 +46,25 @@ enum class CoordinateSystem {
 	master = 19,
 };
 
-class CartesianPoseType : public std::bitset<5> {
+class CartesianPoseType : public std::bitset<6> {
 public:
 	CartesianPoseType() = default;
-	CartesianPoseType(std::uint8_t type) noexcept : std::bitset<5>(type) {}
-	CartesianPoseType(bool flip, bool lower_arm, bool high_r, bool high_t, bool high_s) :
-		std::bitset<5>{flip * 0x01u | lower_arm * 0x02u |  high_r * 0x04u | high_t * 0x08u | high_s * 0x10u} {}
+	CartesianPoseType(std::uint8_t type) noexcept : std::bitset<6>(type) {}
+	CartesianPoseType(bool no_flip, bool lower_arm, bool back, bool high_r, bool high_t, bool high_s) :
+		std::bitset<6>{no_flip * 0x01u | lower_arm * 0x02u | back * 0x04u |  high_r * 0x08u | high_t * 0x10u | high_s * 0x20u} {}
 
-	bool      flip()     const noexcept { return (*this)[0]; }
-	reference flip()           noexcept { return (*this)[0]; }
+	bool      noFlip()   const noexcept { return (*this)[0]; }
+	reference noFlip()         noexcept { return (*this)[0]; }
 	bool      lowerArm() const noexcept { return (*this)[1]; }
 	reference lowerArm()       noexcept { return (*this)[1]; }
-	bool      highR()    const noexcept { return (*this)[2]; }
-	reference highR()          noexcept { return (*this)[2]; }
-	bool      highT()    const noexcept { return (*this)[3]; }
-	reference highT()          noexcept { return (*this)[3]; }
-	bool      highS()    const noexcept { return (*this)[4]; }
-	reference highS()          noexcept { return (*this)[4]; }
+	bool      back()     const noexcept { return (*this)[2]; }
+	reference back()           noexcept { return (*this)[2]; }
+	bool      highR()    const noexcept { return (*this)[3]; }
+	reference highR()          noexcept { return (*this)[3]; }
+	bool      highT()    const noexcept { return (*this)[4]; }
+	reference highT()          noexcept { return (*this)[4]; }
+	bool      highS()    const noexcept { return (*this)[5]; }
+	reference highS()          noexcept { return (*this)[5]; }
 
 	operator std::uint8_t () const noexcept { return to_ulong(); }
 };
