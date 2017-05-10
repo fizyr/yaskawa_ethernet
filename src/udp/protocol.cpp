@@ -44,7 +44,7 @@ namespace {
 		writeLittleEndian<std::uint16_t>(out, header.payload_size);
 
 		// Reserved magic constant.
-		out.push_back('3');
+		out.push_back(3);
 
 		// "Division" (robot command or file command)
 		out.push_back(std::uint8_t(header.division));
@@ -186,7 +186,7 @@ template<> std::vector<std::uint8_t> encode<ReadInt8Variable::Request>(ReadInt8V
 template<> ErrorOr<ReadInt8Variable::Response> decode<ReadInt8Variable::Response>(string_view message) {
 	ErrorOr<ResponseHeader> header = decodeResponseHeader(message);
 	if (!header.valid()) return header.error();
-	if (header.get().payload_size != 4) return unexpectedValue("payload size", header.get().payload_size, 4);
+	if (header.get().payload_size != 1) return unexpectedValue("payload size", header.get().payload_size, 1);
 	return ReadInt8Variable::Response{readLittleEndian<std::uint8_t>(message)};
 }
 
