@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<package format="2">
+	<name>yaskawa_ethernet</name>
+	<version>0.1.0</version>
+	<description>Ethernet client for the Yaskawa high-speed ethernet server</description>
+	<license>proprietary</license>
+
+	<maintainer email="maarten@de-vri.es">Maarten de Vries</maintainer>
+	<author email="maarten@de-vri.es">Maarten de Vries</author>
+
+	<buildtool_depend>catkin</buildtool_depend>
+	<depend>boost</depend>
+</package>

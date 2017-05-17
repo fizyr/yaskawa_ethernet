@@ -1,4 +1,4 @@
-#include <yaskawa-ethernet/tcp/client.hpp>
+#include "../include/yaskawa_ethernet/tcp/client.hpp"
 
 #include <boost/asio/io_service.hpp>
 #include <boost/asio/steady_timer.hpp>

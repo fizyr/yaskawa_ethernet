@@ -1,22 +1,20 @@
 cmake_minimum_required(VERSION 3.1.0)
-project(yaskawa-ethernet)
+project(yaskawa_ethernet)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -Wall -Wextra -Wpedantic")
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+add_compile_options(-Wall -Wextra -Wpedantic)
 
 option(WERROR on)
 if (WERROR)
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
+	add_compile_options(-Werror)
 endif()
-
-option(BUILD_SHARED_LIBS "build shared libraries" on)
 
 # Depencencies
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 find_package(Boost REQUIRED COMPONENTS system)
-
-find_package(PkgConfig)
-pkg_search_module(Eigen3 REQUIRED eigen3)
+find_package(Eigen3)
 
 # Library
 add_library(${PROJECT_NAME}
@@ -29,7 +27,7 @@ add_library(${PROJECT_NAME}
 	src/eigen.cpp
 )
 target_include_directories(${PROJECT_NAME} INTERFACE include PRIVATE include/${PROJECT_NAME})
-target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC ${Eigen3_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
+target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC ${EIGEN3_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
 target_link_libraries(${PROJECT_NAME} PUBLIC Threads::Threads ${Boost_LIBRARIES})
 
 # Test executables
@@ -38,16 +36,16 @@ add_executable(${PROJECT_NAME}_udp_test src/udp_test.cpp)
 target_link_libraries(${PROJECT_NAME}_tcp_test ${PROJECT_NAME})
 target_link_libraries(${PROJECT_NAME}_udp_test ${PROJECT_NAME})
 
-# Install
-include(GNUInstallDirs)
+find_package(catkin REQUIRED COMPONENTS)
+catkin_package()
 
-install(TARGETS ${PROJECT_NAME}
-	ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-	RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+install(TARGETS "${PROJECT_NAME}"
+	ARCHIVE DESTINATION "${CATKIN_PACKAGE_LIB_DESTINATION}"
+	LIBRARY DESTINATION "${CATKIN_PACKAGE_LIB_DESTINATION}"
+	RUNTIME DESTINATION "${CATKIN_GLOBAL_BIN_DESTINATION}"
 )
 
 install(
-	DIRECTORY include
-	DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+	DIRECTORY "include/"
+	DESTINATION "${CATKIN_PACKAGE_INCLUDE_DESTINATION}"
 )
