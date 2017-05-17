@@ -119,8 +119,9 @@ namespace {
 			return malformedResponse(std::string("invalid character encountered in integral value: `") + data[0] + "' (" + std::to_string(data[0]) + ")");
 		}
 
-		if (result < min) return malformedResponse("received value (" + std::to_string(result) + ") exceeds the lowest allowed value (" + std::to_string(min) + ")");
-		if (result > max) return malformedResponse("received value (" + std::to_string(result) + ") exceeds the highest allowed value (" + std::to_string(min) + ")");
+		if (result < min || result > max) {
+			return malformedResponse("received value (" + std::to_string(result) + ") exceeds the allowed range of [" + std::to_string(min) + "," + std::to_string(max) + "]");
+		}
 		return result;
 	}
 
@@ -137,8 +138,9 @@ namespace {
 			return malformedResponse(std::string("invalid character encountered in floating point value: `") + data[0] + "' (" + std::to_string(data[0]) + ")");
 		}
 
-		if (result < min) return malformedResponse("received value (" + std::to_string(result) + ") exceeds the lowest allowed value (" + std::to_string(min) + ")");
-		if (result > max) return malformedResponse("received value (" + std::to_string(result) + ") exceeds the highest allowed value (" + std::to_string(min) + ")");
+		if (result < min || result > max) {
+			return malformedResponse("received value (" + std::to_string(result) + ") exceeds the allowed range of [" + std::to_string(min) + "," + std::to_string(max) + "]");
+		}
 
 		return result;
 	}
