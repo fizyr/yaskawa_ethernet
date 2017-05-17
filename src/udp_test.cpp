@@ -17,18 +17,17 @@ void onTimeout(boost::system::error_code const & error) {
 	timer->async_wait(onTimeout);
 }
 
-void onReadByte(dr::yaskawa::ErrorOr<dr::yaskawa::ReadInt8Variable::Response> const & response) {
-	auto error = response.error();
-	if (error) {
-		std::cout << "Error " << error.category().name() << ":" << error.value() << ": " << error.detailed_message() << "\n";
+void onReadByte(dr::ErrorOr<dr::yaskawa::ReadInt8Variable::Response> const & response) {
+	if (!response) {
+		std::cout << response.error().fullMessage() << "\n";
 	} else {
-		std::cout << "Read byte variable with value " << int(response.get().value) << "\n";
+		std::cout << "Read byte variable with value " << int(response->value) << "\n";
 	}
 	++read_count;
 	client->readByteVariable(0, 1500, onReadByte);
 }
 
-void onConnect(boost::system::error_code const & error) {
+void onConnect(std::error_code const & error) {
 	if (error) {
 		std::cout << "Error " << error.category().name() << ":" << error.value() << ": " << error.message() << "\n";
 		return;

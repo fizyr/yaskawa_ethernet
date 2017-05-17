@@ -5,8 +5,6 @@
 namespace dr {
 namespace yaskawa {
 
-DetailedError DetailedError::empty = DetailedError{};
-
 namespace {
 	impl::YaskawaCategory yaskawa_category_;
 }

@@ -4,6 +4,8 @@
 #include "../error.hpp"
 #include "../string_view.hpp"
 
+#include <dr_error/error_or.hpp>
+
 #include <boost/asio/streambuf.hpp>
 
 #include <vector>

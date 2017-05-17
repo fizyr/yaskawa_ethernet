@@ -53,8 +53,8 @@ void Client::readPulsePosition(ResultCallback<PulsePosition> callback) {
 }
 void Client::readCartesianPosition(CoordinateSystem system, ResultCallback<CartesianPosition> callback) {
 	auto wrapped = [callback, system] (ErrorOr<CartesianPosition> && position) {
-		if (position.valid()) {
-			position.get().system = system;
+		if (position) {
+			position->system = system;
 		}
 		callback(position);
 	};

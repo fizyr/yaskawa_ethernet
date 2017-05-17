@@ -4,6 +4,8 @@
 #include "error.hpp"
 #include "types.hpp"
 
+#include <dr_error/error_or.hpp>
+
 #include <cmath>
 #include <cstdint>
 #include <numeric>
@@ -76,7 +78,7 @@ namespace {
 	}
 
 	DetailedError malformedResponse(std::string && message) {
-		return DetailedError{errc::malformed_response, std::move(message)};
+		return {errc::malformed_response, std::move(message)};
 	}
 
 	DetailedError wrongArgCount(int actual, int expected) {
@@ -168,15 +170,15 @@ namespace {
 		// Parse joint pulse values.
 		for (std::size_t i = 0; i < params.size() - tool; ++i) {
 			ErrorOr<int> value = parseInt<int>(params[i]);
-			if (!value.valid()) return value.error();
-			result.joints()[i] = value.get();
+			if (!value) return value.error();
+			result.joints()[i] = *value;
 		}
 
 		// Parse tool type.
 		if (tool) {
 			ErrorOr<int> value = parseInt<int>(params.back());
-			if (!value.valid()) return value.error();
-			result.tool() = value.get();
+			if (!value) return value.error();
+			result.tool() = *value;
 		} else {
 			result.tool() = 0;
 		}
@@ -192,8 +194,8 @@ namespace {
 		// Parse coordinate system.
 		if (system) {
 			ErrorOr<int> coordinate_system = parseInt<int>(params[0], 0, 19);
-			if (!coordinate_system.valid()) return coordinate_system.error();
-			result.system = CoordinateSystem(coordinate_system.get());
+			if (!coordinate_system) return coordinate_system.error();
+			result.system = CoordinateSystem(*coordinate_system);
 		} else {
 			result.system = CoordinateSystem::base;
 		}
@@ -201,29 +203,29 @@ namespace {
 		// Parse X, Y, Z, Rx, Ry, Rz components.
 		for (int i = 0; i < 6; ++i) {
 			ErrorOr<float> value = parseFloat<float>(params[i + system]);
-			if (!value.valid()) return value.error();
-			result[i] = value.get();
+			if (!value) return value.error();
+			result[i] = *value;
 		}
 
 		// Parse pose type.
 		ErrorOr<int> pose_type = parseInt<int>(params[6 + system], 0, 0x3f);
-		if (!pose_type.valid()) return pose_type.error();
-		result.type = pose_type.get();
+		if (!pose_type) return pose_type.error();
+		result.type = *pose_type;
 
 		// Parse tool number.
 		ErrorOr<int> tool = parseInt<int>(params[7 + system], 0, 15);
-		if (!tool.valid()) return tool.error();
-		result.tool = tool.get();
+		if (!tool) return tool.error();
+		result.tool = *tool;
 
 		return result;
 	}
 
 	ErrorOr<Position> decodePosition(array_view<string_view> params) {
 		if (params.size() < 8 || params.size() > 10) return malformedResponse("wrong number of parameters " + std::to_string(params.size()) + " to describe a position");
-		ErrorOr<int> type = parseInt<int>(params[0]); if (!type.valid()) return type.error();
-		if (type.get() == 0) return decodePulsePosition(params.subview(1), true);
-		if (type.get() == 1) return decodeCartesianPosition(params.subview(1), true);
-		return malformedResponse("unexpected position type (" + std::to_string(type.get()) + "), expected 0 or 1");
+		ErrorOr<int> type = parseInt<int>(params[0]); if (!type) return type.error();
+		if (*type == 0) return ErrorOr<Position>{decodePulsePosition(params.subview(1), true)};
+		if (*type == 1) return ErrorOr<Position>{decodeCartesianPosition(params.subview(1), true)};
+		return malformedResponse("unexpected position type (" + std::to_string(*type) + "), expected 0 or 1");
 	}
 }
 

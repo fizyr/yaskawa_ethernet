@@ -93,7 +93,7 @@ namespace {
 	}
 
 	DetailedError malformedResponse(std::string && message) {
-		return {boost::system::error_code{errc::malformed_response}, std::move(message)};
+		return {errc::malformed_response, std::move(message)};
 	}
 
 	DetailedError maximumExceeded(std::string && field, int value, int max) {
@@ -111,7 +111,7 @@ namespace {
 	}
 
 	DetailedError commandFailed(int status, int extra_status) {
-		return {boost::system::error_code{errc::command_failed},
+		return {errc::command_failed,
 			"command failed with status " + std::to_string(status)
 			+ " and additional status " + std::to_string(extra_status)
 		};
@@ -185,8 +185,8 @@ template<> std::vector<std::uint8_t> encode<ReadInt8Variable::Request>(ReadInt8V
 
 template<> ErrorOr<ReadInt8Variable::Response> decode<ReadInt8Variable::Response>(string_view message) {
 	ErrorOr<ResponseHeader> header = decodeResponseHeader(message);
-	if (!header.valid()) return header.error();
-	if (header.get().payload_size != 1) return unexpectedValue("payload size", header.get().payload_size, 1);
+	if (!header) return header.error();
+	if (header->payload_size != 1) return unexpectedValue("payload size", header->payload_size, 1);
 	return ReadInt8Variable::Response{readLittleEndian<std::uint8_t>(message)};
 }
 
@@ -201,9 +201,9 @@ template<> std::vector<std::uint8_t> encode<WriteInt8Variable::Request>(WriteInt
 
 template<> ErrorOr<WriteInt8Variable::Response> decode<WriteInt8Variable::Response>(string_view message) {
 	ErrorOr<ResponseHeader> header = decodeResponseHeader(message);
-	if (!header.valid()) return header.error();
-	if (header.get().payload_size != 0) return unexpectedValue("payload size", header.get().payload_size, 0);
-	return ErrorOr<void>{};
+	if (!header) return header.error();
+	if (header->payload_size != 0) return unexpectedValue("payload size", header->payload_size, 0);
+	return dr::in_place_valid;
 }
 
 }}}

@@ -69,7 +69,7 @@ protected:
 	void onWriteCommand(Ptr, boost::system::error_code const & error, std::size_t) {
 		if (done.load()) return;
 		write_buffer.clear();
-		if (error) return callback(error);
+		if (error) return callback(DetailedError(std::errc(error.value())));
 
 		read_buffer.resize(512, boost::container::default_init);
 		auto callback = std::bind(&CommandSession::onReadResponse, this, self(), std::placeholders::_1, std::placeholders::_2);
@@ -81,7 +81,7 @@ protected:
 		if (done.exchange(true)) return;
 		timer.cancel();
 		read_buffer.resize(bytes_transferred);
-		if (error) return callback(error);
+		if (error) return callback(DetailedError(std::errc(error.value())));
 		ErrorOr<Response> response = decode<Response>(string_view{reinterpret_cast<char *>(read_buffer.data()), read_buffer.size()});
 		callback(response);
 	}
@@ -90,8 +90,8 @@ protected:
 	void onTimeout(Ptr, boost::system::error_code const & error) {
 		if (done.exchange(true)) return;
 		socket->cancel();
-		if (error) return callback(error);
-		callback(make_error_code(boost::asio::error::timed_out));
+		if (error) return callback(DetailedError(std::errc(error.value())));
+		callback(DetailedError(std::errc::timed_out));
 	}
 };
 

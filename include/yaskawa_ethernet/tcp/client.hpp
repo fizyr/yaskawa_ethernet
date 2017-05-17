@@ -3,6 +3,8 @@
 #include "../commands.hpp"
 #include "../error.hpp"
 
+#include <dr_error/error_or.hpp>
+
 #include <boost/asio/io_service.hpp>
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/streambuf.hpp>
@@ -18,7 +20,7 @@ namespace tcp {
 class Client {
 public:
 	using Socket   = boost::asio::ip::tcp::socket;
-	using Callback = std::function<void (boost::system::error_code const & error)>;
+	using Callback = std::function<void (std::error_code const & error)>;
 
 	template<typename T>
 	using ResultCallback = std::function<void (ErrorOr<T> const & result)>;

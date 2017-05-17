@@ -6,6 +6,8 @@
 #include <boost/asio/ip/udp.hpp>
 #include <boost/asio/streambuf.hpp>
 
+#include <dr_error/error_or.hpp>
+
 #include <functional>
 #include <cstdint>
 #include <string>
@@ -17,7 +19,7 @@ namespace udp {
 class Client {
 public:
 	using Socket   = boost::asio::ip::udp::socket;
-	using Callback = std::function<void (boost::system::error_code const & error)>;
+	using Callback = std::function<void (std::error_code const & error)>;
 
 	template<typename T>
 	using ResultCallback = std::function<void (ErrorOr<T> const & result)>;

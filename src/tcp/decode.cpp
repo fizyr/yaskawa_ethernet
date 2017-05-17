@@ -29,8 +29,8 @@ ErrorOr<void> decodeEmptyData(string_view message) {
 	DetailedError error = parseErrorMessage(message);
 	if (error) return error;
 
-	if (message != "0000\r\n"_v) return {boost::system::error_code{errc::malformed_response}, "expected empty response, received something else"};
-	return ErrorOr<void>{};
+	if (message != "0000\r\n"_v) return DetailedError{errc::malformed_response, "expected empty response, received something else"};
+	return in_place_valid;
 }
 
 ErrorOr<PulsePosition> decodeReadPulsePosition(string_view message) {
@@ -59,8 +59,8 @@ ErrorOr<std::vector<std::uint8_t>> decodeReadIo(string_view message) {
 	result.reserve(data.size());
 	for (string_view param : data) {
 		ErrorOr<std::uint8_t> parsed = parseInt<std::uint8_t>(param);
-		if (!parsed.valid()) return parsed.error();
-		result.push_back(parsed.get());
+		if (!parsed) return parsed.error();
+		result.push_back(*parsed);
 	}
 	return result;
 }
@@ -70,11 +70,11 @@ ErrorOr<std::uint8_t> decodeReadByteVariable(string_view message) {
 }
 
 ErrorOr<std::int16_t> decodeReadIntVariable(string_view message) {
-	return decodeIntMessage<std::uint16_t>(message);
+	return decodeIntMessage<std::int16_t>(message);
 }
 
 ErrorOr<std::int32_t> decodeReadDoubleIntVariable(string_view message) {
-	return decodeIntMessage<std::uint32_t>(message);
+	return decodeIntMessage<std::int32_t>(message);
 }
 
 ErrorOr<float> decodeReadRealVariable(string_view message) {

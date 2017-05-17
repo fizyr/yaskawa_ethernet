@@ -72,7 +72,7 @@ namespace impl {
 		/// Called when the command has been written.
 		void onWriteCommand(Ptr, boost::system::error_code const & error, std::size_t bytes_transferred) {
 			command_buffer.consume(bytes_transferred);
-			if (error) callback(ErrorOr<ResultType>(error));
+			if (error) callback(DetailedError(std::errc(error.value())));
 
 			auto callback = std::bind(&CommandSession::onReadResponse<StartCommand>, this, this->shared_from_this(), std::placeholders::_1, std::placeholders::_2);
 			boost::asio::async_read_until(*socket, *read_buffer, ResponseMatcher{}, callback);
@@ -85,7 +85,7 @@ namespace impl {
 		template<bool R2 = StartCommand>
 		typename std::enable_if<R2>::type
 		onReadResponse(Ptr, boost::system::error_code const & error, std::size_t bytes_transferred) {
-			if (error) callback(error);
+			if (error) callback(DetailedError(std::errc(error.value())));
 			ErrorOr<std::string> decoded = decodeCommandResponse(string_view{boost::asio::buffer_cast<char const *>(read_buffer->data()), bytes_transferred});
 			read_buffer->consume(bytes_transferred);
 			return callback(decoded);
@@ -98,10 +98,10 @@ namespace impl {
 		template<bool R2 = StartCommand>
 		typename std::enable_if<not R2>::type
 		onReadResponse(Ptr, boost::system::error_code const & error, std::size_t bytes_transferred) {
-			if (error) callback(error);
+			if (error) callback(DetailedError(std::errc(error.value())));
 			ErrorOr<std::string> decoded = decodeCommandResponse(string_view{boost::asio::buffer_cast<char const *>(read_buffer->data()), bytes_transferred});
 			read_buffer->consume(bytes_transferred);
-			if (!decoded.valid()) return callback(decoded.error());
+			if (!decoded) return callback(decoded.error());
 
 			// If the command has data, write it.
 			if (data_buffer.size()) {
@@ -117,7 +117,7 @@ namespace impl {
 
 		/// Called when the command data has been written.
 		void onWriteData(Ptr, boost::system::error_code const & error, std::size_t bytes_transferred) {
-			if (error) callback(error);
+			if (error) callback(DetailedError(std::errc(error.value())));
 			data_buffer.consume(bytes_transferred);
 
 			auto callback = std::bind(&CommandSession::onReadData, this, this->shared_from_this(), std::placeholders::_1, std::placeholders::_2);
@@ -126,7 +126,7 @@ namespace impl {
 
 		/// Called when the command data has been read.
 		void onReadData(Ptr, boost::system::error_code const & error, std::size_t bytes_transferred) {
-			if (error) callback(ErrorOr<ResultType>(error));
+			if (error) callback(DetailedError(std::errc(error.value())));
 			ErrorOr<ResultType> result = decoder(string_view{boost::asio::buffer_cast<char const *>(read_buffer->data()), bytes_transferred});
 			read_buffer->consume(bytes_transferred);
 			callback(std::move(result));

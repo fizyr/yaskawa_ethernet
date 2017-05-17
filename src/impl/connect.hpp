@@ -59,7 +59,7 @@ protected:
 	void onResolve(Ptr, boost::system::error_code const & error, Iterator iterator) {
 		if (error) {
 			if (finished.exchange(true)) return;
-			callback(error);
+			callback(make_error_code(std::errc(error.value())));
 		}
 
 		if (finished.load()) return;
@@ -80,7 +80,7 @@ protected:
 
 		finished = true;
 		timer.cancel();
-		callback(error);
+		callback(make_error_code(std::errc(error.value())));
 	}
 
 	/// Called when a connection attempt times out.
@@ -89,8 +89,8 @@ protected:
 		resolver.cancel();
 		socket->cancel();
 
-		if (error) return callback(error);
-		callback(boost::asio::error::timed_out);
+		if (error) return callback(make_error_code(std::errc(error.value())));
+		callback(make_error_code(std::errc::timed_out));
 	}
 };
 

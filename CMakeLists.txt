@@ -10,6 +10,9 @@ if (WERROR)
 	add_compile_options(-Werror)
 endif()
 
+find_package(catkin REQUIRED COMPONENTS dr_error)
+catkin_package()
+
 # Depencencies
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
@@ -26,8 +29,18 @@ add_library(${PROJECT_NAME}
 	src/error.cpp
 	src/eigen.cpp
 )
-target_include_directories(${PROJECT_NAME} INTERFACE include PRIVATE include/${PROJECT_NAME})
-target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC ${EIGEN3_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
+
+target_include_directories(${PROJECT_NAME}
+	INTERFACE include
+	PRIVATE include/${PROJECT_NAME}
+)
+
+target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC
+	${catkin_INCLUDE_DIRS}
+	${EIGEN3_INCLUDE_DIRS}
+	${Boost_INCLUDE_DIRS}
+)
+
 target_link_libraries(${PROJECT_NAME} PUBLIC Threads::Threads ${Boost_LIBRARIES})
 
 # Test executables
@@ -35,9 +48,6 @@ add_executable(${PROJECT_NAME}_tcp_test src/tcp_test.cpp)
 add_executable(${PROJECT_NAME}_udp_test src/udp_test.cpp)
 target_link_libraries(${PROJECT_NAME}_tcp_test ${PROJECT_NAME})
 target_link_libraries(${PROJECT_NAME}_udp_test ${PROJECT_NAME})
-
-find_package(catkin REQUIRED COMPONENTS)
-catkin_package()
 
 install(TARGETS "${PROJECT_NAME}"
 	ARCHIVE DESTINATION "${CATKIN_PACKAGE_LIB_DESTINATION}"

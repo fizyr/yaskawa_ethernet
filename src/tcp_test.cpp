@@ -18,31 +18,29 @@ void onTimeout(boost::system::error_code const & error) {
 	timer->async_wait(onTimeout);
 }
 
-void onReadByte(dr::yaskawa::ErrorOr<std::uint8_t> response) {
-	auto error = response.error();
-	if (error) {
-		std::cout << "Error " << error.category().name() << ":" << error.value() << ": " << error.detailed_message() << "\n";
+void onReadByte(dr::ErrorOr<std::uint8_t> response) {
+	if (!response) {
+		std::cout << response.error().fullMessage();
 		return;
 	}
 
 	++read_count;
-	std::cout << "Read byte variable with value " << int(response.get()) << "\n";
+	std::cout << "Read byte variable with value " << int(*response) << "\n";
 	client->readByteVariable(1, onReadByte);
 }
 
-void onStart(dr::yaskawa::ErrorOr<std::string> response) {
-	auto error = response.error();
-	if (error) {
-		std::cout << "Error " << error.category().name() << ":" << error.value() << ": " << error.detailed_message() << "\n";
+void onStart(dr::ErrorOr<std::string> response) {
+	if (!response) {
+		std::cout << response.error().fullMessage();
 		return;
 	}
 
-	std::cout << "Start request succeeded: " << response.get() << "\n";
+	std::cout << "Start request succeeded: " << *response << "\n";
 	client->readByteVariable(1, onReadByte);
 	timer->async_wait(onTimeout);
 }
 
-void onConnect(boost::system::error_code const & error) {
+void onConnect(std::error_code const & error) {
 	if (error) {
 		std::cout << "Error " << error.category().name() << ":" << error.value() << ": " << error.message() << "\n";
 		return;

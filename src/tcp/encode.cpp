@@ -7,6 +7,37 @@
 
 namespace dr {
 namespace yaskawa {
+
+std::ostream & operator<<(std::ostream & stream, PulsePosition const & position) {
+	for (int pulse : position.joints()) {
+		stream << pulse << ",";
+	}
+	stream << position.tool();
+	return stream;
+}
+
+std::ostream & operator<<(std::ostream & stream, CartesianPosition const & position) {
+	stream << int(position.system) << ",";
+	for (int i = 0; i < 3; ++i) {
+		stream << std::setprecision(3) << std::fixed << position[i] << ",";
+	}
+	for (int i = 3; i < 6; ++i) {
+		stream << std::setprecision(4) << std::fixed << position[i] << ",";
+	}
+	stream << int(position.type) << "," << int(position.tool);
+	return stream;
+
+}
+
+std::ostream & operator<<(std::ostream & stream, Position const & position) {
+	stream << int(position.type()) << ",";
+	switch (position.type()) {
+		case PositionType::pulse:     return stream << position.pulse();
+		case PositionType::cartesian: return stream << position.cartesian();
+	}
+	throw std::logic_error("invalid position type");
+}
+
 namespace tcp {
 
 namespace {
@@ -25,36 +56,6 @@ namespace {
 	template<typename T>
 	void encodeWriteVariable(boost::asio::streambuf & command_out, boost::asio::streambuf & params_out, VariableType type, int index, T value) {
 		encodeCommandWithParams(command_out, params_out, "LOADV", int(type), index, value);
-	}
-
-	std::ostream & operator<<(std::ostream & stream, PulsePosition const & position) {
-		for (int pulse : position.joints()) {
-			stream << pulse << ",";
-		}
-		stream << position.tool();
-		return stream;
-	}
-
-	std::ostream & operator<<(std::ostream & stream, CartesianPosition const & position) {
-		stream << int(position.system) << ",";
-		for (int i = 0; i < 3; ++i) {
-			stream << std::setprecision(3) << std::fixed << position[i] << ",";
-		}
-		for (int i = 3; i < 6; ++i) {
-			stream << std::setprecision(4) << std::fixed << position[i] << ",";
-		}
-		stream << int(position.type) << "," << int(position.tool);
-		return stream;
-
-	}
-
-	std::ostream & operator<<(std::ostream & stream, Position const & position) {
-		stream << int(position.type()) << ",";
-		switch (position.type()) {
-			case PositionType::pulse:     return stream << position.pulse();
-			case PositionType::cartesian: return stream << position.cartesian();
-		}
-		throw std::logic_error("invalid position type");
 	}
 }
 
