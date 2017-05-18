@@ -1,6 +1,5 @@
 #pragma once
 #include "../error.hpp"
-#include "../commands.hpp"
 
 #include <boost/asio/io_service.hpp>
 #include <boost/asio/ip/udp.hpp>
@@ -8,8 +7,9 @@
 
 #include <dr_error/error_or.hpp>
 
-#include <functional>
+#include <chrono>
 #include <cstdint>
+#include <functional>
 #include <string>
 
 namespace dr {
@@ -60,8 +60,17 @@ public:
 	Socket        & socket()       { return socket_; }
 	Socket const  & socket() const { return socket_; }
 
-	void readByteVariable(ReadInt8Variable::Request request, unsigned int timeout, ResultCallback<ReadInt8Variable::Response> const & callback);
-	void writeByteVariable(WriteInt8Variable::Request request, unsigned int timeout, ResultCallback<WriteInt8Variable::Response> const & callback);
+	void readByteVariable(int index, std::chrono::milliseconds timeout, std::function<void(ErrorOr<std::uint8_t>)> callback);
+	void writeByteVariable(int index, std::uint8_t value, std::chrono::milliseconds timeout, std::function<void(ErrorOr<void>)> callback);
+
+	void readInt16Variable(int index, std::chrono::milliseconds timeout, std::function<void(ErrorOr<std::int16_t>)> callback);
+	void writeInt16Variable(int index, std::int16_t value, std::chrono::milliseconds timeout, std::function<void(ErrorOr<void>)> callback);
+
+	void readInt32Variable(int index, std::chrono::milliseconds timeout, std::function<void(ErrorOr<std::int32_t>)> callback);
+	void writeInt32Variable(int index, std::int32_t value, std::chrono::milliseconds timeout, std::function<void(ErrorOr<void>)> callback);
+
+	void readFloat32Variable(int index, std::chrono::milliseconds timeout, std::function<void(ErrorOr<float>)> callback);
+	void writeFloat32Variable(int index, float value, std::chrono::milliseconds timeout, std::function<void(ErrorOr<void>)> callback);
 };
 
 }}}

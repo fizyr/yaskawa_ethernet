@@ -24,7 +24,7 @@ struct Header {
 	std::uint32_t block_number;
 };
 
-constexpr std::size_t header_size = 0x20;
+constexpr std::size_t header_size       = 0x20;
 constexpr std::size_t max_payaload_size = 0x479;
 
 struct RequestHeader : Header {

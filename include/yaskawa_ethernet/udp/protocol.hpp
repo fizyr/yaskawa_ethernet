@@ -12,13 +12,28 @@ namespace dr {
 namespace yaskawa {
 namespace udp {
 
-template<typename T> std::vector<std::uint8_t> encode(T const & message, std::uint8_t request_id = 0);
-template<typename T> ErrorOr<T> decode(string_view message);
+std::vector<std::uint8_t> encodeReadInt8Variable(std::uint8_t request_id, int index);
+ErrorOr<std::uint8_t> decodeReadInt8Variable(string_view message);
 
-template<> std::vector<std::uint8_t> encode<ReadInt8Variable::Request>(ReadInt8Variable::Request const &, std::uint8_t request_id);
-template<> ErrorOr<ReadInt8Variable::Response> decode<ReadInt8Variable::Response>(string_view message);
+std::vector<std::uint8_t> encodeWriteInt8Variable(std::uint8_t request_id, int index, std::uint8_t value);
+ErrorOr<void> decodeWriteInt8Variable(string_view message);
 
-template<> std::vector<std::uint8_t> encode<WriteInt8Variable::Request>(WriteInt8Variable::Request const &, std::uint8_t request_id);
-template<> ErrorOr<WriteInt8Variable::Response> decode<WriteInt8Variable::Response>(string_view message);
+std::vector<std::uint8_t> encodeReadInt16Variable(std::uint8_t request_id, int index);
+ErrorOr<std::int16_t> decodeReadInt16Variable(string_view message);
+
+std::vector<std::uint8_t> encodeWriteInt16Variable(std::uint8_t request_id, int index, std::int16_t value);
+ErrorOr<void> decodeWriteInt16Variable(string_view message);
+
+std::vector<std::uint8_t> encodeReadInt32Variable(std::uint8_t request_id, int index);
+ErrorOr<std::int32_t> decodeReadInt32Variable(string_view message);
+
+std::vector<std::uint8_t> encodeWriteInt32Variable(std::uint8_t request_id, int index, std::int32_t value);
+ErrorOr<void> decodeWriteInt32Variable(string_view message);
+
+std::vector<std::uint8_t> encodeReadFloat32Variable(std::uint8_t request_id, int index);
+ErrorOr<float> decodeReadFloat32Variable(string_view message);
+
+std::vector<std::uint8_t> encodeWriteFloat32Variable(std::uint8_t request_id, int index, float value);
+ErrorOr<void> decodeWriteFloat32Variable(string_view message);
 
 }}}

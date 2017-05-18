@@ -25,11 +25,10 @@ namespace impl {
  * - Read command response.
  * - Read response data.
  */
-template<typename Command, typename Socket, typename Callback>
-class CommandSession : public std::enable_shared_from_this<CommandSession<Command, Socket, Callback>> {
-	using Request  = typename Command::Request;
-	using Response = typename Command::Response;
-	using Ptr = std::shared_ptr<CommandSession>;
+template<typename Decoder, typename Socket, typename Callback>
+class CommandSession : public std::enable_shared_from_this<CommandSession<Decoder, Socket, Callback>> {
+	using Response = decltype(std::declval<Decoder>()(string_view{}));
+	using Ptr      = std::shared_ptr<CommandSession>;
 
 	Socket * socket;
 	boost::asio::steady_timer timer;
@@ -37,27 +36,25 @@ class CommandSession : public std::enable_shared_from_this<CommandSession<Comman
 	boost::container::vector<std::uint8_t> read_buffer;
 
 	std::atomic_bool done{false};
+	Decoder decoder;
 	Callback callback;
 
 public:
 	/// Construct a command session.
-	CommandSession(Socket & socket, Callback && callback) :
+	CommandSession(std::vector<uint8_t> && message, Decoder decoder, Socket & socket, Callback callback) :
 		socket(&socket),
 		timer(socket.get_io_service()),
+		write_buffer(std::move(message)),
+		decoder(std::move(decoder)),
 		callback(std::move(callback)) {}
 
-	/// Construct a command session.
-	CommandSession(Socket & socket, Callback const & callback) :
-		socket(&socket),
-		timer(socket.get_io_service()),
-		callback(callback) {}
-
 	/// Start the session by writing the command and starting the timeout..
-	void start(Request const & request, unsigned int timeout, std::uint8_t request_id) {
-		write_buffer = encode(request, request_id);
+	
+	void start(std::chrono::milliseconds timeout) {
 		auto callback = std::bind(&CommandSession::onWriteCommand, this, self(), std::placeholders::_1, std::placeholders::_2);
 		socket->async_send(boost::asio::buffer(write_buffer.data(), write_buffer.size()), callback);
-		timer.expires_from_now(std::chrono::milliseconds(timeout));
+
+		timer.expires_from_now(timeout);
 		timer.async_wait(std::bind(&CommandSession::onTimeout, this, self(), std::placeholders::_1));
 	}
 
@@ -82,7 +79,7 @@ protected:
 		timer.cancel();
 		read_buffer.resize(bytes_transferred);
 		if (error) return callback(DetailedError(std::errc(error.value())));
-		ErrorOr<Response> response = decode<Response>(string_view{reinterpret_cast<char *>(read_buffer.data()), read_buffer.size()});
+		Response response = decoder(string_view{reinterpret_cast<char *>(read_buffer.data()), read_buffer.size()});
 		callback(response);
 	}
 
@@ -90,15 +87,22 @@ protected:
 	void onTimeout(Ptr, boost::system::error_code const & error) {
 		if (done.exchange(true)) return;
 		socket->cancel();
-		if (error) return callback(DetailedError(std::errc(error.value())));
-		callback(DetailedError(std::errc::timed_out));
+		if (error) return callback(DetailedError(std::errc(error.value()), "waiting for reply"));
+		callback(DetailedError(std::errc::timed_out, "waiting for reply"));
 	}
 };
 
-template<typename Command, typename Socket, typename Callback>
-void sendCommand(typename Command::Request const & request, unsigned int timeout, std::uint8_t request_id, Socket & socket, Callback && callback) {
-	auto session = std::make_shared<impl::CommandSession<Command, Socket, typename std::decay<Callback>::type>>(socket, std::forward<Callback>(callback));
-	session->start(request, timeout, request_id);
+template<typename Decoder, typename Socket, typename Callback>
+void sendCommand(
+	std::vector<std::uint8_t> && message,
+	Decoder && decoder,
+	std::chrono::milliseconds timeout,
+	Socket & socket,
+	Callback && callback
+) {
+	using Session = impl::CommandSession<std::decay_t<Decoder>, Socket, std::decay_t<Callback>>;
+	auto session = std::make_shared<Session>(std::move(message), std::forward<Decoder>(decoder), socket, std::forward<Callback>(callback));
+	session->start(timeout);
 }
 
 }}}}

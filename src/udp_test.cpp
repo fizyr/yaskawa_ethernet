@@ -3,7 +3,10 @@
 #include <boost/asio/io_service.hpp>
 #include <boost/asio/steady_timer.hpp>
 
+#include <chrono>
 #include <iostream>
+
+using namespace std::chrono_literals;
 
 dr::yaskawa::udp::Client * client;
 int read_count = 0;
@@ -17,14 +20,14 @@ void onTimeout(boost::system::error_code const & error) {
 	timer->async_wait(onTimeout);
 }
 
-void onReadByte(dr::ErrorOr<dr::yaskawa::ReadInt8Variable::Response> const & response) {
+void onReadByte(dr::ErrorOr<std::uint8_t> response) {
 	if (!response) {
 		std::cout << response.error().fullMessage() << "\n";
 	} else {
-		std::cout << "Read byte variable with value " << int(response->value) << "\n";
+		std::cout << "Read byte variable with value " << int(*response) << "\n";
 	}
 	++read_count;
-	client->readByteVariable(0, 1500, onReadByte);
+	client->readByteVariable(0, 1500ms, onReadByte);
 }
 
 void onConnect(std::error_code const & error) {
@@ -33,7 +36,7 @@ void onConnect(std::error_code const & error) {
 		return;
 	}
 	std::cout << "Connected to " << client->socket().remote_endpoint() << " .\n";
-	client->readByteVariable(0, 1500, onReadByte);
+	client->readByteVariable(0, 1500ms, onReadByte);
 	timer->async_wait(onTimeout);
 }
 
