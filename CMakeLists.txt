@@ -11,7 +11,11 @@ if (WERROR)
 endif()
 
 find_package(catkin REQUIRED COMPONENTS dr_error)
-catkin_package()
+catkin_package(
+	INCLUDE_DIRS include
+	LIBRARIES ${PROJECT_NAME}
+	CATKIN_DEPENDS dr_error
+)
 
 # Depencencies
 set(THREADS_PREFER_PTHREAD_FLAG ON)
