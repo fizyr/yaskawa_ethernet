@@ -71,7 +71,7 @@ void onReadInt16(dr::ErrorOr<std::int16_t> result) {
 		if (*result != int16_value) std::cout << "Read wrong int16 value: " << int(*result) << ", expected " << int16_value << ".\n";
 		++int16_value;
 	}
-	client->writeInt32Variable(7, int32_value, 100ms, onWriteInt16);
+	client->writeInt32Variable(7, int32_value, 100ms, onWriteInt32);
 }
 
 void onWriteInt32(dr::ErrorOr<void> result) {
@@ -108,7 +108,7 @@ void onReadFloat(dr::ErrorOr<float> result) {
 		std::cout << result.error().fullMessage() << "\n";
 	} else {
 		++command_count;
-		if (*result != float32_value) std::cout << "Read wrong float32 value: " << int(*result) << ", expected " << float32_value << ".\n";
+		if (*result != float32_value) std::cout << "Read wrong float32 value: " << (*result) << ", expected " << float32_value << ".\n";
 		++float32_value;
 	}
 	client->writeByteVariable(5, byte_value, 100ms, onWriteByte);
@@ -119,7 +119,7 @@ void onConnect(std::error_code const & error) {
 		std::cout << "Error " << error.category().name() << ":" << error.value() << ": " << error.message() << "\n";
 		return;
 	}
-	std::cout << "Connected to " << client->socket().remote_endpoint() << " .\n";
+	std::cout << "Connected to " << client->socket().remote_endpoint() << ".\n";
 	client->writeByteVariable(5, byte_value, 100ms, onWriteByte);
 	timer->async_wait(onTimeout);
 }

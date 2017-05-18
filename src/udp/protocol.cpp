@@ -217,8 +217,8 @@ std::vector<std::uint8_t> encodeReadInt16Variable(std::uint8_t request_id, int i
 ErrorOr<std::int16_t> decodeReadInt16Variable(string_view message) {
 	ErrorOr<ResponseHeader> header = decodeResponseHeader(message);
 	if (!header) return header.error();
-	if (header->payload_size != 1) return unexpectedValue("payload size", header->payload_size, 1);
-	return readLittleEndian<std::uint8_t>(message);
+	if (header->payload_size != 2) return unexpectedValue("payload size", header->payload_size, 2);
+	return readLittleEndian<std::int16_t>(message);
 }
 
 std::vector<std::uint8_t> encodeWriteInt16Variable(std::uint8_t request_id, int index, std::int16_t value) {
@@ -243,8 +243,8 @@ std::vector<std::uint8_t> encodeReadInt32Variable(std::uint8_t request_id, int i
 ErrorOr<std::int32_t> decodeReadInt32Variable(string_view message) {
 	ErrorOr<ResponseHeader> header = decodeResponseHeader(message);
 	if (!header) return header.error();
-	if (header->payload_size != 1) return unexpectedValue("payload size", header->payload_size, 1);
-	return readLittleEndian<std::uint8_t>(message);
+	if (header->payload_size != 4) return unexpectedValue("payload size", header->payload_size, 4);
+	return readLittleEndian<std::int32_t>(message);
 }
 
 std::vector<std::uint8_t> encodeWriteInt32Variable(std::uint8_t request_id, int index, std::int32_t value) {
@@ -269,13 +269,13 @@ std::vector<std::uint8_t> encodeReadFloat32Variable(std::uint8_t request_id, int
 ErrorOr<float> decodeReadFloat32Variable(string_view message) {
 	ErrorOr<ResponseHeader> header = decodeResponseHeader(message);
 	if (!header) return header.error();
-	if (header->payload_size != 1) return unexpectedValue("payload size", header->payload_size, 1);
+	if (header->payload_size != 4) return unexpectedValue("payload size", header->payload_size, 4);
 	std::uint32_t value = readLittleEndian<std::uint32_t>(message);
 	return reinterpret_cast<float &>(value);
 }
 
 std::vector<std::uint8_t> encodeWriteFloat32Variable(std::uint8_t request_id, int index, float value) {
-	std::vector<std::uint8_t> result = encodeRequestHeader(makeRobotRequestHeader(4, commands::robot::readwrite_int32_variable, index, 1, service::set_single, request_id));
+	std::vector<std::uint8_t> result = encodeRequestHeader(makeRobotRequestHeader(4, commands::robot::readwrite_float_variable, index, 1, service::set_single, request_id));
 	writeLittleEndian<std::uint32_t>(result, reinterpret_cast<std::uint32_t &>(value));
 	return result;
 }
