@@ -30,6 +30,7 @@ add_library(${PROJECT_NAME}
 	src/tcp/client.cpp
 	src/tcp/decode.cpp
 	src/tcp/encode.cpp
+	src/types.cpp
 	src/udp/client.cpp
 	src/udp/decode.cpp
 	src/udp/encode.cpp

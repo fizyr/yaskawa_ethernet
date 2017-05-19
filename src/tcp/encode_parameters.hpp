@@ -8,6 +8,11 @@ namespace dr {
 namespace yaskawa {
 namespace tcp {
 
+template<typename T>
+void encode(std::ostream & stream, T const & value) {
+	stream << value;
+}
+
 namespace {
 	template<typename... T>
 	struct EncodeParametersImp;
@@ -23,7 +28,8 @@ namespace {
 	template<typename Head>
 	struct EncodeParametersImp<Head> {
 		static void addParameters(std::ostream && stream, Head const & head) {
-			stream << head << '\r';
+			encode(stream, head);
+			stream.put('\r');
 		}
 	};
 

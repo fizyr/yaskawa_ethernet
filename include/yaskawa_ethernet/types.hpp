@@ -1,8 +1,11 @@
 #pragma once
-#include <array>
-#include <boost/variant.hpp>
-#include <bitset>
 #include "array_view.hpp"
+
+#include <boost/variant.hpp>
+
+#include <array>
+#include <bitset>
+#include <ostream>
 
 namespace dr {
 namespace yaskawa {
@@ -51,14 +54,18 @@ constexpr bool isUserCoordinateSystem(CoordinateSystem system) {
 	return system >= CoordinateSystem::user1 && system <= CoordinateSystem::user16;
 }
 
-/// Get the zero-based index of a user coordinate system.
-constexpr int userCoordinateIndex(CoordinateSystem system) {
-	return int(system) - int(CoordinateSystem::user1);
+/// Get the one-based index of a user coordinate system.
+/**
+ * If a coordinate system is not a user coordinate system, this function returns 0.
+ */
+constexpr int userCoordinateNumber(CoordinateSystem system) {
+	if (!isUserCoordinateSystem(system)) return 0;
+	return int(system) - int(CoordinateSystem::user1) + 1;
 }
 
-/// Get a user coordinate system from a user coordinate system index.
-constexpr CoordinateSystem userCoordinateSystem(int index) {
-	return CoordinateSystem(int(CoordinateSystem::user1) + index);
+/// Get a user coordinate system from a user coordinate system number (starting at 1).
+constexpr CoordinateSystem userCoordinateSystem(int number) {
+	return CoordinateSystem(int(CoordinateSystem::user1) + number - 1);
 }
 
 class PoseConfiguration : public std::bitset<6> {
@@ -202,5 +209,12 @@ public:
 	bool operator==(Position const & other) const { return data_ == other.data_; }
 	bool operator!=(Position const & other) const { return !(*this == other); }
 };
+
+std::ostream & operator<<(std::ostream & stream, CoordinateSystem const & frame);
+std::ostream & operator<<(std::ostream & stream, PoseConfiguration const & configuration);
+std::ostream & operator<<(std::ostream & stream, PulsePosition const & position);
+std::ostream & operator<<(std::ostream & stream, PulsePosition const & position);
+std::ostream & operator<<(std::ostream & stream, CartesianPosition const & position);
+std::ostream & operator<<(std::ostream & stream, Position const & position);
 
 }}

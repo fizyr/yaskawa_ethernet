@@ -8,15 +8,14 @@
 namespace dr {
 namespace yaskawa {
 
-std::ostream & operator<<(std::ostream & stream, PulsePosition const & position) {
+void encode(std::ostream & stream, PulsePosition const & position) {
 	for (int pulse : position.joints()) {
 		stream << pulse << ",";
 	}
 	stream << position.tool();
-	return stream;
 }
 
-std::ostream & operator<<(std::ostream & stream, CartesianPosition const & position) {
+void encode(std::ostream & stream, CartesianPosition const & position) {
 	stream << int(position.frame()) << ",";
 	for (int i = 0; i < 3; ++i) {
 		stream << std::setprecision(3) << std::fixed << position[i] << ",";
@@ -25,15 +24,14 @@ std::ostream & operator<<(std::ostream & stream, CartesianPosition const & posit
 		stream << std::setprecision(4) << std::fixed << position[i] << ",";
 	}
 	stream << int(position.configuration()) << "," << int(position.tool());
-	return stream;
 
 }
 
-std::ostream & operator<<(std::ostream & stream, Position const & position) {
+void encode(std::ostream & stream, Position const & position) {
 	stream << int(position.type()) << ",";
 	switch (position.type()) {
-		case PositionType::pulse:     return stream << position.pulse();
-		case PositionType::cartesian: return stream << position.cartesian();
+		case PositionType::pulse:     stream << position.pulse();     return;
+		case PositionType::cartesian: stream << position.cartesian(); return;
 	}
 	throw std::logic_error("invalid position type");
 }

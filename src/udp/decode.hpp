@@ -39,7 +39,7 @@ DetailedError maximumExceeded(std::string field, int value, int max);
 
 DetailedError unexpectedValue(std::string field, int value, int expected);
 
-DetailedError commandFailed(int status, int extra_status);
+DetailedError commandFailed(std::uint16_t status, std::uint16_t extra_status);
 
 /// Decode a response header.
 ErrorOr<ResponseHeader> decodeResponseHeader(string_view & data);

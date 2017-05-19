@@ -11,7 +11,7 @@ namespace udp {
 
 // write variable response
 std::vector<std::uint8_t> encodeReadVariable(std::uint8_t request_id, int index, std::uint16_t command) {
-	return encodeRequestHeader(makeRobotRequestHeader(0, command, index, 1, service::get_all, request_id));
+	return encodeRequestHeader(makeRobotRequestHeader(0, command, index, 0, service::get_all, request_id));
 }
 
 ErrorOr<void> decodeWriteVariable(string_view message) {
@@ -92,7 +92,7 @@ ErrorOr<Position> decodeReadPositionVariable(string_view message) {
 }
 
 std::vector<std::uint8_t> encodeWritePositionVariable(std::uint8_t request_id, int index, Position const & value, std::uint16_t command) {
-	std::vector<std::uint8_t> result = encodeRequestHeader(makeRobotRequestHeader(13 * 4, command, index, 1, service::set_all, request_id));
+	std::vector<std::uint8_t> result = encodeRequestHeader(makeRobotRequestHeader(13 * 4, command, index, 0, service::set_all, request_id));
 	encodePosition(result, value);
 	return result;
 }

@@ -82,16 +82,20 @@ void encodePulsePosition(std::vector<std::uint8_t> & out, PulsePosition const & 
 	writeLittleEndian<std::uint32_t>(out, 0);
 	// Extended joint configuration, meaningless with pulse positions.
 	writeLittleEndian<std::uint32_t>(out, 0);
-	// Invividual joint values in millirad.
-	for (std::int32_t value : position.joints()) writeLittleEndian<std::int32_t>(out, value * 1000);
+	// Invividual joint values in pulses.
+	for (std::int32_t value : position.joints()) writeLittleEndian<std::int32_t>(out, value);
+	// Padding (robot wants 8 coordinates).
+	for (unsigned int i = position.joints().size(); i < 8; ++i) {
+		writeLittleEndian<std::int32_t>(out, 0);
+	}
 }
 
 std::uint32_t encodeFrameType(CoordinateSystem frame) {
-	if (isUserCoordinateSystem(frame)) return 18;
+	if (isUserCoordinateSystem(frame)) return 19;
 	switch (frame) {
 		case CoordinateSystem::base:  return 16;
 		case CoordinateSystem::robot: return 17;
-		case CoordinateSystem::tool:  return 19;
+		case CoordinateSystem::tool:  return 18;
 		default: throw std::logic_error("unknown coordinate system type: " + std::to_string(int(frame)));
 	}
 }
@@ -104,7 +108,7 @@ void encodeCartesianPosition(std::vector<std::uint8_t> & out, CartesianPosition 
 	// Tool number.
 	writeLittleEndian<std::uint32_t>(out, position.tool());
 	// User coordinate system.
-	writeLittleEndian<std::uint32_t>(out, isUserCoordinateSystem(position.frame()) ? userCoordinateIndex(position.frame()) : 0);
+	writeLittleEndian<std::uint32_t>(out, userCoordinateNumber(position.frame()));
 	// Extended joint configuration, not supported.
 	writeLittleEndian<std::uint32_t>(out, 0);
 	// XYZ components in micrometer.
@@ -112,9 +116,12 @@ void encodeCartesianPosition(std::vector<std::uint8_t> & out, CartesianPosition 
 	writeLittleEndian<std::int32_t>(out, position[1] * 1000);
 	writeLittleEndian<std::int32_t>(out, position[2] * 1000);
 	// Rotation components in millidegrees.
-	writeLittleEndian<std::int32_t>(out, position[3] * 1000);
-	writeLittleEndian<std::int32_t>(out, position[4] * 1000);
-	writeLittleEndian<std::int32_t>(out, position[5] * 1000);
+	writeLittleEndian<std::int32_t>(out, position[3] * 10000);
+	writeLittleEndian<std::int32_t>(out, position[4] * 10000);
+	writeLittleEndian<std::int32_t>(out, position[5] * 10000);
+	// Padding (robot wants 8 coordinates).
+	writeLittleEndian<std::int32_t>(out, 0);
+	writeLittleEndian<std::int32_t>(out, 0);
 }
 
 void encodePosition(std::vector<std::uint8_t> & out, Position const & position) {

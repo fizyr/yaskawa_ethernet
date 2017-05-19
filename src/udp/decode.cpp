@@ -4,6 +4,22 @@ namespace dr {
 namespace yaskawa {
 namespace udp {
 
+char hexNibble(int value) {
+	if (value < 10) return '0' + value;
+	return 'A' + value - 10;
+}
+
+template<typename T>
+std::string toHex(T val) {
+	static_assert(std::is_integral<T>::value, "");
+	std::string result(sizeof(T) * 2, '0');
+	for (unsigned int i = 0; i < sizeof(T); i++) {
+		result[(sizeof(T) - i) * 2 - 1] = hexNibble(val >> (8 * i)     & 0x0f);
+		result[(sizeof(T) - i) * 2 - 2] = hexNibble(val >> (8 * i + 4) & 0x0f);
+	}
+	return result;
+}
+
 DetailedError malformedResponse(std::string message) {
 	return {errc::malformed_response, std::move(message)};
 }
@@ -22,10 +38,10 @@ DetailedError unexpectedValue(std::string field, int value, int expected) {
 	);
 }
 
-DetailedError commandFailed(int status, int extra_status) {
+DetailedError commandFailed(std::uint16_t status, std::uint16_t extra_status) {
 	return {errc::command_failed,
-		"command failed with status " + std::to_string(status)
-		+ " and additional status " + std::to_string(extra_status)
+		"command failed with status 0x" + toHex(status)
+		+ " and additional status 0x" + toHex(extra_status)
 	};
 }
 
@@ -92,12 +108,12 @@ namespace {
 		switch (type) {
 			case 16: return CoordinateSystem::base;
 			case 17: return CoordinateSystem::robot;
-			case 18:
+			case 18: return CoordinateSystem::tool;
+			case 19:
 				if (user_frame > 15) {
 					return maximumExceeded("user frame", user_frame, 15);
 				}
 				return userCoordinateSystem(user_frame);
-			case 19: return CoordinateSystem::tool;
 		}
 		return malformedResponse("unknown position type (" + std::to_string(type) + "), expected 16, 17, 18 or 19");
 	}
@@ -105,7 +121,7 @@ namespace {
 
 /// Decode a position variable.
 ErrorOr<Position> decodePositionVariable(string_view data) {
-	if (data.size() != 13) return unexpectedValue("message size", data.size(), 13);
+	if (data.size() != 13 * 4) return unexpectedValue("message size", data.size(), 13 * 4);
 	std::uint32_t type                   = readLittleEndian<std::uint32_t>(data);
 	std::uint8_t  configuration          = readLittleEndian<std::uint32_t>(data);
 	std::uint32_t tool                   = readLittleEndian<std::uint32_t>(data);
@@ -114,7 +130,6 @@ ErrorOr<Position> decodePositionVariable(string_view data) {
 
 	// Extended joint configuration is not supported.
 	(void) extended_configuration;
-
 
 	// Pulse position.
 	if (type == 0) {
@@ -127,15 +142,15 @@ ErrorOr<Position> decodePositionVariable(string_view data) {
 	if (!frame) return frame.error();
 
 	// Cartesian position.
-	// Position data is in micrometer.
-	// Rotation data is in millidegrees.
-	return Position{CartesianPosition{{{
+	// Position data is in micrometers.
+	// Rotation data is in 0.0001 degrees.
+	return Position{CartesianPosition{ {{
 		readLittleEndian<std::int32_t>(data) / 1000.0,
 		readLittleEndian<std::int32_t>(data) / 1000.0,
 		readLittleEndian<std::int32_t>(data) / 1000.0,
-		readLittleEndian<std::int32_t>(data) / 1000.0,
-		readLittleEndian<std::int32_t>(data) / 1000.0,
-		readLittleEndian<std::int32_t>(data) / 1000.0,
+		readLittleEndian<std::int32_t>(data) / 10000.0,
+		readLittleEndian<std::int32_t>(data) / 10000.0,
+		readLittleEndian<std::int32_t>(data) / 10000.0,
 	}}, *frame, PoseConfiguration(configuration), int(tool)}};
 }
 
