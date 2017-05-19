@@ -7,6 +7,7 @@
 #include <iostream>
 
 using namespace std::chrono_literals;
+using namespace dr::yaskawa;
 
 dr::yaskawa::udp::Client * client;
 int command_count = 0;
@@ -17,6 +18,15 @@ std::int16_t int16_value   = -5;
 std::int32_t int32_value   = -5;
 float        float32_value = -5;
 
+std::array<Position, 4> positions {{
+	PulsePosition{std::array<int, 6>{{0, 1, 2, 3, 4,   5}}, 1},
+	PulsePosition{std::array<int, 6>{{6, 7, 8, 9, 10, 11}}, 2},
+	CartesianPosition{std::array<double, 6>{{12, 13, 14, 15, 16, 17}}, CoordinateSystem::base,  0xff, 3},
+	CartesianPosition{std::array<double, 6>{{18, 19, 20, 21, 22, 23}}, CoordinateSystem::user3, 0x00, 4},
+}};
+
+int position_index = 0;
+
 void onWriteByte(dr::ErrorOr<void> result);
 void onReadByte(dr::ErrorOr<std::uint8_t> result);
 void onWriteInt16(dr::ErrorOr<void> result);
@@ -25,6 +35,8 @@ void onWriteInt32(dr::ErrorOr<void> result);
 void onReadInt32(dr::ErrorOr<std::int32_t> result);
 void onWriteFloat(dr::ErrorOr<void> result);
 void onReadFloat(dr::ErrorOr<float> result);
+void onWritePosition(dr::ErrorOr<void> result);
+void onReadPosition(dr::ErrorOr<Position> const & result);
 
 void onTimeout(boost::system::error_code const & error) {
 	if (error) throw boost::system::system_error(error);
@@ -109,6 +121,26 @@ void onReadFloat(dr::ErrorOr<float> result) {
 	} else {
 		++command_count;
 		if (*result != float32_value) std::cout << "Read wrong float32 value: " << (*result) << ", expected " << float32_value << ".\n";
+		++float32_value;
+	}
+	client->writeRobotPositionVariable(9, positions[position_index], 100ms, onWritePosition);
+}
+
+void onWritePosition(dr::ErrorOr<void> result) {
+	if (!result) {
+		std::cerr << "Failed to write position value: " << result.error().fullMessage() << "\n";
+	} else {
+		++command_count;
+	}
+	client->readRobotPositionVariable(9, 100ms, onReadPosition);
+}
+
+void onReadPosition(dr::ErrorOr<Position> const & result) {
+	if (!result) {
+		std::cout << result.error().fullMessage() << "\n";
+	} else {
+		++command_count;
+		if (*result != positions[position_index]) std::cout << "Read wrong position value\n";
 		++float32_value;
 	}
 	client->writeByteVariable(5, byte_value, 100ms, onWriteByte);

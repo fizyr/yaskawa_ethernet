@@ -11,6 +11,11 @@ namespace yaskawa {
  */
 Eigen::Isometry3d toEigen(CartesianPosition const & position);
 
-CartesianPosition toCartesian(Eigen::Isometry3d const & pose, CoordinateSystem system = CoordinateSystem::base, int tool = 0, CartesianPoseType type = {});
+CartesianPosition toCartesian(
+	Eigen::Isometry3d const & pose,
+	CoordinateSystem system = CoordinateSystem::base,
+	int tool = 0,
+	PoseConfiguration configuration = {}
+);
 
 }}

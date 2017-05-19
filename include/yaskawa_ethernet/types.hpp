@@ -46,11 +46,26 @@ enum class CoordinateSystem {
 	master = 19,
 };
 
-class CartesianPoseType : public std::bitset<6> {
+/// Check if a coordinate system is a user coordinate system.
+constexpr bool isUserCoordinateSystem(CoordinateSystem system) {
+	return system >= CoordinateSystem::user1 && system <= CoordinateSystem::user16;
+}
+
+/// Get the zero-based index of a user coordinate system.
+constexpr int userCoordinateIndex(CoordinateSystem system) {
+	return int(system) - int(CoordinateSystem::user1);
+}
+
+/// Get a user coordinate system from a user coordinate system index.
+constexpr CoordinateSystem userCoordinateSystem(int index) {
+	return CoordinateSystem(int(CoordinateSystem::user1) + index);
+}
+
+class PoseConfiguration : public std::bitset<6> {
 public:
-	CartesianPoseType() = default;
-	CartesianPoseType(std::uint8_t type) noexcept : std::bitset<6>(type) {}
-	CartesianPoseType(bool no_flip, bool lower_arm, bool back, bool high_r, bool high_t, bool high_s) :
+	PoseConfiguration() = default;
+	PoseConfiguration(std::uint8_t type) noexcept : std::bitset<6>(type) {}
+	PoseConfiguration(bool no_flip, bool lower_arm, bool back, bool high_r, bool high_t, bool high_s) :
 		std::bitset<6>{no_flip * 0x01u | lower_arm * 0x02u | back * 0x04u |  high_r * 0x08u | high_t * 0x10u | high_s * 0x20u} {}
 
 	bool      noFlip()   const noexcept { return (*this)[0]; }
@@ -71,50 +86,75 @@ public:
 
 class PulsePosition {
 private:
-	std::array<int, 7> joints_;
-	bool axis7_;
+	std::array<int, 8> joints_;
+	unsigned int size_;
 	int tool_;
 
 public:
-	PulsePosition(bool axis7, int tool = 0) noexcept : axis7_{axis7}, tool_(tool) {}
-	PulsePosition(std::array<int, 7> const & array, int tool = 0) noexcept : joints_{array}, axis7_{true}, tool_(tool) {}
-	PulsePosition(std::array<int, 6> const & array, int tool = 0) noexcept :
-		joints_{{array[0], array[1], array[2], array[3], array[4], array[5], 0}},
-		axis7_{false},
-		tool_(tool) {}
+	PulsePosition(unsigned int size, int tool = 0) noexcept : size_{size}, tool_(tool) {}
+	PulsePosition(std::array<int, 8> const & array, int tool = 0) noexcept : size_(array.size()), tool_(tool) {
+		std::copy(array.begin(), array.end(), joints_.begin());
+	}
+	PulsePosition(std::array<int, 7> const & array, int tool = 0) noexcept : size_(array.size()), tool_(tool) {
+		std::copy(array.begin(), array.end(), joints_.begin());
+	}
+	PulsePosition(std::array<int, 6> const & array, int tool = 0) noexcept : size_(array.size()), tool_(tool) {
+		std::copy(array.begin(), array.end(), joints_.begin());
+	}
 
-	array_view<int      > joints()       noexcept { return {joints_.data(), axis7_ ? 7u : 6u}; }
-	array_view<int const> joints() const noexcept { return {joints_.data(), axis7_ ? 7u : 6u}; }
+	array_view<int      > joints()       noexcept { return {joints_.data(), size_}; }
+	array_view<int const> joints() const noexcept { return {joints_.data(), size_}; }
 
 	int & tool()       noexcept { return tool_; }
 	int   tool() const noexcept { return tool_; }
+
+	bool operator==(PulsePosition const & other) const {
+		return size_ == other.size_
+			&& tool_ == other.tool_
+			&& joints_ == other.joints_;
+	}
+
+	bool operator!=(PulsePosition const & other) const {
+		return !(*this == other);
+	}
 };
 
-struct CartesianPosition : std::array<double, 6> {
-	CoordinateSystem system;
-	CartesianPoseType type;
-	int tool;
+class CartesianPosition : public std::array<double, 6> {
+private:
+	CoordinateSystem frame_;
+	PoseConfiguration type_;
+	int tool_;
 
+public:
 	CartesianPosition() = default;
 
 	CartesianPosition(
 		std::array<double, 6> const & data,
-		CoordinateSystem system = CoordinateSystem::base,
-		CartesianPoseType type = {},
+		CoordinateSystem frame = CoordinateSystem::base,
+		PoseConfiguration type = {},
 		int tool = 0
 	) :
 		std::array<double, 6>(data),
-		system{system},
-		type{type},
-		tool(tool) {}
+		frame_{frame},
+		type_{type},
+		tool_(tool) {}
 
 	CartesianPosition(
 		double x, double y, double z,
 		double rx, double ry, double rz,
-		CoordinateSystem system = CoordinateSystem::base,
-		CartesianPoseType type = {},
+		CoordinateSystem frame = CoordinateSystem::base,
+		PoseConfiguration type = {},
 		int tool = 0
-	) : CartesianPosition{{{x, y, z, rx, ry, rz}}, system, type, tool} {}
+	) : CartesianPosition{{{x, y, z, rx, ry, rz}}, frame, type, tool} {}
+
+	CoordinateSystem   frame() const { return frame_; }
+	CoordinateSystem & frame()       { return frame_; }
+
+	PoseConfiguration   configuration() const { return type_; }
+	PoseConfiguration & configuration()       { return type_; }
+
+	int   tool() const { return tool_; }
+	int & tool()       { return tool_; }
 
 	double    x() const { return (*this)[0]; }
 	double &  x()       { return (*this)[0]; }
@@ -128,6 +168,17 @@ struct CartesianPosition : std::array<double, 6> {
 	double & ry()       { return (*this)[4]; }
 	double   rz() const { return (*this)[5]; }
 	double & rz()       { return (*this)[5]; }
+
+	bool operator==(CartesianPosition const & other) const {
+		return frame_ == other.frame_
+			&& type_ == other.type_
+			&& tool_ == other.tool_
+			&& static_cast<std::array<double, 6> const &>(*this) == other;
+	}
+
+	bool operator!=(CartesianPosition const & other) const {
+		return !(*this == other);
+	}
 };
 
 class Position {
@@ -135,22 +186,21 @@ class Position {
 	Variant data_;
 
 public:
-	Position(PulsePosition const & position) : data_(position) {}
-	Position(PulsePosition      && position) : data_(std::move(position)) {}
+	Position(PulsePosition      const & position) : data_(position) {}
 	Position(CartesianPosition  const & position) : data_(position) {}
-	Position(CartesianPosition       && position) : data_(std::move(position)) {}
 
-	PositionType type() const { return PositionType(data_.which()); }
-	bool isPulse()     const { return type() == PositionType::pulse;     }
-	bool isCartesian() const { return type() == PositionType::cartesian; }
+	PositionType type() const { return PositionType(data_.which());       }
+	bool isPulse()      const { return type() == PositionType::pulse;     }
+	bool isCartesian()  const { return type() == PositionType::cartesian; }
 
 	PulsePosition const & pulse() const { return boost::get<PulsePosition const &>(data_); }
-	PulsePosition       & pulse()       { return boost::get<PulsePosition &>(data_);       }
+	PulsePosition       & pulse()       { return boost::get<PulsePosition       &>(data_); }
 
 	CartesianPosition const & cartesian() const { return boost::get<CartesianPosition const &>(data_); }
-	CartesianPosition       & cartesian()       { return boost::get<CartesianPosition &>(data_);       }
+	CartesianPosition       & cartesian()       { return boost::get<CartesianPosition       &>(data_); }
 
-
+	bool operator==(Position const & other) const { return data_ == other.data_; }
+	bool operator!=(Position const & other) const { return !(*this == other); }
 };
 
 }}

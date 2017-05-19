@@ -197,9 +197,9 @@ namespace {
 		if (system) {
 			ErrorOr<int> coordinate_system = parseInt<int>(params[0], 0, 19);
 			if (!coordinate_system) return coordinate_system.error();
-			result.system = CoordinateSystem(*coordinate_system);
+			result.frame() = CoordinateSystem(*coordinate_system);
 		} else {
-			result.system = CoordinateSystem::base;
+			result.frame() = CoordinateSystem::base;
 		}
 
 		// Parse X, Y, Z, Rx, Ry, Rz components.
@@ -212,12 +212,12 @@ namespace {
 		// Parse pose type.
 		ErrorOr<int> pose_type = parseInt<int>(params[6 + system], 0, 0x3f);
 		if (!pose_type) return pose_type.error();
-		result.type = *pose_type;
+		result.configuration() = *pose_type;
 
 		// Parse tool number.
 		ErrorOr<int> tool = parseInt<int>(params[7 + system], 0, 15);
 		if (!tool) return tool.error();
-		result.tool = *tool;
+		result.tool() = *tool;
 
 		return result;
 	}

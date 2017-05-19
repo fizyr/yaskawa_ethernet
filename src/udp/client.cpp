@@ -1,6 +1,7 @@
 #include "udp/client.hpp"
 #include "udp/protocol.hpp"
 #include "send_command.hpp"
+#include "udp/commands.hpp"
 #include "../impl/connect.hpp"
 
 #include <memory>
@@ -21,36 +22,109 @@ void Client::connect(std::string const & host, std::uint16_t port, unsigned int 
 	connect(host, std::to_string(port), timeout, callback);
 }
 
+void Client::close() {
+	socket_.close();
+}
+
+// Byte variables.
+
 void Client::readByteVariable(int index, std::chrono::milliseconds timeout, std::function<void (ErrorOr<std::uint8_t>)> callback) {
-	impl::sendCommand(encodeReadInt8Variable(request_id_++, index), decodeReadInt8Variable, timeout, socket_, std::move(callback));
+	impl::sendCommand(
+		encodeReadVariable(
+			request_id_++,
+			index,
+			commands::robot::readwrite_int8_variable
+		),
+		decodeReadInt8Variable, timeout, socket_, std::move(callback)
+	);
 }
 
 void Client::writeByteVariable(int index, std::uint8_t value, std::chrono::milliseconds timeout, std::function<void(ErrorOr<void>)> callback) {
-	impl::sendCommand(encodeWriteInt8Variable(request_id_++, index, value), decodeWriteInt8Variable, timeout, socket_, callback);
+	impl::sendCommand(
+		encodeWriteInt8Variable(request_id_++, index, value),
+		decodeWriteVariable, timeout, socket_, callback
+	);
 }
 
+// Integer (16 bit) variables.
+
 void Client::readInt16Variable(int index, std::chrono::milliseconds timeout, std::function<void (ErrorOr<std::int16_t>)> callback) {
-	impl::sendCommand(encodeReadInt16Variable(request_id_++, index), decodeReadInt16Variable, timeout, socket_, std::move(callback));
+	impl::sendCommand(
+		encodeReadVariable(
+			request_id_++,
+			index,
+			commands::robot::readwrite_int16_variable
+		),
+		decodeReadInt16Variable, timeout, socket_, std::move(callback)
+	);
 }
 
 void Client::writeInt16Variable(int index, std::int16_t value, std::chrono::milliseconds timeout, std::function<void(ErrorOr<void>)> callback) {
-	impl::sendCommand(encodeWriteInt16Variable(request_id_++, index, value), decodeWriteInt16Variable, timeout, socket_, callback);
+	impl::sendCommand(
+		encodeWriteInt16Variable(request_id_++, index, value),
+		decodeWriteVariable, timeout, socket_, std::move(callback)
+	);
 }
 
+// Integer (32 bit) variables.
+
 void Client::readInt32Variable(int index, std::chrono::milliseconds timeout, std::function<void (ErrorOr<std::int32_t>)> callback) {
-	impl::sendCommand(encodeReadInt32Variable(request_id_++, index), decodeReadInt32Variable, timeout, socket_, std::move(callback));
+	impl::sendCommand(
+		encodeReadVariable(
+			request_id_++,
+			index,
+			commands::robot::readwrite_int32_variable
+		),
+		decodeReadInt32Variable, timeout, socket_, std::move(callback)
+	);
 }
 
 void Client::writeInt32Variable(int index, std::int32_t value, std::chrono::milliseconds timeout, std::function<void(ErrorOr<void>)> callback) {
-	impl::sendCommand(encodeWriteInt32Variable(request_id_++, index, value), decodeWriteInt32Variable, timeout, socket_, callback);
+	impl::sendCommand(
+		encodeWriteInt32Variable(request_id_++, index, value),
+		decodeWriteVariable, timeout, socket_, std::move(callback)
+	);
 }
 
+// Float (32 bit) variables.
+
 void Client::readFloat32Variable(int index, std::chrono::milliseconds timeout, std::function<void (ErrorOr<float>)> callback) {
-	impl::sendCommand(encodeReadFloat32Variable(request_id_++, index), decodeReadFloat32Variable, timeout, socket_, std::move(callback));
+	impl::sendCommand(
+		encodeReadVariable(
+			request_id_++,
+			index,
+			commands::robot::readwrite_float_variable
+		),
+		decodeReadFloat32Variable, timeout, socket_, std::move(callback)
+	);
 }
 
 void Client::writeFloat32Variable(int index, float value, std::chrono::milliseconds timeout, std::function<void(ErrorOr<void>)> callback) {
-	impl::sendCommand(encodeWriteFloat32Variable(request_id_++, index, value), decodeWriteFloat32Variable, timeout, socket_, callback);
+	impl::sendCommand(
+		encodeWriteFloat32Variable(request_id_++, index, value),
+		decodeWriteVariable, timeout, socket_, std::move(callback)
+	);
+}
+
+// Robot position variables.
+
+void Client::readRobotPositionVariable(int index, std::chrono::milliseconds timeout, std::function<void(ErrorOr<Position>)> callback) {
+	impl::sendCommand(
+		encodeReadVariable(
+			request_id_++,
+			index,
+			commands::robot::readwrite_robot_position_variable
+		),
+		decodeReadPositionVariable, timeout, socket_, std::move(callback)
+	);
+}
+
+void Client::writeRobotPositionVariable(int index, Position value, std::chrono::milliseconds timeout, std::function<void(ErrorOr<void>)> callback) {
+	impl::sendCommand(
+		encodeWritePositionVariable(request_id_++, index, value, commands::robot::readwrite_robot_position_variable),
+		decodeWriteVariable, timeout, socket_, std::move(callback)
+	);
+
 }
 
 }}}

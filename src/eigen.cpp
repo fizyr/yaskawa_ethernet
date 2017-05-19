@@ -18,11 +18,11 @@ Eigen::Isometry3d toEigen(CartesianPosition const & position) {
 		;
 }
 
-CartesianPosition toCartesian(Eigen::Isometry3d const & pose, CoordinateSystem system, int tool, CartesianPoseType type) {
+CartesianPosition toCartesian(Eigen::Isometry3d const & pose, CoordinateSystem frame, int tool, PoseConfiguration configuration) {
 	CartesianPosition result;
-	result.system = system;
-	result.tool   = tool;
-	result.type   = type;
+	result.frame()         = frame;
+	result.tool()          = tool;
+	result.configuration() = configuration;
 
 	Eigen::Vector3d angles = pose.rotation().eulerAngles(2, 1, 0);
 	result.x() = pose.translation().x() * 1000;

@@ -1,5 +1,6 @@
 #pragma once
 #include "../error.hpp"
+#include "../types.hpp"
 
 #include <boost/asio/io_service.hpp>
 #include <boost/asio/ip/udp.hpp>
@@ -71,6 +72,9 @@ public:
 
 	void readFloat32Variable(int index, std::chrono::milliseconds timeout, std::function<void(ErrorOr<float>)> callback);
 	void writeFloat32Variable(int index, float value, std::chrono::milliseconds timeout, std::function<void(ErrorOr<void>)> callback);
+
+	void readRobotPositionVariable (int index, std::chrono::milliseconds timeout, std::function<void(ErrorOr<Position>)> callback);
+	void writeRobotPositionVariable(int index, Position value, std::chrono::milliseconds timeout, std::function<void(ErrorOr<void>)> callback);
 };
 
 }}}

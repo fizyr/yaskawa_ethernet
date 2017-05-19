@@ -25,13 +25,15 @@ find_package(Eigen3)
 
 # Library
 add_library(${PROJECT_NAME}
-	src/tcp/client.cpp
-	src/tcp/encode.cpp
-	src/tcp/decode.cpp
-	src/udp/client.cpp
-	src/udp/protocol.cpp
-	src/error.cpp
 	src/eigen.cpp
+	src/error.cpp
+	src/tcp/client.cpp
+	src/tcp/decode.cpp
+	src/tcp/encode.cpp
+	src/udp/client.cpp
+	src/udp/decode.cpp
+	src/udp/encode.cpp
+	src/udp/protocol.cpp
 )
 
 target_include_directories(${PROJECT_NAME}

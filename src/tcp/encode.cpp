@@ -17,14 +17,14 @@ std::ostream & operator<<(std::ostream & stream, PulsePosition const & position)
 }
 
 std::ostream & operator<<(std::ostream & stream, CartesianPosition const & position) {
-	stream << int(position.system) << ",";
+	stream << int(position.frame()) << ",";
 	for (int i = 0; i < 3; ++i) {
 		stream << std::setprecision(3) << std::fixed << position[i] << ",";
 	}
 	for (int i = 3; i < 6; ++i) {
 		stream << std::setprecision(4) << std::fixed << position[i] << ",";
 	}
-	stream << int(position.type) << "," << int(position.tool);
+	stream << int(position.configuration()) << "," << int(position.tool());
 	return stream;
 
 }
