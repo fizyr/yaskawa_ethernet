@@ -1,5 +1,6 @@
 #pragma once
-#include "../commands.hpp"
+#include "commands.hpp"
+#include "../types.hpp"
 #include "../error.hpp"
 #include "../string_view.hpp"
 
@@ -12,22 +13,50 @@ namespace dr {
 namespace yaskawa {
 namespace udp {
 
-std::vector<std::uint8_t> encodeReadVariable(std::uint8_t request_id, int index, std::uint16_t command);
-ErrorOr<void> decodeWriteVariable(string_view message);
+struct ByteVariable {
+	using type = std::uint8_t;
+	constexpr static std::uint16_t command_single   = commands::robot::readwrite_int8_variable;
+	constexpr static std::uint16_t command_multiple = commands::robot::readwrite_multiple_int8;
+	constexpr static std::size_t encoded_size = 1;
+	static void encode(std::vector<std::uint8_t> & output, std::uint8_t value);
+	static ErrorOr<std::uint8_t> decode(string_view data);
+};
 
-ErrorOr<std::uint8_t> decodeReadInt8Variable(string_view message);
-std::vector<std::uint8_t> encodeWriteInt8Variable(std::uint8_t request_id, int index, std::uint8_t value);
+struct Int16Variable {
+	using type = std::int16_t;
+	constexpr static std::uint16_t command_single   = commands::robot::readwrite_int16_variable;
+	constexpr static std::uint16_t command_multiple = commands::robot::readwrite_multiple_int16;
+	constexpr static std::size_t encoded_size = 2;
+	static void encode(std::vector<std::uint8_t> & output, type value);
+	static ErrorOr<type> decode(string_view data);
+};
 
-ErrorOr<std::int16_t> decodeReadInt16Variable(string_view message);
-std::vector<std::uint8_t> encodeWriteInt16Variable(std::uint8_t request_id, int index, std::int16_t value);
+struct Int32Variable {
+	using type = std::int32_t;
+	constexpr static std::uint16_t command_single   = commands::robot::readwrite_int32_variable;
+	constexpr static std::uint16_t command_multiple = commands::robot::readwrite_multiple_int32;
+	constexpr static std::size_t encoded_size = 4;
+	static void encode(std::vector<std::uint8_t> & output, std::int32_t value);
+	static ErrorOr<std::int32_t> decode(string_view data);
+};
 
-ErrorOr<std::int32_t> decodeReadInt32Variable(string_view message);
-std::vector<std::uint8_t> encodeWriteInt32Variable(std::uint8_t request_id, int index, std::int32_t value);
+struct Float32Variable {
+	using type = float;
+	constexpr static std::uint16_t command_single   = commands::robot::readwrite_float_variable;
+	constexpr static std::uint16_t command_multiple = commands::robot::readwrite_multiple_float;
+	constexpr static std::size_t encoded_size = 4;
+	static void encode(std::vector<std::uint8_t> & output, float value);
+	static ErrorOr<float> decode(string_view data);
+};
 
-ErrorOr<float> decodeReadFloat32Variable(string_view message);
-std::vector<std::uint8_t> encodeWriteFloat32Variable(std::uint8_t request_id, int index, float value);
+struct PositionVariable {
+	using type = Position;
+	constexpr static std::uint16_t command_single   = commands::robot::readwrite_robot_position_variable;
+	constexpr static std::uint16_t command_multiple = commands::robot::readwrite_multiple_robot_position;
+	constexpr static std::size_t encoded_size = 13 * 4;
+	static void encode(std::vector<std::uint8_t> & output, Position const & value);
+	static ErrorOr<Position> decode(string_view data);
+};
 
-ErrorOr<Position> decodeReadPositionVariable(string_view message);
-std::vector<std::uint8_t> encodeWritePositionVariable(std::uint8_t request_id, int index, Position const & value, std::uint16_t command);
 
 }}}

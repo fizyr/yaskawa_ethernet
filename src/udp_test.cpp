@@ -52,7 +52,7 @@ void onWriteByte(dr::ErrorOr<void> result) {
 	} else {
 		++command_count;
 	}
-	client->readByteVariable(5, 100ms, onReadByte);
+	client->readByte(5, 100ms, onReadByte);
 }
 
 void onReadByte(dr::ErrorOr<std::uint8_t> result) {
@@ -63,7 +63,7 @@ void onReadByte(dr::ErrorOr<std::uint8_t> result) {
 		if (*result != byte_value) std::cout << "Read wrong byte value: " << int(*result) << ", expected " << byte_value << ".\n";
 		++byte_value;
 	}
-	client->writeInt16Variable(6, int16_value, 100ms, onWriteInt16);
+	client->writeInt16(6, int16_value, 100ms, onWriteInt16);
 }
 
 void onWriteInt16(dr::ErrorOr<void> result) {
@@ -72,7 +72,7 @@ void onWriteInt16(dr::ErrorOr<void> result) {
 	} else {
 		++command_count;
 	}
-	client->readInt16Variable(6, 100ms, onReadInt16);
+	client->readInt16(6, 100ms, onReadInt16);
 }
 
 void onReadInt16(dr::ErrorOr<std::int16_t> result) {
@@ -83,7 +83,7 @@ void onReadInt16(dr::ErrorOr<std::int16_t> result) {
 		if (*result != int16_value) std::cout << "Read wrong int16 value: " << int(*result) << ", expected " << int16_value << ".\n";
 		++int16_value;
 	}
-	client->writeInt32Variable(7, int32_value, 100ms, onWriteInt32);
+	client->writeInt32(7, int32_value, 100ms, onWriteInt32);
 }
 
 void onWriteInt32(dr::ErrorOr<void> result) {
@@ -92,7 +92,7 @@ void onWriteInt32(dr::ErrorOr<void> result) {
 	} else {
 		++command_count;
 	}
-	client->readInt32Variable(7, 100ms, onReadInt32);
+	client->readInt32(7, 100ms, onReadInt32);
 }
 
 void onReadInt32(dr::ErrorOr<std::int32_t> result) {
@@ -103,7 +103,7 @@ void onReadInt32(dr::ErrorOr<std::int32_t> result) {
 		if (*result != int32_value) std::cout << "Read wrong int32 value: " << int(*result) << ", expected " << int32_value << ".\n";
 		++int32_value;
 	}
-	client->writeFloat32Variable(8, float32_value, 100ms, onWriteFloat);
+	client->writeFloat32(8, float32_value, 100ms, onWriteFloat);
 }
 
 void onWriteFloat(dr::ErrorOr<void> result) {
@@ -112,7 +112,7 @@ void onWriteFloat(dr::ErrorOr<void> result) {
 	} else {
 		++command_count;
 	}
-	client->readFloat32Variable(8, 100ms, onReadFloat);
+	client->readFloat32(8, 100ms, onReadFloat);
 }
 
 void onReadFloat(dr::ErrorOr<float> result) {
@@ -123,7 +123,7 @@ void onReadFloat(dr::ErrorOr<float> result) {
 		if (*result != float32_value) std::cout << "Read wrong float32 value: " << (*result) << ", expected " << float32_value << ".\n";
 		++float32_value;
 	}
-	client->writeRobotPositionVariable(9, positions[position_index], 100ms, onWritePosition);
+	client->writeRobotPosition(9, positions[position_index], 100ms, onWritePosition);
 }
 
 void onWritePosition(dr::ErrorOr<void> result) {
@@ -132,7 +132,7 @@ void onWritePosition(dr::ErrorOr<void> result) {
 	} else {
 		++command_count;
 	}
-	client->readRobotPositionVariable(9, 100ms, onReadPosition);
+	client->readRobotPosition(9, 100ms, onReadPosition);
 }
 
 void onReadPosition(dr::ErrorOr<Position> const & result) {
@@ -147,7 +147,7 @@ void onReadPosition(dr::ErrorOr<Position> const & result) {
 		}
 	}
 	position_index = (position_index + 1) % positions.size();
-	client->writeByteVariable(5, byte_value, 100ms, onWriteByte);
+	client->writeByte(5, byte_value, 100ms, onWriteByte);
 }
 
 void onConnect(std::error_code const & error) {
@@ -156,7 +156,7 @@ void onConnect(std::error_code const & error) {
 		return;
 	}
 	std::cout << "Connected to " << client->socket().remote_endpoint() << ".\n";
-	client->writeByteVariable(5, byte_value, 100ms, onWriteByte);
+	client->writeByte(5, byte_value, 100ms, onWriteByte);
 	timer->async_wait(onTimeout);
 }
 

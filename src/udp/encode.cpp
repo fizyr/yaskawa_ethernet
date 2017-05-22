@@ -1,4 +1,5 @@
 #include "encode.hpp"
+#include "udp/protocol.hpp"
 
 namespace dr {
 namespace yaskawa {
@@ -71,6 +72,16 @@ RequestHeader makeRobotRequestHeader(
 	return header;
 }
 
+std::uint32_t encodeFrameType(CoordinateSystem frame) {
+	if (isUserCoordinateSystem(frame)) return 19;
+	switch (frame) {
+		case CoordinateSystem::base:  return 16;
+		case CoordinateSystem::robot: return 17;
+		case CoordinateSystem::tool:  return 18;
+		default: throw std::logic_error("unknown coordinate system type: " + std::to_string(int(frame)));
+	}
+}
+
 void encodePulsePosition(std::vector<std::uint8_t> & out, PulsePosition const & position) {
 	// Position type: pulse.
 	writeLittleEndian<std::uint32_t>(out, 0);
@@ -87,16 +98,6 @@ void encodePulsePosition(std::vector<std::uint8_t> & out, PulsePosition const & 
 	// Padding (robot wants 8 coordinates).
 	for (unsigned int i = position.joints().size(); i < 8; ++i) {
 		writeLittleEndian<std::int32_t>(out, 0);
-	}
-}
-
-std::uint32_t encodeFrameType(CoordinateSystem frame) {
-	if (isUserCoordinateSystem(frame)) return 19;
-	switch (frame) {
-		case CoordinateSystem::base:  return 16;
-		case CoordinateSystem::robot: return 17;
-		case CoordinateSystem::tool:  return 18;
-		default: throw std::logic_error("unknown coordinate system type: " + std::to_string(int(frame)));
 	}
 }
 
@@ -122,11 +123,6 @@ void encodeCartesianPosition(std::vector<std::uint8_t> & out, CartesianPosition 
 	// Padding (robot wants 8 coordinates).
 	writeLittleEndian<std::int32_t>(out, 0);
 	writeLittleEndian<std::int32_t>(out, 0);
-}
-
-void encodePosition(std::vector<std::uint8_t> & out, Position const & position) {
-	if (position.isPulse()) encodePulsePosition(out, position.pulse());
-	else encodeCartesianPosition(out, position.cartesian());
 }
 
 }}}

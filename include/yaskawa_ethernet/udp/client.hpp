@@ -61,20 +61,20 @@ public:
 	Socket        & socket()       { return socket_; }
 	Socket const  & socket() const { return socket_; }
 
-	void readByteVariable(int index, std::chrono::milliseconds timeout, std::function<void(ErrorOr<std::uint8_t>)> callback);
-	void writeByteVariable(int index, std::uint8_t value, std::chrono::milliseconds timeout, std::function<void(ErrorOr<void>)> callback);
+	void readByte(int index, std::chrono::milliseconds timeout, std::function<void(ErrorOr<std::uint8_t>)> callback);
+	void writeByte(int index, std::uint8_t value, std::chrono::milliseconds timeout, std::function<void(ErrorOr<void>)> callback);
 
-	void readInt16Variable(int index, std::chrono::milliseconds timeout, std::function<void(ErrorOr<std::int16_t>)> callback);
-	void writeInt16Variable(int index, std::int16_t value, std::chrono::milliseconds timeout, std::function<void(ErrorOr<void>)> callback);
+	void readInt16(int index, std::chrono::milliseconds timeout, std::function<void(ErrorOr<std::int16_t>)> callback);
+	void writeInt16(int index, std::int16_t value, std::chrono::milliseconds timeout, std::function<void(ErrorOr<void>)> callback);
 
-	void readInt32Variable(int index, std::chrono::milliseconds timeout, std::function<void(ErrorOr<std::int32_t>)> callback);
-	void writeInt32Variable(int index, std::int32_t value, std::chrono::milliseconds timeout, std::function<void(ErrorOr<void>)> callback);
+	void readInt32(int index, std::chrono::milliseconds timeout, std::function<void(ErrorOr<std::int32_t>)> callback);
+	void writeInt32(int index, std::int32_t value, std::chrono::milliseconds timeout, std::function<void(ErrorOr<void>)> callback);
 
-	void readFloat32Variable(int index, std::chrono::milliseconds timeout, std::function<void(ErrorOr<float>)> callback);
-	void writeFloat32Variable(int index, float value, std::chrono::milliseconds timeout, std::function<void(ErrorOr<void>)> callback);
+	void readFloat32(int index, std::chrono::milliseconds timeout, std::function<void(ErrorOr<float>)> callback);
+	void writeFloat32(int index, float value, std::chrono::milliseconds timeout, std::function<void(ErrorOr<void>)> callback);
 
-	void readRobotPositionVariable (int index, std::chrono::milliseconds timeout, std::function<void(ErrorOr<Position>)> callback);
-	void writeRobotPositionVariable(int index, Position value, std::chrono::milliseconds timeout, std::function<void(ErrorOr<void>)> callback);
+	void readRobotPosition(int index, std::chrono::milliseconds timeout, std::function<void(ErrorOr<Position>)> callback);
+	void writeRobotPosition(int index, Position value, std::chrono::milliseconds timeout, std::function<void(ErrorOr<void>)> callback);
 };
 
 }}}

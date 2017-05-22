@@ -10,10 +10,12 @@ enum class Division {
 };
 
 namespace service {
-	constexpr std::uint8_t get_single = 0x0e;
-	constexpr std::uint8_t set_single = 0x10;
-	constexpr std::uint8_t get_all    = 0x01;
-	constexpr std::uint8_t set_all    = 0x02;
+	constexpr std::uint8_t get_single     = 0x0e;
+	constexpr std::uint8_t set_single     = 0x10;
+	constexpr std::uint8_t get_all        = 0x01;
+	constexpr std::uint8_t set_all        = 0x02;
+	constexpr std::uint8_t read_multiple  = 0x33;
+	constexpr std::uint8_t write_multiple = 0x34;
 }
 
 struct Header {

@@ -1,4 +1,5 @@
 #include "decode.hpp"
+#include "udp/protocol.hpp"
 
 namespace dr {
 namespace yaskawa {
@@ -103,55 +104,18 @@ ErrorOr<ResponseHeader> decodeResponseHeader(string_view & data) {
 	return result;
 }
 
-namespace {
-	ErrorOr<CoordinateSystem> decodeCartesianFrame(int type, int user_frame) {
-		switch (type) {
-			case 16: return CoordinateSystem::base;
-			case 17: return CoordinateSystem::robot;
-			case 18: return CoordinateSystem::tool;
-			case 19:
-				if (user_frame > 15) {
-					return maximumExceeded("user frame", user_frame, 15);
-				}
-				return userCoordinateSystem(user_frame);
-		}
-		return malformedResponse("unknown position type (" + std::to_string(type) + "), expected 16, 17, 18 or 19");
+ErrorOr<CoordinateSystem> decodeCartesianFrame(int type, int user_frame) {
+	switch (type) {
+		case 16: return CoordinateSystem::base;
+		case 17: return CoordinateSystem::robot;
+		case 18: return CoordinateSystem::tool;
+		case 19:
+			if (user_frame > 15) {
+				return maximumExceeded("user frame", user_frame, 15);
+			}
+			return userCoordinateSystem(user_frame);
 	}
-}
-
-/// Decode a position variable.
-ErrorOr<Position> decodePositionVariable(string_view data) {
-	if (data.size() != 13 * 4) return unexpectedValue("message size", data.size(), 13 * 4);
-	std::uint32_t type                   = readLittleEndian<std::uint32_t>(data);
-	std::uint8_t  configuration          = readLittleEndian<std::uint32_t>(data);
-	std::uint32_t tool                   = readLittleEndian<std::uint32_t>(data);
-	std::uint32_t user_frame             = readLittleEndian<std::uint32_t>(data);
-	std::uint8_t  extended_configuration = readLittleEndian<std::uint32_t>(data);
-
-	// Extended joint configuration is not supported.
-	(void) extended_configuration;
-
-	// Pulse position.
-	if (type == 0) {
-		PulsePosition result(8, tool);
-		for (int i = 0; i < 8; ++i) result.joints()[i] = readLittleEndian<std::int32_t>(data);
-		return Position{result};
-	}
-
-	ErrorOr<CoordinateSystem> frame = decodeCartesianFrame(type, user_frame);
-	if (!frame) return frame.error();
-
-	// Cartesian position.
-	// Position data is in micrometers.
-	// Rotation data is in 0.0001 degrees.
-	return Position{CartesianPosition{ {{
-		readLittleEndian<std::int32_t>(data) / 1000.0,
-		readLittleEndian<std::int32_t>(data) / 1000.0,
-		readLittleEndian<std::int32_t>(data) / 1000.0,
-		readLittleEndian<std::int32_t>(data) / 10000.0,
-		readLittleEndian<std::int32_t>(data) / 10000.0,
-		readLittleEndian<std::int32_t>(data) / 10000.0,
-	}}, *frame, PoseConfiguration(configuration), int(tool)}};
+	return malformedResponse("unknown position type (" + std::to_string(type) + "), expected 16, 17, 18 or 19");
 }
 
 }}}

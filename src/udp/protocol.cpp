@@ -9,92 +9,62 @@ namespace dr {
 namespace yaskawa {
 namespace udp {
 
-// write variable response
-std::vector<std::uint8_t> encodeReadVariable(std::uint8_t request_id, int index, std::uint16_t command) {
-	return encodeRequestHeader(makeRobotRequestHeader(0, command, index, 0, service::get_all, request_id));
+void  ByteVariable::encode(std::vector<std::uint8_t> & out, std::uint8_t value) { writeLittleEndian<std::uint8_t>(out, value); }
+void Int16Variable::encode(std::vector<std::uint8_t> & out, std::int16_t value) { writeLittleEndian<std::int16_t>(out, value); }
+void Int32Variable::encode(std::vector<std::uint8_t> & out, std::int32_t value) { writeLittleEndian<std::int32_t>(out, value); }
+
+ErrorOr<std::uint8_t>  ByteVariable::decode(string_view message) { return decodeIntegral< ByteVariable>(message, "byte"); }
+ErrorOr<std::int16_t> Int16Variable::decode(string_view message) { return decodeIntegral<Int16Variable>(message, "int16"); }
+ErrorOr<std::int32_t> Int32Variable::decode(string_view message) { return decodeIntegral<Int32Variable>(message, "int32"); }
+
+void Float32Variable::encode(std::vector<std::uint8_t> & out, float value) {
+	writeLittleEndian<std::uint32_t>(out, reinterpret_cast<std::uint32_t &>(value));
 }
 
-ErrorOr<void> decodeWriteVariable(string_view message) {
-	ErrorOr<ResponseHeader> header = decodeResponseHeader(message);
-	if (!header) return header.error();
-	if (header->payload_size != 0) return unexpectedValue("payload size", header->payload_size, 0);
-	return dr::in_place_valid;
+ErrorOr<float> Float32Variable::decode(string_view message) {
+	if (message.size() != encoded_size) return unexpectedValue("float size", message.size(), encoded_size);
+	std::int32_t parsed = readLittleEndian<std::int32_t>(message);
+	return reinterpret_cast<float &>(parsed);
 }
 
-// byte variables
-
-ErrorOr<std::uint8_t> decodeReadInt8Variable(string_view message) {
-	ErrorOr<ResponseHeader> header = decodeResponseHeader(message);
-	if (!header) return header.error();
-	if (header->payload_size != 1) return unexpectedValue("payload size", header->payload_size, 1);
-	return readLittleEndian<std::uint8_t>(message);
+void PositionVariable::encode(std::vector<std::uint8_t> & out, Position const & position) {
+	if (position.isPulse()) encodePulsePosition(out, position.pulse());
+	else encodeCartesianPosition(out, position.cartesian());
 }
 
-std::vector<std::uint8_t> encodeWriteInt8Variable(std::uint8_t request_id, int index, std::uint8_t value) {
-	std::vector<std::uint8_t> result = encodeRequestHeader(makeRobotRequestHeader(1, commands::robot::readwrite_int8_variable, index, 1, service::set_all, request_id));
-	writeLittleEndian<std::uint8_t>(result, value);
-	return result;
-}
+/// Decode a position variable.
+ErrorOr<Position> PositionVariable::decode(string_view data) {
+	if (data.size() != 13 * 4) return unexpectedValue("message size", data.size(), 13 * 4);
+	std::uint32_t type                   = readLittleEndian<std::uint32_t>(data);
+	std::uint8_t  configuration          = readLittleEndian<std::uint32_t>(data);
+	std::uint32_t tool                   = readLittleEndian<std::uint32_t>(data);
+	std::uint32_t user_frame             = readLittleEndian<std::uint32_t>(data);
+	std::uint8_t  extended_configuration = readLittleEndian<std::uint32_t>(data);
 
-// int (16 bit) variables
+	// Extended joint configuration is not supported.
+	(void) extended_configuration;
 
-ErrorOr<std::int16_t> decodeReadInt16Variable(string_view message) {
-	ErrorOr<ResponseHeader> header = decodeResponseHeader(message);
-	if (!header) return header.error();
-	if (header->payload_size != 2) return unexpectedValue("payload size", header->payload_size, 2);
-	return readLittleEndian<std::int16_t>(message);
-}
+	// Pulse position.
+	if (type == 0) {
+		PulsePosition result(8, tool);
+		for (int i = 0; i < 8; ++i) result.joints()[i] = readLittleEndian<std::int32_t>(data);
+		return Position{result};
+	}
 
-std::vector<std::uint8_t> encodeWriteInt16Variable(std::uint8_t request_id, int index, std::int16_t value) {
-	std::vector<std::uint8_t> result = encodeRequestHeader(makeRobotRequestHeader(2, commands::robot::readwrite_int16_variable, index, 1, service::set_all, request_id));
-	writeLittleEndian<std::int16_t>(result, value);
-	return result;
-}
+	ErrorOr<CoordinateSystem> frame = decodeCartesianFrame(type, user_frame);
+	if (!frame) return frame.error();
 
-// double int (32 bit) variables
-
-ErrorOr<std::int32_t> decodeReadInt32Variable(string_view message) {
-	ErrorOr<ResponseHeader> header = decodeResponseHeader(message);
-	if (!header) return header.error();
-	if (header->payload_size != 4) return unexpectedValue("payload size", header->payload_size, 4);
-	return readLittleEndian<std::int32_t>(message);
-}
-
-std::vector<std::uint8_t> encodeWriteInt32Variable(std::uint8_t request_id, int index, std::int32_t value) {
-	std::vector<std::uint8_t> result = encodeRequestHeader(makeRobotRequestHeader(4, commands::robot::readwrite_int32_variable, index, 1, service::set_all, request_id));
-	writeLittleEndian<std::int32_t>(result, value);
-	return result;
-}
-
-// real (32 bit float?) variables
-
-ErrorOr<float> decodeReadFloat32Variable(string_view message) {
-	ErrorOr<ResponseHeader> header = decodeResponseHeader(message);
-	if (!header) return header.error();
-	if (header->payload_size != 4) return unexpectedValue("payload size", header->payload_size, 4);
-	std::uint32_t value = readLittleEndian<std::uint32_t>(message);
-	return reinterpret_cast<float &>(value);
-}
-
-std::vector<std::uint8_t> encodeWriteFloat32Variable(std::uint8_t request_id, int index, float value) {
-	std::vector<std::uint8_t> result = encodeRequestHeader(makeRobotRequestHeader(4, commands::robot::readwrite_float_variable, index, 1, service::set_all, request_id));
-	writeLittleEndian<std::uint32_t>(result, reinterpret_cast<std::uint32_t &>(value));
-	return result;
-}
-
-// position variables
-
-ErrorOr<Position> decodeReadPositionVariable(string_view message) {
-	ErrorOr<ResponseHeader> header = decodeResponseHeader(message);
-	if (!header) return header.error();
-	if (header->payload_size != 13 * 4) return unexpectedValue("payload size", header->payload_size, 13 * 4);
-	return decodePositionVariable(message);
-}
-
-std::vector<std::uint8_t> encodeWritePositionVariable(std::uint8_t request_id, int index, Position const & value, std::uint16_t command) {
-	std::vector<std::uint8_t> result = encodeRequestHeader(makeRobotRequestHeader(13 * 4, command, index, 0, service::set_all, request_id));
-	encodePosition(result, value);
-	return result;
+	// Cartesian position.
+	// Position data is in micrometers.
+	// Rotation data is in 0.0001 degrees.
+	return Position{CartesianPosition{ {{
+		readLittleEndian<std::int32_t>(data) / 1000.0,
+		readLittleEndian<std::int32_t>(data) / 1000.0,
+		readLittleEndian<std::int32_t>(data) / 1000.0,
+		readLittleEndian<std::int32_t>(data) / 10000.0,
+		readLittleEndian<std::int32_t>(data) / 10000.0,
+		readLittleEndian<std::int32_t>(data) / 10000.0,
+	}}, *frame, PoseConfiguration(configuration), int(tool)}};
 }
 
 }}}
