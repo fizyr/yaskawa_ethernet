@@ -178,6 +178,6 @@ int main(int argc, char * * argv) {
 	if (argc > 1) host = argv[1];
 	if (argc > 2) port = argv[2];
 
-	client.connect(host, port, 1500, onConnect);
+	client.connect(host, port, 1500ms, onConnect);
 	ios.run();
 }

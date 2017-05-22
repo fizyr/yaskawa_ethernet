@@ -40,13 +40,13 @@ public:
 
 	/// Start the connection attempt.
 	void start(
-		Query query,         ///< The resolver query.
-		unsigned int timeout ///< Time timout for the full connection attempt in milliseconds, or 0 for no timeout.
+		Query query,                      ///< The resolver query.
+		std::chrono::milliseconds timeout ///< Time timout for the full connection attempt in milliseconds, or 0 for no timeout.
 	) {
 		auto callback = std::bind(&ConnectionAttempt::onResolve, this, self(), std::placeholders::_1, std::placeholders::_2);
 		resolver.async_resolve(query, callback);
-		if (timeout) {
-			timer.expires_from_now(std::chrono::milliseconds(timeout));
+		if (timeout.count()) {
+			timer.expires_from_now(timeout);
 			timer.async_wait(std::bind(&ConnectionAttempt::onConnectTimeout, this, self(), std::placeholders::_1));
 		}
 	}
@@ -97,10 +97,10 @@ protected:
 /// Perform an asynchronous connection attempt.
 template<typename Socket, typename Callback, typename Resolver = typename Socket::protocol_type::resolver>
 void asyncResolveConnect(
-	typename Resolver::query query,  ///< The resolver query.
-	unsigned int timeout,            ///< The timeout in milliseconds, or 0 for no timeout.
-	Socket & socket,                 ///< The socket to connect with.
-	Callback callback                ///< The callback to invoke on success, failure or timeout.
+	typename Resolver::query query,    ///< The resolver query.
+	std::chrono::milliseconds timeout, ///< The timeout in milliseconds, or 0 for no timeout.
+	Socket & socket,                   ///< The socket to connect with.
+	Callback callback                  ///< The callback to invoke on success, failure or timeout.
 ) {
 	auto connection_attempt = std::make_shared<ConnectionAttempt<Socket, Callback, Resolver>>(socket, callback);
 	connection_attempt->start(query, timeout);

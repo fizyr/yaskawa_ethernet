@@ -37,18 +37,18 @@ public:
 
 	/// Open a connection.
 	void connect(
-		std::string const & host,   ///< Hostname or IP address to connect to.
-		std::string const & port,   ///< Port number or service name to connect to.
-		unsigned int timeout,       ///< Timeout for the connection attempt in milliseconds.
-		Callback const & callback   ///< Callback to call when the connection attempt finished.
+		std::string const & host,          ///< Hostname or IP address to connect to.
+		std::string const & port,          ///< Port number or service name to connect to.
+		std::chrono::milliseconds timeout, ///< Timeout for the connection attempt in milliseconds.
+		Callback const & callback          ///< Callback to call when the connection attempt finished.
 	);
 
 	/// Open a connection.
 	void connect(
-		std::string const & host,   ///< Hostname or IP address to connect to.
-		std::uint16_t port,         ///< Port number to connect to.
-		unsigned int timeout,       ///< Timeout for the connection attempt in milliseconds.
-		Callback const & callback   ///< Callback to call when the connection attempt finished.
+		std::string const & host,          ///< Hostname or IP address to connect to.
+		std::uint16_t port,                ///< Port number to connect to.
+		std::chrono::milliseconds timeout, ///< Timeout for the connection attempt in milliseconds.
+		Callback const & callback          ///< Callback to call when the connection attempt finished.
 	);
 
 	/// Close the connection.

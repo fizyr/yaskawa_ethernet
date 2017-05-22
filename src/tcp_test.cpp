@@ -6,6 +6,8 @@
 #include <iostream>
 #include <chrono>
 
+using namespace std::chrono_literals;
+
 dr::yaskawa::tcp::Client * client;
 int read_count = 0;
 boost::asio::steady_timer * timer;
@@ -62,6 +64,6 @@ int main(int argc, char * * argv) {
 	if (argc > 1) host = argv[1];
 	if (argc > 2) port = argv[2];
 
-	client.connect(host, port, 1500, onConnect);
+	client.connect(host, port, 1500ms, onConnect);
 	ios.run();
 }
