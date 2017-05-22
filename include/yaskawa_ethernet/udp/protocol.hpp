@@ -19,7 +19,7 @@ struct ByteVariable {
 	constexpr static std::uint16_t command_multiple = commands::robot::readwrite_multiple_int8;
 	constexpr static std::size_t encoded_size = 1;
 	static void encode(std::vector<std::uint8_t> & output, std::uint8_t value);
-	static ErrorOr<std::uint8_t> decode(string_view data);
+	static ErrorOr<std::uint8_t> decode(string_view & data);
 };
 
 struct Int16Variable {
@@ -28,7 +28,7 @@ struct Int16Variable {
 	constexpr static std::uint16_t command_multiple = commands::robot::readwrite_multiple_int16;
 	constexpr static std::size_t encoded_size = 2;
 	static void encode(std::vector<std::uint8_t> & output, type value);
-	static ErrorOr<type> decode(string_view data);
+	static ErrorOr<type> decode(string_view & data);
 };
 
 struct Int32Variable {
@@ -37,7 +37,7 @@ struct Int32Variable {
 	constexpr static std::uint16_t command_multiple = commands::robot::readwrite_multiple_int32;
 	constexpr static std::size_t encoded_size = 4;
 	static void encode(std::vector<std::uint8_t> & output, std::int32_t value);
-	static ErrorOr<std::int32_t> decode(string_view data);
+	static ErrorOr<std::int32_t> decode(string_view & data);
 };
 
 struct Float32Variable {
@@ -46,7 +46,7 @@ struct Float32Variable {
 	constexpr static std::uint16_t command_multiple = commands::robot::readwrite_multiple_float;
 	constexpr static std::size_t encoded_size = 4;
 	static void encode(std::vector<std::uint8_t> & output, float value);
-	static ErrorOr<float> decode(string_view data);
+	static ErrorOr<float> decode(string_view & data);
 };
 
 struct PositionVariable {
@@ -55,7 +55,7 @@ struct PositionVariable {
 	constexpr static std::uint16_t command_multiple = commands::robot::readwrite_multiple_robot_position;
 	constexpr static std::size_t encoded_size = 13 * 4;
 	static void encode(std::vector<std::uint8_t> & output, Position const & value);
-	static ErrorOr<Position> decode(string_view data);
+	static ErrorOr<Position> decode(string_view & data);
 };
 
 

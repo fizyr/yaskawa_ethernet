@@ -27,7 +27,7 @@ namespace impl {
  */
 template<typename Decoder, typename Socket, typename Callback>
 class CommandSession : public std::enable_shared_from_this<CommandSession<Decoder, Socket, Callback>> {
-	using Response = decltype(std::declval<Decoder>()(string_view{}));
+	using Response = decltype(std::declval<Decoder>()(std::declval<string_view &>()));
 	using Ptr      = std::shared_ptr<CommandSession>;
 
 	Socket * socket;
@@ -79,7 +79,8 @@ protected:
 		timer.cancel();
 		read_buffer.resize(bytes_transferred);
 		if (error) return callback(DetailedError(std::errc(error.value())));
-		Response response = decoder(string_view{reinterpret_cast<char *>(read_buffer.data()), read_buffer.size()});
+		string_view message = {reinterpret_cast<char *>(read_buffer.data()), read_buffer.size()};
+		Response response = decoder(message);
 		callback(response);
 	}
 

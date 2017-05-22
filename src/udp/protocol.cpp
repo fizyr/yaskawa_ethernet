@@ -13,16 +13,15 @@ void  ByteVariable::encode(std::vector<std::uint8_t> & out, std::uint8_t value) 
 void Int16Variable::encode(std::vector<std::uint8_t> & out, std::int16_t value) { writeLittleEndian<std::int16_t>(out, value); }
 void Int32Variable::encode(std::vector<std::uint8_t> & out, std::int32_t value) { writeLittleEndian<std::int32_t>(out, value); }
 
-ErrorOr<std::uint8_t>  ByteVariable::decode(string_view message) { return decodeIntegral< ByteVariable>(message, "byte"); }
-ErrorOr<std::int16_t> Int16Variable::decode(string_view message) { return decodeIntegral<Int16Variable>(message, "int16"); }
-ErrorOr<std::int32_t> Int32Variable::decode(string_view message) { return decodeIntegral<Int32Variable>(message, "int32"); }
+ErrorOr<std::uint8_t>  ByteVariable::decode(string_view & message) { return readLittleEndian<std::uint8_t>(message); }
+ErrorOr<std::int16_t> Int16Variable::decode(string_view & message) { return readLittleEndian<std::int16_t>(message); }
+ErrorOr<std::int32_t> Int32Variable::decode(string_view & message) { return readLittleEndian<std::int32_t>(message); }
 
 void Float32Variable::encode(std::vector<std::uint8_t> & out, float value) {
 	writeLittleEndian<std::uint32_t>(out, reinterpret_cast<std::uint32_t &>(value));
 }
 
-ErrorOr<float> Float32Variable::decode(string_view message) {
-	if (message.size() != encoded_size) return unexpectedValue("float size", message.size(), encoded_size);
+ErrorOr<float> Float32Variable::decode(string_view & message) {
 	std::int32_t parsed = readLittleEndian<std::int32_t>(message);
 	return reinterpret_cast<float &>(parsed);
 }
@@ -33,8 +32,7 @@ void PositionVariable::encode(std::vector<std::uint8_t> & out, Position const & 
 }
 
 /// Decode a position variable.
-ErrorOr<Position> PositionVariable::decode(string_view data) {
-	if (data.size() != 13 * 4) return unexpectedValue("message size", data.size(), 13 * 4);
+ErrorOr<Position> PositionVariable::decode(string_view & data) {
 	std::uint32_t type                   = readLittleEndian<std::uint32_t>(data);
 	std::uint8_t  configuration          = readLittleEndian<std::uint32_t>(data);
 	std::uint32_t tool                   = readLittleEndian<std::uint32_t>(data);

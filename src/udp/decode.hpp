@@ -47,24 +47,19 @@ ErrorOr<ResponseHeader> decodeResponseHeader(string_view & data);
 /// Decode a cartesian frame from a position type and a user frame.
 ErrorOr<CoordinateSystem> decodeCartesianFrame(int type, int user_frame);
 
-/// Decode an integral value.
-template<typename T>
-ErrorOr<typename T::type> decodeIntegral(string_view message, std::string name) {
-	if (message.size() != T::encoded_size) return unexpectedValue(std::move(name) + " size", message.size(), T::encoded_size);
-	return readLittleEndian<typename T::type>(message);
-}
 
 /// Decode a read response.
 template<typename T>
-ErrorOr<typename T::type> decodeReadResponse(string_view response) {
+ErrorOr<typename T::type> decodeReadResponse(string_view & response) {
 	ErrorOr<ResponseHeader> header = decodeResponseHeader(response);
 	if (!header) return header.error();
+	if (response.size() != T::encoded_size) return unexpectedValue("data size", response.size(), T::encoded_size);
 	return T::decode(response);
 }
 
 /// Decode a read response.
 template<typename T>
-ErrorOr<std::vector<typename T::type>> decodeReadMultipleResponse(string_view response) {
+ErrorOr<std::vector<typename T::type>> decodeReadMultipleResponse(string_view & response) {
 	using type = typename T::type;
 
 	ErrorOr<ResponseHeader> header = decodeResponseHeader(response);
@@ -85,7 +80,7 @@ ErrorOr<std::vector<typename T::type>> decodeReadMultipleResponse(string_view re
 
 /// Decode a write response.
 template<typename T>
-ErrorOr<void> decodeWriteResponse(string_view response) {
+ErrorOr<void> decodeWriteResponse(string_view & response) {
 	ErrorOr<ResponseHeader> header = decodeResponseHeader(response);
 	if (!header) return header.error();
 	return in_place_valid;
