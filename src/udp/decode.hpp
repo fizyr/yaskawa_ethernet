@@ -61,7 +61,29 @@ ErrorOr<typename T::type> decodeReadResponse(string_view response) {
 	if (!header) return header.error();
 	return T::decode(response);
 }
+
 /// Decode a read response.
+template<typename T>
+ErrorOr<std::vector<typename T::type>> decodeReadMultipleResponse(string_view response) {
+	using type = typename T::type;
+
+	ErrorOr<ResponseHeader> header = decodeResponseHeader(response);
+	if (!header) return header.error();
+	if (response.size() < 4) return malformedResponse("payload size too small, got " + std::to_string(response.size()) + ", need atleast 4.");
+	std::uint32_t count = readLittleEndian<std::uint32_t>(response);
+	if (response.size() != count * T::encoded_size) return unexpectedValue("data size", response.size(), count * T::encoded_size);
+
+	std::vector<type> result;
+	result.reserve(count);
+	for (std::size_t i = 0; i < count; ++i) {
+		ErrorOr<type> element = T::decode(response);
+		if (!element) return element.error();
+		result.push_back(std::move(*element));
+	}
+	return result;
+}
+
+/// Decode a write response.
 template<typename T>
 ErrorOr<void> decodeWriteResponse(string_view response) {
 	ErrorOr<ResponseHeader> header = decodeResponseHeader(response);

@@ -62,19 +62,29 @@ public:
 	Socket const  & socket() const { return socket_; }
 
 	void readByte(int index, std::chrono::milliseconds timeout, std::function<void(ErrorOr<std::uint8_t>)> callback);
+	void readBytes(int index, int count, std::chrono::milliseconds timeout, std::function<void(ErrorOr<std::vector<std::uint8_t>> const &)> callback);
 	void writeByte(int index, std::uint8_t value, std::chrono::milliseconds timeout, std::function<void(ErrorOr<void>)> callback);
+	void writeBytes(int index, std::vector<std::uint8_t> const & value, std::chrono::milliseconds timeout, std::function<void(ErrorOr<void>)> callback);
 
 	void readInt16(int index, std::chrono::milliseconds timeout, std::function<void(ErrorOr<std::int16_t>)> callback);
+	void readInt16s(int index, int count, std::chrono::milliseconds timeout, std::function<void(ErrorOr<std::vector<std::int16_t>> const &)> callback);
 	void writeInt16(int index, std::int16_t value, std::chrono::milliseconds timeout, std::function<void(ErrorOr<void>)> callback);
+	void writeInt16s(int index, std::vector<std::int16_t> const & value, std::chrono::milliseconds timeout, std::function<void(ErrorOr<void>)> callback);
 
 	void readInt32(int index, std::chrono::milliseconds timeout, std::function<void(ErrorOr<std::int32_t>)> callback);
+	void readInt32s(int index, int count, std::chrono::milliseconds timeout, std::function<void(ErrorOr<std::vector<std::int32_t>> const &)> callback);
 	void writeInt32(int index, std::int32_t value, std::chrono::milliseconds timeout, std::function<void(ErrorOr<void>)> callback);
+	void writeInt32s(int index, std::vector<std::int32_t> const & value, std::chrono::milliseconds timeout, std::function<void(ErrorOr<void>)> callback);
 
 	void readFloat32(int index, std::chrono::milliseconds timeout, std::function<void(ErrorOr<float>)> callback);
+	void readFloat32s(int index, int count, std::chrono::milliseconds timeout, std::function<void(ErrorOr<std::vector<float>> const &)> callback);
 	void writeFloat32(int index, float value, std::chrono::milliseconds timeout, std::function<void(ErrorOr<void>)> callback);
+	void writeFloat32s(int index, std::vector<float> const & value, std::chrono::milliseconds timeout, std::function<void(ErrorOr<void>)> callback);
 
 	void readRobotPosition(int index, std::chrono::milliseconds timeout, std::function<void(ErrorOr<Position>)> callback);
+	void readRobotPositions(int index, int count, std::chrono::milliseconds timeout, std::function<void(ErrorOr<std::vector<Position>> const &)> callback);
 	void writeRobotPosition(int index, Position value, std::chrono::milliseconds timeout, std::function<void(ErrorOr<void>)> callback);
+	void writeRobotPositions(int index, std::vector<Position> const & value, std::chrono::milliseconds timeout, std::function<void(ErrorOr<void>)> callback);
 };
 
 }}}
