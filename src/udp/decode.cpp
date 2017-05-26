@@ -100,7 +100,6 @@ ErrorOr<ResponseHeader> decodeResponseHeader(string_view & data) {
 	// Padding.
 	data.remove_prefix(2);
 
-	if (result.status != 0) return commandFailed(result.status, result.extra_status);
 	return result;
 }
 

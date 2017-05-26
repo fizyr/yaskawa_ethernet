@@ -30,153 +30,197 @@ void Client::close() {
 	socket_.close();
 }
 
-/// Read a variable from a robot.
-template<typename T>
-void readVariable(
-	Client::Socket & socket,
-	std::uint8_t request_id,
-	int index,
-	std::chrono::milliseconds timeout,
-	std::function<void (ErrorOr<typename T::type>)> callback
-) {
-	std::vector<std::uint8_t> message = encodeRequestHeader(makeRobotRequestHeader(0, T::command_single, index, 0, service::get_all, request_id));
-	impl::sendCommand(std::move(message), decodeReadResponse<T>, timeout, socket, std::move(callback));
+Client::HandlerToken Client::registerHandler(std::uint8_t request_id, std::function<void(ResponseHeader const &, string_view)> handler) {
+	auto result = requests_.insert({request_id, {std::chrono::steady_clock::now(), handler}});
+	if (!result.second) throw std::logic_error("request_id " + std::to_string(request_id) + " is already taken, can not register handler");
+	return result.first;
 }
 
-/// Read multiple variables from a robot.
-template<typename T>
-void readVariables(
-	Client::Socket & socket,
-	std::uint8_t request_id,
-	int index,
-	int count,
-	std::chrono::milliseconds timeout,
-	std::function<void (ErrorOr<std::vector<typename T::type>>)> callback
-) {
-	std::vector<std::uint8_t> message = encodeRequestHeader(makeRobotRequestHeader(4, T::command_multiple, index, 0, service::read_multiple, request_id));
-	writeLittleEndian<std::uint32_t>(message, count);
-	impl::sendCommand(std::move(message), decodeReadMultipleResponse<T>, timeout, socket, std::move(callback));
+void Client::removeHandler(HandlerToken token) {
+	requests_.erase(token);
 }
 
-/// Write a variable to a robot.
-template<typename T>
-void writeVariable(
-	Client::Socket & socket,
-	std::uint8_t request_id,
-	int index,
-	typename T::type const & value,
-	std::chrono::milliseconds timeout,
-	std::function<void (ErrorOr<void>)> callback
-) {
-	std::vector<std::uint8_t> message = encodeRequestHeader(makeRobotRequestHeader(T::encoded_size, T::command_single, index, 0, service::set_all, request_id));
-	T::encode(message, value);
-	impl::sendCommand(std::move(message), decodeWriteResponse<T>, timeout, socket, std::move(callback));
-}
+namespace {
+	/// Read a variable from a robot.
+	template<typename T>
+	void readVariable(
+		Client & client,
+		std::uint8_t request_id,
+		int index,
+		std::chrono::milliseconds timeout,
+		std::function<void (ErrorOr<typename T::type>)> callback
+	) {
+		std::vector<std::uint8_t> message = encodeRequestHeader(makeRobotRequestHeader(0, T::command_single, index, 0, service::get_all, request_id));
+		impl::sendCommand(client, request_id, std::move(message), decodeReadResponse<T>, timeout, std::move(callback));
+	}
 
-/// Write multiple variables to a robot.
-template<typename T>
-void writeVariables(
-	Client::Socket & socket,
-	std::uint8_t request_id,
-	int index,
-	std::vector<typename T::type> const & values,
-	std::chrono::milliseconds timeout,
-	std::function<void (ErrorOr<void>)> callback
-) {
-	std::vector<std::uint8_t> message = encodeRequestHeader(makeRobotRequestHeader(4 + values.size() * T::encoded_size, T::command_multiple, index, 0, service::write_multiple, request_id));
-	writeLittleEndian<std::uint32_t>(message, values.size());
-	for (auto const & value : values) T::encode(message, value);
-	impl::sendCommand(std::move(message), decodeWriteResponse<T>, timeout, socket, std::move(callback));
+	/// Read multiple variables from a robot.
+	template<typename T>
+	void readVariables(
+		Client & client,
+		std::uint8_t request_id,
+		int index,
+		int count,
+		std::chrono::milliseconds timeout,
+		std::function<void (ErrorOr<std::vector<typename T::type>>)> callback
+	) {
+		std::vector<std::uint8_t> message = encodeRequestHeader(makeRobotRequestHeader(4, T::command_multiple, index, 0, service::read_multiple, request_id));
+		writeLittleEndian<std::uint32_t>(message, count);
+		impl::sendCommand(client, request_id, std::move(message), decodeReadMultipleResponse<T>, timeout, std::move(callback));
+	}
+
+	/// Write a variable to a robot.
+	template<typename T>
+	void writeVariable(
+		Client & client,
+		std::uint8_t request_id,
+		int index,
+		typename T::type const & value,
+		std::chrono::milliseconds timeout,
+		std::function<void (ErrorOr<void>)> callback
+	) {
+		std::vector<std::uint8_t> message = encodeRequestHeader(makeRobotRequestHeader(T::encoded_size, T::command_single, index, 0, service::set_all, request_id));
+		T::encode(message, value);
+		impl::sendCommand(client, request_id, std::move(message), decodeWriteResponse<T>, timeout, std::move(callback));
+	}
+
+	/// Write multiple variables to a robot.
+	template<typename T>
+	void writeVariables(
+		Client & client,
+		std::uint8_t request_id,
+		int index,
+		std::vector<typename T::type> const & values,
+		std::chrono::milliseconds timeout,
+		std::function<void (ErrorOr<void>)> callback
+	) {
+		std::vector<std::uint8_t> message = encodeRequestHeader(makeRobotRequestHeader(4 + values.size() * T::encoded_size, T::command_multiple, index, 0, service::write_multiple, request_id));
+		writeLittleEndian<std::uint32_t>(message, values.size());
+		for (auto const & value : values) T::encode(message, value);
+		impl::sendCommand(client, request_id, std::move(message), decodeWriteResponse<T>, timeout, std::move(callback));
+	}
 }
 
 // Byte variables.
 
 void Client::readByte(int index, std::chrono::milliseconds timeout, std::function<void (ErrorOr<std::uint8_t>)> callback) {
-	readVariable<ByteVariable>(socket_, request_id_++, index, timeout, std::move(callback));
+	readVariable<ByteVariable>(*this, request_id_++, index, timeout, std::move(callback));
 }
 
 void Client::readBytes(int index, int count, std::chrono::milliseconds timeout, std::function<void (ErrorOr<std::vector<std::uint8_t>> const &)> callback) {
-	readVariables<ByteVariable>(socket_, request_id_++, index, count, timeout, std::move(callback));
+	readVariables<ByteVariable>(*this, request_id_++, index, count, timeout, std::move(callback));
 }
 
 void Client::writeByte(int index, std::uint8_t value, std::chrono::milliseconds timeout, std::function<void(ErrorOr<void>)> callback) {
-	writeVariable<ByteVariable>(socket_, request_id_++, index, value, timeout, std::move(callback));
+	writeVariable<ByteVariable>(*this, request_id_++, index, value, timeout, std::move(callback));
 }
 
 void Client::writeBytes(int index, std::vector<std::uint8_t> const & values, std::chrono::milliseconds timeout, std::function<void(ErrorOr<void>)> callback) {
-	writeVariables<ByteVariable>(socket_, request_id_++, index, values, timeout, std::move(callback));
+	writeVariables<ByteVariable>(*this, request_id_++, index, values, timeout, std::move(callback));
 }
 
 // Integer (16 bit) variables.
 
 void Client::readInt16(int index, std::chrono::milliseconds timeout, std::function<void (ErrorOr<std::int16_t>)> callback) {
-	readVariable<Int16Variable>(socket_, request_id_++, index, timeout, std::move(callback));
+	readVariable<Int16Variable>(*this, request_id_++, index, timeout, std::move(callback));
 }
 
 void Client::readInt16s(int index, int count, std::chrono::milliseconds timeout, std::function<void (ErrorOr<std::vector<std::int16_t>> const &)> callback) {
-	readVariables<Int16Variable>(socket_, request_id_++, index, count, timeout, std::move(callback));
+	readVariables<Int16Variable>(*this, request_id_++, index, count, timeout, std::move(callback));
 }
 
 void Client::writeInt16(int index, std::int16_t value, std::chrono::milliseconds timeout, std::function<void(ErrorOr<void>)> callback) {
-	writeVariable<Int16Variable>(socket_, request_id_++, index, value, timeout, std::move(callback));
+	writeVariable<Int16Variable>(*this, request_id_++, index, value, timeout, std::move(callback));
 }
 
 void Client::writeInt16s(int index, std::vector<std::int16_t> const & values, std::chrono::milliseconds timeout, std::function<void(ErrorOr<void>)> callback) {
-	writeVariables<Int16Variable>(socket_, request_id_++, index, values, timeout, std::move(callback));
+	writeVariables<Int16Variable>(*this, request_id_++, index, values, timeout, std::move(callback));
 }
 
 // Integer (32 bit) variables.
 
 void Client::readInt32(int index, std::chrono::milliseconds timeout, std::function<void (ErrorOr<std::int32_t>)> callback) {
-	readVariable<Int32Variable>(socket_, request_id_++, index, timeout, std::move(callback));
+	readVariable<Int32Variable>(*this, request_id_++, index, timeout, std::move(callback));
 }
 
 void Client::readInt32s(int index, int count, std::chrono::milliseconds timeout, std::function<void (ErrorOr<std::vector<std::int32_t>> const &)> callback) {
-	readVariables<Int32Variable>(socket_, request_id_++, index, count, timeout, std::move(callback));
+	readVariables<Int32Variable>(*this, request_id_++, index, count, timeout, std::move(callback));
 }
 
 void Client::writeInt32(int index, std::int32_t value, std::chrono::milliseconds timeout, std::function<void(ErrorOr<void>)> callback) {
-	writeVariable<Int32Variable>(socket_, request_id_++, index, value, timeout, std::move(callback));
+	writeVariable<Int32Variable>(*this, request_id_++, index, value, timeout, std::move(callback));
 }
 
 void Client::writeInt32s(int index, std::vector<std::int32_t> const & values, std::chrono::milliseconds timeout, std::function<void(ErrorOr<void>)> callback) {
-	writeVariables<Int32Variable>(socket_, request_id_++, index, values, timeout, std::move(callback));
+	writeVariables<Int32Variable>(*this, request_id_++, index, values, timeout, std::move(callback));
 }
 
 // Float (32 bit) variables.
 
 void Client::readFloat32(int index, std::chrono::milliseconds timeout, std::function<void (ErrorOr<float>)> callback) {
-	readVariable<Float32Variable>(socket_, request_id_++, index, timeout, std::move(callback));
+	readVariable<Float32Variable>(*this, request_id_++, index, timeout, std::move(callback));
 }
 
 void Client::readFloat32s(int index, int count, std::chrono::milliseconds timeout, std::function<void (ErrorOr<std::vector<float>> const &)> callback) {
-	readVariables<Float32Variable>(socket_, request_id_++, index, count, timeout, std::move(callback));
+	readVariables<Float32Variable>(*this, request_id_++, index, count, timeout, std::move(callback));
 }
 
 void Client::writeFloat32(int index, float value, std::chrono::milliseconds timeout, std::function<void(ErrorOr<void>)> callback) {
-	writeVariable<Float32Variable>(socket_, request_id_++, index, value, timeout, std::move(callback));
+	writeVariable<Float32Variable>(*this, request_id_++, index, value, timeout, std::move(callback));
 }
 
 void Client::writeFloat32s(int index, std::vector<float> const & values, std::chrono::milliseconds timeout, std::function<void(ErrorOr<void>)> callback) {
-	writeVariables<Float32Variable>(socket_, request_id_++, index, values, timeout, std::move(callback));
+	writeVariables<Float32Variable>(*this, request_id_++, index, values, timeout, std::move(callback));
 }
 
 // Robot position variables.
 
 void Client::readRobotPosition(int index, std::chrono::milliseconds timeout, std::function<void(ErrorOr<Position>)> callback) {
-	readVariable<PositionVariable>(socket_, request_id_++, index, timeout, std::move(callback));
+	readVariable<PositionVariable>(*this, request_id_++, index, timeout, std::move(callback));
 }
 
 void Client::readRobotPositions(int index, int count, std::chrono::milliseconds timeout, std::function<void (ErrorOr<std::vector<Position>> const &)> callback) {
-	readVariables<PositionVariable>(socket_, request_id_++, index, count, timeout, std::move(callback));
+	readVariables<PositionVariable>(*this, request_id_++, index, count, timeout, std::move(callback));
 }
 
 void Client::writeRobotPosition(int index, Position value, std::chrono::milliseconds timeout, std::function<void(ErrorOr<void>)> callback) {
-	writeVariable<PositionVariable>(socket_, request_id_++, index, value, timeout, std::move(callback));
+	writeVariable<PositionVariable>(*this, request_id_++, index, value, timeout, std::move(callback));
 }
 
 void Client::writeRobotPositions(int index, std::vector<Position> const & values, std::chrono::milliseconds timeout, std::function<void(ErrorOr<void>)> callback) {
-	writeVariables<PositionVariable>(socket_, request_id_++, index, values, timeout, std::move(callback));
+	writeVariables<PositionVariable>(*this, request_id_++, index, values, timeout, std::move(callback));
+}
+
+void Client::receive() {
+	auto callback = std::bind(&Client::onReceive, this, std::placeholders::_1, std::placeholders::_2);
+	socket_.async_receive(boost::asio::buffer(read_buffer_->data(), read_buffer_->size()), callback);
+}
+
+void Client::onReceive(boost::system::error_code error, std::size_t message_size) {
+	if (error) {
+		if (on_error) on_error(make_error_code(std::errc(error.value())));
+		return;
+	}
+
+	// Decode the response header.
+	string_view message{reinterpret_cast<char const *>(read_buffer_->data()), message_size};
+	ErrorOr<ResponseHeader> header = decodeResponseHeader(message);
+	if (!header) {
+		if (on_error) on_error(header.error());
+		return;
+	}
+
+	// Find the right handler for the response.
+	auto handler = requests_.find(header->request_id);
+	if (handler == requests_.end()) {
+		if (on_error) on_error({std::errc::invalid_argument, "parsing response header from message"});
+		return;
+	}
+
+	// Erase and invoke the handler.
+	auto callback = std::move(handler->second.on_reply);
+	requests_.erase(handler);
+	callback(*header, message);
 }
 
 }}}

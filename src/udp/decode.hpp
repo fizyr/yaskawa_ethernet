@@ -50,28 +50,26 @@ ErrorOr<CoordinateSystem> decodeCartesianFrame(int type, int user_frame);
 
 /// Decode a read response.
 template<typename T>
-ErrorOr<typename T::type> decodeReadResponse(string_view & response) {
-	ErrorOr<ResponseHeader> header = decodeResponseHeader(response);
-	if (!header) return header.error();
-	if (response.size() != T::encoded_size) return unexpectedValue("data size", response.size(), T::encoded_size);
-	return T::decode(response);
+ErrorOr<typename T::type> decodeReadResponse(ResponseHeader const & header, string_view & data) {
+	if (header.status != 0) return commandFailed(header.status, header.extra_status);
+	if (data.size() != T::encoded_size) return unexpectedValue("data size", data.size(), T::encoded_size);
+	return T::decode(data);
 }
 
 /// Decode a read response.
 template<typename T>
-ErrorOr<std::vector<typename T::type>> decodeReadMultipleResponse(string_view & response) {
+ErrorOr<std::vector<typename T::type>> decodeReadMultipleResponse(ResponseHeader const & header, string_view & data) {
 	using type = typename T::type;
+	if (header.status != 0) return commandFailed(header.status, header.extra_status);
 
-	ErrorOr<ResponseHeader> header = decodeResponseHeader(response);
-	if (!header) return header.error();
-	if (response.size() < 4) return malformedResponse("payload size too small, got " + std::to_string(response.size()) + ", need atleast 4.");
-	std::uint32_t count = readLittleEndian<std::uint32_t>(response);
-	if (response.size() != count * T::encoded_size) return unexpectedValue("data size", response.size(), count * T::encoded_size);
+	if (data.size() < 4) return malformedResponse("payload size too small, got " + std::to_string(data.size()) + ", need atleast 4.");
+	std::uint32_t count = readLittleEndian<std::uint32_t>(data);
+	if (data.size() != count * T::encoded_size) return unexpectedValue("data size", data.size(), count * T::encoded_size);
 
 	std::vector<type> result;
 	result.reserve(count);
 	for (std::size_t i = 0; i < count; ++i) {
-		ErrorOr<type> element = T::decode(response);
+		ErrorOr<type> element = T::decode(data);
 		if (!element) return element.error();
 		result.push_back(std::move(*element));
 	}
@@ -80,9 +78,9 @@ ErrorOr<std::vector<typename T::type>> decodeReadMultipleResponse(string_view & 
 
 /// Decode a write response.
 template<typename T>
-ErrorOr<void> decodeWriteResponse(string_view & response) {
-	ErrorOr<ResponseHeader> header = decodeResponseHeader(response);
-	if (!header) return header.error();
+ErrorOr<void> decodeWriteResponse(ResponseHeader const & header, string_view & data) {
+	if (header.status != 0) return commandFailed(header.status, header.extra_status);
+	(void) data;
 	return in_place_valid;
 }
 

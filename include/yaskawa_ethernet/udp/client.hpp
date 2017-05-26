@@ -1,6 +1,8 @@
 #pragma once
 #include "../error.hpp"
 #include "../types.hpp"
+#include "../string_view.hpp"
+#include "message.hpp"
 
 #include <boost/asio/io_service.hpp>
 #include <boost/asio/ip/udp.hpp>
@@ -12,6 +14,7 @@
 #include <cstdint>
 #include <functional>
 #include <string>
+#include <map>
 
 namespace dr {
 namespace yaskawa {
@@ -20,17 +23,23 @@ namespace udp {
 class Client {
 public:
 	using Socket   = boost::asio::ip::udp::socket;
-	using Callback = std::function<void (std::error_code const & error)>;
+	using Callback = std::function<void (DetailedError error)>;
 
-	template<typename T>
-	using ResultCallback = std::function<void (ErrorOr<T> const & result)>;
+	struct OpenRequest {
+		std::chrono::steady_clock::time_point start_time;
+		std::function<void (ResponseHeader const & header, string_view data)> on_reply;
+	};
+
+	using HandlerToken = std::map<std::uint8_t, OpenRequest>::iterator;
+
+	Callback on_error;
 
 private:
 	Socket socket_;
 	std::uint8_t request_id_ = 1;
-	boost::asio::streambuf read_buffer_;
-	boost::asio::streambuf write_buffer_;
-	std::ostream write_stream_{&write_buffer_};
+	std::unique_ptr<std::array<std::uint8_t, 512>> read_buffer_;
+
+	std::map<std::uint8_t, OpenRequest> requests_;
 
 public:
 	Client(boost::asio::io_service & ios);
@@ -61,6 +70,12 @@ public:
 	Socket        & socket()       { return socket_; }
 	Socket const  & socket() const { return socket_; }
 
+	/// Register a handler for a request id.
+	HandlerToken registerHandler(std::uint8_t request_id, std::function<void(ResponseHeader const &, string_view)> handler);
+
+	/// Remove a handler for a request id.
+	void removeHandler(HandlerToken);
+
 	void readByte(int index, std::chrono::milliseconds timeout, std::function<void(ErrorOr<std::uint8_t>)> callback);
 	void readBytes(int index, int count, std::chrono::milliseconds timeout, std::function<void(ErrorOr<std::vector<std::uint8_t>> const &)> callback);
 	void writeByte(int index, std::uint8_t value, std::chrono::milliseconds timeout, std::function<void(ErrorOr<void>)> callback);
@@ -85,6 +100,14 @@ public:
 	void readRobotPositions(int index, int count, std::chrono::milliseconds timeout, std::function<void(ErrorOr<std::vector<Position>> const &)> callback);
 	void writeRobotPosition(int index, Position value, std::chrono::milliseconds timeout, std::function<void(ErrorOr<void>)> callback);
 	void writeRobotPositions(int index, std::vector<Position> const & value, std::chrono::milliseconds timeout, std::function<void(ErrorOr<void>)> callback);
+
+private:
+
+	/// Start an asynchronous receive.
+	void receive();
+
+	/// Process incoming messages.
+	void onReceive(boost::system::error_code error, std::size_t message_size);
 };
 
 }}}
