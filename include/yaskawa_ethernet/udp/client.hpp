@@ -49,7 +49,7 @@ public:
 		std::string const & host,          ///< Hostname or IP address to connect to.
 		std::string const & port,          ///< Port number or service name to connect to.
 		std::chrono::milliseconds timeout, ///< Timeout for the connection attempt in milliseconds.
-		Callback const & callback          ///< Callback to call when the connection attempt finished.
+		Callback callback                  ///< Callback to call when the connection attempt finished.
 	);
 
 	/// Open a connection.
@@ -57,7 +57,7 @@ public:
 		std::string const & host,          ///< Hostname or IP address to connect to.
 		std::uint16_t port,                ///< Port number to connect to.
 		std::chrono::milliseconds timeout, ///< Timeout for the connection attempt in milliseconds.
-		Callback const & callback          ///< Callback to call when the connection attempt finished.
+		Callback callback                  ///< Callback to call when the connection attempt finished.
 	);
 
 	/// Close the connection.
@@ -102,6 +102,8 @@ public:
 	void writeRobotPositions(int index, std::vector<Position> const & value, std::chrono::milliseconds timeout, std::function<void(ErrorOr<void>)> callback);
 
 private:
+	/// Called when a connection attempt finishes.
+	void onConnect(DetailedError, Callback callback);
 
 	/// Start an asynchronous receive.
 	void receive();

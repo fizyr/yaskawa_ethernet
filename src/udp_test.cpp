@@ -18,6 +18,8 @@ std::int16_t int16_value   = -5;
 std::int32_t int32_value   = -5;
 float        float32_value = -5;
 
+std::chrono::milliseconds timeout = 200ms;
+
 std::array<Position, 4> positions {{
 	PulsePosition{std::array<int, 8>{{0, 1, 2, 3, 4,   5, 0, 0}}, 1},
 	PulsePosition{std::array<int, 8>{{6, 7, 8, 9, 10, 11, 0, 0}}, 2},
@@ -52,7 +54,7 @@ void onWriteByte(dr::ErrorOr<void> result) {
 	} else {
 		++command_count;
 	}
-	client->readByte(5, 100ms, onReadByte);
+	client->readByte(5, timeout, onReadByte);
 }
 
 void onReadByte(dr::ErrorOr<std::uint8_t> result) {
@@ -63,7 +65,7 @@ void onReadByte(dr::ErrorOr<std::uint8_t> result) {
 		if (*result != byte_value) std::cout << "Read wrong byte value: " << int(*result) << ", expected " << byte_value << ".\n";
 		++byte_value;
 	}
-	client->writeByte(5, byte_value, 100ms, onWriteByte);
+	client->writeByte(5, byte_value, timeout, onWriteByte);
 }
 
 void onWriteInt16(dr::ErrorOr<void> result) {
@@ -72,18 +74,18 @@ void onWriteInt16(dr::ErrorOr<void> result) {
 	} else {
 		++command_count;
 	}
-	client->readInt16(6, 100ms, onReadInt16);
+	client->readInt16(6, timeout, onReadInt16);
 }
 
 void onReadInt16(dr::ErrorOr<std::int16_t> result) {
 	if (!result) {
-		std::cout << "Failed to read in16: " << result.error().fullMessage() << "\n";
+		std::cout << "Failed to read int16: " << result.error().fullMessage() << "\n";
 	} else {
 		++command_count;
 		if (*result != int16_value) std::cout << "Read wrong int16 value: " << int(*result) << ", expected " << int16_value << ".\n";
 		++int16_value;
 	}
-	client->writeInt16(6, int16_value, 100ms, onWriteInt16);
+	client->writeInt16(6, int16_value, timeout, onWriteInt16);
 }
 
 void onWriteInt32(dr::ErrorOr<void> result) {
@@ -92,7 +94,7 @@ void onWriteInt32(dr::ErrorOr<void> result) {
 	} else {
 		++command_count;
 	}
-	client->readInt32(7, 100ms, onReadInt32);
+	client->readInt32(7, timeout, onReadInt32);
 }
 
 void onReadInt32(dr::ErrorOr<std::int32_t> result) {
@@ -103,7 +105,7 @@ void onReadInt32(dr::ErrorOr<std::int32_t> result) {
 		if (*result != int32_value) std::cout << "Read wrong int32 value: " << int(*result) << ", expected " << int32_value << ".\n";
 		++int32_value;
 	}
-	client->writeInt32(7, int32_value, 100ms, onWriteInt32);
+	client->writeInt32(7, int32_value, timeout, onWriteInt32);
 }
 
 void onWriteFloat(dr::ErrorOr<void> result) {
@@ -112,7 +114,7 @@ void onWriteFloat(dr::ErrorOr<void> result) {
 	} else {
 		++command_count;
 	}
-	client->readFloat32(8, 100ms, onReadFloat);
+	client->readFloat32(8, timeout, onReadFloat);
 }
 
 void onReadFloat(dr::ErrorOr<float> result) {
@@ -123,7 +125,7 @@ void onReadFloat(dr::ErrorOr<float> result) {
 		if (*result != float32_value) std::cout << "Read wrong float32 value: " << (*result) << ", expected " << float32_value << ".\n";
 		++float32_value;
 	}
-	client->writeFloat32(8, float32_value, 100ms, onWriteFloat);
+	client->writeFloat32(8, float32_value, timeout, onWriteFloat);
 }
 
 void onWritePosition(dr::ErrorOr<void> result) {
@@ -132,7 +134,7 @@ void onWritePosition(dr::ErrorOr<void> result) {
 	} else {
 		++command_count;
 	}
-	client->readRobotPosition(9, 100ms, onReadPosition);
+	client->readRobotPosition(9, timeout, onReadPosition);
 }
 
 void onReadPosition(dr::ErrorOr<Position> const & result) {
@@ -147,7 +149,7 @@ void onReadPosition(dr::ErrorOr<Position> const & result) {
 		}
 	}
 	position_index = (position_index + 1) % positions.size();
-	client->writeRobotPosition(9, positions[position_index], 100ms, onWritePosition);
+	client->writeRobotPosition(9, positions[position_index], timeout, onWritePosition);
 }
 
 void onConnect(std::error_code const & error) {
@@ -156,11 +158,11 @@ void onConnect(std::error_code const & error) {
 		return;
 	}
 	std::cout << "Connected to " << client->socket().remote_endpoint() << ".\n";
-	client->writeByte(5, byte_value, 100ms, onWriteByte);
-	client->writeInt16(6, int16_value, 100ms, onWriteInt16);
-	client->writeInt32(7, int32_value, 100ms, onWriteInt32);
-	client->writeFloat32(8, float32_value, 100ms, onWriteFloat);
-	client->writeRobotPosition(9, positions[position_index], 100ms, onWritePosition);
+	client->writeByte(5, byte_value, timeout, onWriteByte);
+	client->writeInt16(6, int16_value, timeout, onWriteInt16);
+	client->writeInt32(7, int32_value, timeout, onWriteInt32);
+	client->writeFloat32(8, float32_value, timeout, onWriteFloat);
+	client->writeRobotPosition(9, positions[position_index], timeout, onWritePosition);
 	timer->async_wait(onTimeout);
 }
 
@@ -170,6 +172,10 @@ int main(int argc, char * * argv) {
 	::client = &client;
 	boost::asio::steady_timer timer(ios);
 	::timer = &timer;
+
+	client.on_error = [] (dr::DetailedError const & error) {
+		std::cout << "Communication error: " << error.fullMessage() << "\n";
+	};
 
 
 	std::string host = "10.0.0.2";

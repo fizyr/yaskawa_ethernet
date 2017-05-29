@@ -68,11 +68,6 @@ ErrorOr<ResponseHeader> decodeResponseHeader(string_view & data) {
 	// Get payload size and make sure the message is complete.
 	result.payload_size = readLittleEndian<std::uint16_t>(data);
 	if (result.payload_size > max_payaload_size) return maximumExceeded("payload size", result.payload_size, max_payaload_size);
-	if (original.size() != header_size + result.payload_size) return malformedResponse(
-		"number of received bytes (" + std::to_string(original.size()) + ") "
-		"does not match the message size according to the header "
-		"(" + std::to_string(header_size + result.payload_size) + ")"
-	);
 
 	data.remove_prefix(1);
 	result.division = Division(readLittleEndian<std::uint8_t>(data));
@@ -99,6 +94,13 @@ ErrorOr<ResponseHeader> decodeResponseHeader(string_view & data) {
 
 	// Padding.
 	data.remove_prefix(2);
+
+	if (original.size() != header_size + result.payload_size) return malformedResponse(
+		"request " + std::to_string(int(result.request_id)) + ": "
+		"number of received bytes (" + std::to_string(original.size()) + ") "
+		"does not match the message size according to the header "
+		"(" + std::to_string(header_size + result.payload_size) + ")"
+	);
 
 	return result;
 }

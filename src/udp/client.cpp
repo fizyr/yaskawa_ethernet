@@ -8,21 +8,26 @@
 #include "encode.hpp"
 #include "decode.hpp"
 
-#include <memory>
 #include <atomic>
+#include <memory>
 #include <utility>
 
 namespace dr {
 namespace yaskawa {
 namespace udp {
 
-Client::Client(boost::asio::io_service & ios) : socket_(ios) {}
+Client::Client(boost::asio::io_service & ios) :
+	socket_(ios),
+	read_buffer_{std::make_unique<std::array<std::uint8_t, 512>>()} {}
 
-void Client::connect(std::string const & host, std::string const & port, std::chrono::milliseconds timeout, Callback const & callback) {
-	asyncResolveConnect({host, port}, timeout, socket_, callback);
+void Client::connect(std::string const & host, std::string const & port, std::chrono::milliseconds timeout, Callback callback) {
+	auto on_connect = [this, callback = std::move(callback)] (DetailedError error) {
+		onConnect(error, std::move(callback));
+	};
+	asyncResolveConnect({host, port}, timeout, socket_, on_connect);
 }
 
-void Client::connect(std::string const & host, std::uint16_t port, std::chrono::milliseconds timeout, Callback const & callback) {
+void Client::connect(std::string const & host, std::uint16_t port, std::chrono::milliseconds timeout, Callback callback) {
 	connect(host, std::to_string(port), timeout, callback);
 }
 
@@ -191,6 +196,11 @@ void Client::writeRobotPositions(int index, std::vector<Position> const & values
 	writeVariables<PositionVariable>(*this, request_id_++, index, values, timeout, std::move(callback));
 }
 
+void Client::onConnect(DetailedError error, Callback callback) {
+	callback(error);
+	if (!error) receive();
+}
+
 void Client::receive() {
 	auto callback = std::bind(&Client::onReceive, this, std::placeholders::_1, std::placeholders::_2);
 	socket_.async_receive(boost::asio::buffer(read_buffer_->data(), read_buffer_->size()), callback);
@@ -199,6 +209,7 @@ void Client::receive() {
 void Client::onReceive(boost::system::error_code error, std::size_t message_size) {
 	if (error) {
 		if (on_error) on_error(make_error_code(std::errc(error.value())));
+		receive();
 		return;
 	}
 
@@ -207,20 +218,22 @@ void Client::onReceive(boost::system::error_code error, std::size_t message_size
 	ErrorOr<ResponseHeader> header = decodeResponseHeader(message);
 	if (!header) {
 		if (on_error) on_error(header.error());
+		receive();
 		return;
 	}
 
 	// Find the right handler for the response.
 	auto handler = requests_.find(header->request_id);
 	if (handler == requests_.end()) {
-		if (on_error) on_error({std::errc::invalid_argument, "parsing response header from message"});
+		if (on_error) on_error({std::errc::invalid_argument, "no handler for request id " + std::to_string(header->request_id)});
+		receive();
 		return;
 	}
 
 	// Erase and invoke the handler.
 	auto callback = std::move(handler->second.on_reply);
-	requests_.erase(handler);
 	callback(*header, message);
+	receive();
 }
 
 }}}
