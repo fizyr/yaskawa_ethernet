@@ -67,7 +67,7 @@ ErrorOr<ResponseHeader> decodeResponseHeader(string_view & data) {
 
 	// Get payload size and make sure the message is complete.
 	result.payload_size = readLittleEndian<std::uint16_t>(data);
-	if (result.payload_size > max_payaload_size) return maximumExceeded("payload size", result.payload_size, max_payaload_size);
+	if (result.payload_size > max_payload_size) return maximumExceeded("payload size", result.payload_size, max_payload_size);
 
 	data.remove_prefix(1);
 	result.division = Division(readLittleEndian<std::uint8_t>(data));
