@@ -1,5 +1,6 @@
 #pragma once
 #include "commands.hpp"
+#include "message.hpp"
 #include "../types.hpp"
 #include "../error.hpp"
 #include "../string_view.hpp"
@@ -56,6 +57,36 @@ struct PositionVariable {
 	constexpr static std::size_t encoded_size = 13 * 4;
 	static void encode(std::vector<std::uint8_t> & output, Position const & value);
 	static ErrorOr<Position> decode(string_view & data);
+};
+
+struct ReadFileList {
+	using type = std::vector<std::string>;
+	static void encode(std::vector<std::uint8_t> & output, string_view type);
+	static ErrorOr<std::vector<std::string>> decode(string_view & data);
+};
+
+struct ReadFile {
+	using type = void;
+	static void encode(std::vector<std::uint8_t> & output, string_view name);
+	static ErrorOr<void> decode(string_view & data);
+};
+
+struct WriteFile {
+	using type = void;
+	static void encode(std::vector<std::uint8_t> & output, string_view name);
+	static ErrorOr<void> decode(string_view & data);
+};
+
+struct DeleteFile {
+	using type = void;
+	static void encode(std::vector<std::uint8_t> & output, string_view name);
+	static ErrorOr<void> decode(string_view & data);
+};
+
+struct FileData {
+	using type = std::string;
+	static void encode(std::vector<std::uint8_t> & output, string_view data);
+	static ErrorOr<std::string> decode(string_view & data);
 };
 
 

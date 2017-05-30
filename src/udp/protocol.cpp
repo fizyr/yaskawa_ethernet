@@ -65,4 +65,57 @@ ErrorOr<Position> PositionVariable::decode(string_view & data) {
 	}}, *frame, PoseConfiguration(configuration), int(tool)}};
 }
 
+void ReadFileList::encode(std::vector<std::uint8_t> & message, string_view type) {
+	std::copy(type.begin(), type.end(), std::back_inserter(message));
+}
+
+ErrorOr<std::vector<std::string>> ReadFileList::decode(string_view & data) {
+	if (data.size() == 0) return std::vector<std::string>{};
+	if (data.size() == 1) return DetailedError{std::errc::invalid_argument, "file list consist of exactly one byte"};
+	auto line_start = data.begin();
+	auto finger     = line_start;
+	std::vector<std::string> result;
+	while (finger < data.end() - 1) {
+		if (finger[0] == '\r' && finger[1] == '\n') {
+			result.emplace_back(line_start, finger);
+			line_start = finger + 2;
+		}
+	}
+	return result;
+}
+
+void ReadFile::encode(std::vector<std::uint8_t> & message, string_view name) {
+	std::copy(name.begin(), name.end(), std::back_inserter(message));
+}
+
+ErrorOr<void> ReadFile::decode(string_view &) {
+	return in_place_valid;
+}
+
+void WriteFile::encode(std::vector<std::uint8_t> & message, string_view name) {
+	std::copy(name.begin(), name.end(), std::back_inserter(message));
+}
+
+ErrorOr<void> WriteFile::decode(string_view &) {
+	return in_place_valid;
+}
+
+void DeleteFile::encode(std::vector<std::uint8_t> & message, string_view name) {
+	std::copy(name.begin(), name.end(), std::back_inserter(message));
+}
+
+ErrorOr<void> DeleteFile::decode(string_view &) {
+	return in_place_valid;
+}
+
+void FileData::encode(std::vector<std::uint8_t> & message, string_view data) {
+	std::copy(data.begin(), data.end(), std::back_inserter(message));
+}
+
+ErrorOr<std::string> FileData::decode(string_view & data) {
+	std::string result{data.begin(), data.end()};
+	data.remove_prefix(data.size());
+	return result;
+}
+
 }}}

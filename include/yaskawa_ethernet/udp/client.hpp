@@ -101,6 +101,30 @@ public:
 	void writeRobotPosition(int index, Position value, std::chrono::milliseconds timeout, std::function<void(ErrorOr<void>)> callback);
 	void writeRobotPositions(int index, std::vector<Position> const & value, std::chrono::milliseconds timeout, std::function<void(ErrorOr<void>)> callback);
 
+	void readFileList(
+		string_view type,
+		std::chrono::milliseconds timeout,
+		std::function<void(ErrorOr<std::vector<std::string>>)> callback
+	);
+	void readFile(
+		string_view name,
+		std::chrono::milliseconds timeout,
+		std::function<void(ErrorOr<std::string>)> on_done,
+		std::function<void(std::size_t bytes_received)> on_progress
+	);
+	void writeFile(
+		string_view name,
+		std::string data,
+		std::chrono::milliseconds timeout,
+		std::function<void(ErrorOr<void>)> on_done,
+		std::function<void(std::size_t bytes_sent, std::size_t bytes_total)> on_progress
+	);
+	void deleteFile(
+		string_view name,
+		std::chrono::milliseconds timeout,
+		std::function<void(ErrorOr<void>)> callback
+	);
+
 private:
 	/// Called when a connection attempt finishes.
 	void onConnect(DetailedError, Callback callback);

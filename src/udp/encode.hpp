@@ -35,6 +35,14 @@ RequestHeader makeRobotRequestHeader(
 	std::uint8_t request_id
 );
 
+RequestHeader makeFileRequestHeader(
+	std::uint16_t payload_size,
+	std::uint8_t service,
+	std::uint8_t request_id,
+	std::uint32_t block_number = 0,
+	bool ack = false
+);
+
 void encodePulsePosition(
 	std::vector<std::uint8_t> & out,
 	PulsePosition const & position

@@ -72,6 +72,26 @@ RequestHeader makeRobotRequestHeader(
 	return header;
 }
 
+RequestHeader makeFileRequestHeader(
+	std::uint16_t payload_size,
+	std::uint8_t service,
+	std::uint8_t request_id,
+	std::uint32_t block_number,
+	bool ack
+) {
+	RequestHeader header;
+	header.payload_size = payload_size;
+	header.division     = Division::file;
+	header.ack          = ack;
+	header.request_id   = request_id;
+	header.block_number = block_number;
+	header.command      = 0x00;
+	header.instance     = 0x00;
+	header.attribute    = 0x00;
+	header.service      = service;
+	return header;
+}
+
 std::uint32_t encodeFrameType(CoordinateSystem frame) {
 	if (isUserCoordinateSystem(frame)) return 19;
 	switch (frame) {

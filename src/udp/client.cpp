@@ -1,9 +1,11 @@
-#include "udp/client.hpp"
-#include "udp/protocol.hpp"
-#include "udp/message.hpp"
-#include "send_command.hpp"
-#include "udp/commands.hpp"
+#include "./read_file.hpp"
+#include "./write_file.hpp"
 #include "../impl/connect.hpp"
+#include "send_command.hpp"
+#include "udp/client.hpp"
+#include "udp/commands.hpp"
+#include "udp/message.hpp"
+#include "udp/protocol.hpp"
 
 #include "encode.hpp"
 #include "decode.hpp"
@@ -195,6 +197,43 @@ void Client::writeRobotPosition(int index, Position value, std::chrono::millisec
 void Client::writeRobotPositions(int index, std::vector<Position> const & values, std::chrono::milliseconds timeout, std::function<void(ErrorOr<void>)> callback) {
 	writeVariables<PositionVariable>(*this, request_id_++, index, values, timeout, std::move(callback));
 }
+
+// File control.
+
+void Client::readFileList(string_view type, std::chrono::milliseconds timeout, std::function<void(ErrorOr<std::vector<std::string>>)> callback) {
+	std::uint8_t request_id = request_id_++;
+	std::vector<std::uint8_t> message = encodeRequestHeader(makeFileRequestHeader(type.size(), commands::file::read_file_list, request_id));
+	ReadFileList::encode(message, type);
+	impl::sendCommand(*this, request_id, std::move(message), decodeFileResponse<ReadFileList>, timeout, std::move(callback));
+}
+
+void Client::readFile(
+	string_view name,
+	std::chrono::milliseconds timeout,
+	std::function<void(ErrorOr<std::string>)> on_done,
+	std::function<void(std::size_t bytes_received)> on_progress
+) {
+	impl::readFile(*this, request_id_++, name, timeout, std::move(on_done), std::move(on_progress));
+}
+
+void Client::writeFile(
+	string_view name,
+	std::string data,
+	std::chrono::milliseconds timeout,
+	std::function<void(ErrorOr<void>)> on_done,
+	std::function<void(std::size_t bytes_sent, std::size_t total_bytes)> on_progress
+) {
+	impl::writeFile(*this, request_id_++, name, std::move(data), timeout, std::move(on_done), std::move(on_progress));
+}
+
+void Client::deleteFile(string_view name, std::chrono::milliseconds timeout, std::function<void(ErrorOr<void>)> callback) {
+	std::uint8_t request_id = request_id_++;
+	std::vector<std::uint8_t> message = encodeRequestHeader(makeFileRequestHeader(name.size(), commands::file::delete_file, request_id));
+	DeleteFile::encode(message, name);
+	impl::sendCommand(*this, request_id, std::move(message), decodeFileResponse<DeleteFile>, timeout, std::move(callback));
+}
+
+// Other stuff
 
 void Client::onConnect(DetailedError error, Callback callback) {
 	callback(error);

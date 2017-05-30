@@ -57,6 +57,13 @@ ErrorOr<typename T::type> decodeReadResponse(ResponseHeader const & header, stri
 	return T::decode(data);
 }
 
+/// Decode a file response.
+template<typename T>
+ErrorOr<typename T::type> decodeFileResponse(ResponseHeader const & header, string_view & data) {
+	if (header.status != 0) return commandFailed(header.status, header.extra_status);
+	return T::decode(data);
+}
+
 /// Decode a read response.
 template<typename T>
 ErrorOr<std::vector<typename T::type>> decodeReadMultipleResponse(ResponseHeader const & header, string_view & data) {
