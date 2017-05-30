@@ -269,8 +269,8 @@ void Client::onReceive(boost::system::error_code error, std::size_t message_size
 		return;
 	}
 
-	// Erase and invoke the handler.
-	auto callback = std::move(handler->second.on_reply);
+	// Invoke the handler (a copy, so it can erase itself safely).
+	auto callback = handler->second.on_reply;
 	callback(*header, message);
 	receive();
 }
