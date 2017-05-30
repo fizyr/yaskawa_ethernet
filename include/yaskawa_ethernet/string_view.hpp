@@ -1,6 +1,6 @@
 #pragma once
 #if defined(__has_include) && __cplusplus >= 201402
-#  if __has_include(<string_view>)
+#  if __has_include(<string_view>) && __cplusplus >= 201703
 #    define STD_STRING_VIEW
 #  elif __has_include(<experimental/string_view>)
 #    define EXPERIMENTAL_STRING_VIEW
