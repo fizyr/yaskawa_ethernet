@@ -112,7 +112,7 @@ void Client::readByte(int index, std::chrono::milliseconds timeout, std::functio
 	readVariable<ByteVariable>(*this, request_id_++, index, timeout, std::move(callback));
 }
 
-void Client::readBytes(int index, int count, std::chrono::milliseconds timeout, std::function<void (ErrorOr<std::vector<std::uint8_t>> const &)> callback) {
+void Client::readBytes(int index, int count, std::chrono::milliseconds timeout, std::function<void (ErrorOr<std::vector<std::uint8_t>>)> callback) {
 	readVariables<ByteVariable>(*this, request_id_++, index, count, timeout, std::move(callback));
 }
 
@@ -130,7 +130,7 @@ void Client::readInt16(int index, std::chrono::milliseconds timeout, std::functi
 	readVariable<Int16Variable>(*this, request_id_++, index, timeout, std::move(callback));
 }
 
-void Client::readInt16s(int index, int count, std::chrono::milliseconds timeout, std::function<void (ErrorOr<std::vector<std::int16_t>> const &)> callback) {
+void Client::readInt16s(int index, int count, std::chrono::milliseconds timeout, std::function<void (ErrorOr<std::vector<std::int16_t>>)> callback) {
 	readVariables<Int16Variable>(*this, request_id_++, index, count, timeout, std::move(callback));
 }
 
@@ -148,7 +148,7 @@ void Client::readInt32(int index, std::chrono::milliseconds timeout, std::functi
 	readVariable<Int32Variable>(*this, request_id_++, index, timeout, std::move(callback));
 }
 
-void Client::readInt32s(int index, int count, std::chrono::milliseconds timeout, std::function<void (ErrorOr<std::vector<std::int32_t>> const &)> callback) {
+void Client::readInt32s(int index, int count, std::chrono::milliseconds timeout, std::function<void (ErrorOr<std::vector<std::int32_t>>)> callback) {
 	readVariables<Int32Variable>(*this, request_id_++, index, count, timeout, std::move(callback));
 }
 
@@ -166,7 +166,7 @@ void Client::readFloat32(int index, std::chrono::milliseconds timeout, std::func
 	readVariable<Float32Variable>(*this, request_id_++, index, timeout, std::move(callback));
 }
 
-void Client::readFloat32s(int index, int count, std::chrono::milliseconds timeout, std::function<void (ErrorOr<std::vector<float>> const &)> callback) {
+void Client::readFloat32s(int index, int count, std::chrono::milliseconds timeout, std::function<void (ErrorOr<std::vector<float>>)> callback) {
 	readVariables<Float32Variable>(*this, request_id_++, index, count, timeout, std::move(callback));
 }
 
@@ -184,7 +184,7 @@ void Client::readRobotPosition(int index, std::chrono::milliseconds timeout, std
 	readVariable<PositionVariable>(*this, request_id_++, index, timeout, std::move(callback));
 }
 
-void Client::readRobotPositions(int index, int count, std::chrono::milliseconds timeout, std::function<void (ErrorOr<std::vector<Position>> const &)> callback) {
+void Client::readRobotPositions(int index, int count, std::chrono::milliseconds timeout, std::function<void (ErrorOr<std::vector<Position>>)> callback) {
 	readVariables<PositionVariable>(*this, request_id_++, index, count, timeout, std::move(callback));
 }
 

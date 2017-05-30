@@ -4,10 +4,8 @@
 #include "udp/client.hpp"
 #include "udp/protocol.hpp"
 
-#include <boost/asio/streambuf.hpp>
 #include <boost/asio/steady_timer.hpp>
 #include <boost/system/error_code.hpp>
-#include <boost/container/vector.hpp>
 
 #include <atomic>
 #include <cstdint>
@@ -84,7 +82,7 @@ protected:
 		client_->removeHandler(handler_);
 
 		Response response = decoder(header, data);
-		callback(response);
+		callback(std::move(response));
 	}
 
 	/// Called when the request times out.
