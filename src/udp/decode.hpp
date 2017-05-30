@@ -1,3 +1,4 @@
+#pragma once
 #include "error.hpp"
 #include "string_view.hpp"
 #include "types.hpp"
