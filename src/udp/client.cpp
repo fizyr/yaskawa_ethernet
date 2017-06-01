@@ -108,6 +108,14 @@ namespace {
 	}
 }
 
+// Pulse position
+
+void Client::readCurrentPulsePosition(int robot, std::chrono::milliseconds timeout, std::function<void(ErrorOr<PulsePosition>)> callback) {
+	std::uint8_t request_id = request_id_++;
+	std::vector<std::uint8_t> message = encodeRequestHeader(makeRobotRequestHeader(0, commands::robot::read_robot_position, robot, 0, service::get_all, request_id));
+	impl::sendCommand(*this, request_id, std::move(message), decodeReadResponse<ReadCurrentRobotPosition>, timeout, std::move(callback));
+}
+
 // Byte variables.
 
 void Client::readByte(int index, std::chrono::milliseconds timeout, std::function<void (ErrorOr<std::uint8_t>)> callback) {

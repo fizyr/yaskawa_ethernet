@@ -14,6 +14,12 @@ namespace dr {
 namespace yaskawa {
 namespace udp {
 
+struct ReadCurrentRobotPosition {
+	using type = PulsePosition;
+	constexpr static std::size_t encoded_size = 11 * 4; // TODO: Documentation says 13*4 :/
+	static ErrorOr<PulsePosition> decode(string_view & data);
+};
+
 struct ByteVariable {
 	using type = std::uint8_t;
 	constexpr static std::uint16_t command_single   = commands::robot::readwrite_int8_variable;

@@ -9,6 +9,17 @@ namespace dr {
 namespace yaskawa {
 namespace udp {
 
+ErrorOr<PulsePosition> ReadCurrentRobotPosition::decode(string_view & data) {
+	std::string padded_data;
+	padded_data.resize(13, '0');
+	std::copy(data.begin(), data.end(), padded_data.begin());
+	string_view padded_view = padded_data;
+	ErrorOr<Position> result = PositionVariable::decode(padded_view);
+	if (!result) return result.error();
+	if (!result->isPulse()) return DetailedError{std::errc::invalid_argument, "unexpected position type, expected a pulse position"};
+	return result->pulse();
+}
+
 void  ByteVariable::encode(std::vector<std::uint8_t> & out, std::uint8_t value) { writeLittleEndian<std::uint8_t>(out, value); }
 void Int16Variable::encode(std::vector<std::uint8_t> & out, std::int16_t value) { writeLittleEndian<std::int16_t>(out, value); }
 void Int32Variable::encode(std::vector<std::uint8_t> & out, std::int32_t value) { writeLittleEndian<std::int32_t>(out, value); }
