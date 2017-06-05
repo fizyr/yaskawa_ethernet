@@ -249,11 +249,16 @@ void Client::onConnect(DetailedError error, Callback callback) {
 }
 
 void Client::receive() {
+	// Make sure we stop reading if the socket is closed.
+	// Otherwise in rare cases we can miss the operation_canceled of closing the socket
+	// in on_receive and continue reading forever.
+	if (!socket_.is_open()) return;
 	auto callback = std::bind(&Client::onReceive, this, std::placeholders::_1, std::placeholders::_2);
 	socket_.async_receive(boost::asio::buffer(read_buffer_->data(), read_buffer_->size()), callback);
 }
 
 void Client::onReceive(boost::system::error_code error, std::size_t message_size) {
+	if (error == boost::system::errc::operation_canceled) return;
 	if (error) {
 		if (on_error) on_error(make_error_code(std::errc(error.value())));
 		receive();
