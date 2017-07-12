@@ -10,8 +10,9 @@ namespace yaskawa {
 namespace udp {
 
 ErrorOr<PulsePosition> ReadCurrentRobotPosition::decode(string_view & data) {
+	if (data.size() > 13 * 4) return DetailedError{std::errc::invalid_argument, "current robot position response larger than expected, expected at most 52 bytes, got " + std::to_string(data.size()) + " bytes"};
 	std::string padded_data;
-	padded_data.resize(13, '0');
+	padded_data.resize(13 * 4, '0');
 	std::copy(data.begin(), data.end(), padded_data.begin());
 	string_view padded_view = padded_data;
 	ErrorOr<Position> result = PositionVariable::decode(padded_view);
