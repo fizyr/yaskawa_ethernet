@@ -108,12 +108,19 @@ namespace {
 	}
 }
 
-// Pulse position
+// Current position
 
-void Client::readCurrentPulsePosition(int robot, std::chrono::milliseconds timeout, std::function<void(ErrorOr<PulsePosition>)> callback) {
+void Client::readCurrentPosition(int control_group, CoordinateSystemType type, std::chrono::milliseconds timeout, std::function<void(ErrorOr<Position>)> callback) {
 	std::uint8_t request_id = request_id_++;
-	std::vector<std::uint8_t> message = encodeRequestHeader(makeRobotRequestHeader(0, commands::robot::read_robot_position, robot, 0, service::get_all, request_id));
-	impl::sendCommand(*this, request_id, std::move(message), decodeReadResponse<ReadCurrentRobotPosition>, timeout, std::move(callback));
+	int instance = control_group;
+	switch (type) {
+		case CoordinateSystemType::robot_pulse:     instance +=   1; break;
+		case CoordinateSystemType::base_pulse:      instance +=  11; break;
+		case CoordinateSystemType::station_pulse:   instance +=  21; break;
+		case CoordinateSystemType::robot_cartesian: instance += 101; break;
+	}
+	std::vector<std::uint8_t> message = encodeRequestHeader(makeRobotRequestHeader(0, commands::robot::read_robot_position, instance, 0, service::get_all, request_id));
+	impl::sendCommand(*this, request_id, std::move(message), decodePlainResponse<ReadCurrentRobotPosition>, timeout, std::move(callback));
 }
 
 // Byte variables.
@@ -212,7 +219,7 @@ void Client::readFileList(string_view type, std::chrono::milliseconds timeout, s
 	std::uint8_t request_id = request_id_++;
 	std::vector<std::uint8_t> message = encodeRequestHeader(makeFileRequestHeader(type.size(), commands::file::read_file_list, request_id));
 	ReadFileList::encode(message, type);
-	impl::sendCommand(*this, request_id, std::move(message), decodeFileResponse<ReadFileList>, timeout, std::move(callback));
+	impl::sendCommand(*this, request_id, std::move(message), decodePlainResponse<ReadFileList>, timeout, std::move(callback));
 }
 
 void Client::readFile(
@@ -238,7 +245,7 @@ void Client::deleteFile(string_view name, std::chrono::milliseconds timeout, std
 	std::uint8_t request_id = request_id_++;
 	std::vector<std::uint8_t> message = encodeRequestHeader(makeFileRequestHeader(name.size(), commands::file::delete_file, request_id));
 	DeleteFile::encode(message, name);
-	impl::sendCommand(*this, request_id, std::move(message), decodeFileResponse<DeleteFile>, timeout, std::move(callback));
+	impl::sendCommand(*this, request_id, std::move(message), decodePlainResponse<DeleteFile>, timeout, std::move(callback));
 }
 
 // Other stuff

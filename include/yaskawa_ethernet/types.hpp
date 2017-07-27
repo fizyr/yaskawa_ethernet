@@ -26,6 +26,13 @@ enum class PositionType {
 	cartesian = 1,
 };
 
+enum class CoordinateSystemType {
+	robot_pulse     = 0,
+	base_pulse      = 1,
+	station_pulse   = 3,
+	robot_cartesian = 4,
+};
+
 enum class CoordinateSystem {
 	base   = 0,
 	robot  = 1,
