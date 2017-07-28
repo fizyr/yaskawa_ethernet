@@ -9,7 +9,7 @@ namespace dr {
 namespace yaskawa {
 namespace udp {
 
-ErrorOr<PulsePosition> ReadCurrentRobotPosition::decode(string_view & data) {
+ErrorOr<Position> ReadCurrentRobotPosition::decode(string_view & data) {
 	if (data.size() > 13 * 4) return DetailedError{std::errc::invalid_argument, "current robot position response larger than expected, expected at most 52 bytes, got " + std::to_string(data.size()) + " bytes"};
 	std::string padded_data;
 	padded_data.resize(13 * 4, '0');
@@ -17,8 +17,7 @@ ErrorOr<PulsePosition> ReadCurrentRobotPosition::decode(string_view & data) {
 	string_view padded_view = padded_data;
 	ErrorOr<Position> result = PositionVariable::decode(padded_view);
 	if (!result) return result.error();
-	if (!result->isPulse()) return DetailedError{std::errc::invalid_argument, "unexpected position type, expected a pulse position"};
-	return result->pulse();
+	return result;
 }
 
 void  ByteVariable::encode(std::vector<std::uint8_t> & out, std::uint8_t value) { writeLittleEndian<std::uint8_t>(out, value); }

@@ -76,7 +76,7 @@ public:
 	/// Remove a handler for a request id.
 	void removeHandler(HandlerToken);
 
-	void readCurrentPulsePosition(int robot, std::chrono::milliseconds timeout, std::function<void(ErrorOr<PulsePosition>)> callback);
+	void readCurrentPosition(int control_group, CoordinateSystemType type, std::chrono::milliseconds timeout, std::function<void(ErrorOr<Position>)> callback);
 
 	void readByte(int index, std::chrono::milliseconds timeout, std::function<void(ErrorOr<std::uint8_t>)> callback);
 	void readBytes(int index, int count, std::chrono::milliseconds timeout, std::function<void(ErrorOr<std::vector<std::uint8_t>>)> callback);
