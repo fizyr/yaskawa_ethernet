@@ -84,8 +84,7 @@ ErrorOr<std::vector<typename T::type>> decodeReadMultipleResponse(ResponseHeader
 }
 
 /// Decode a write response.
-template<typename T>
-ErrorOr<void> decodeWriteResponse(ResponseHeader const & header, string_view & data) {
+inline ErrorOr<void> decodeEmptyResponse(ResponseHeader const & header, string_view & data) {
 	if (header.status != 0) return commandFailed(header.status, header.extra_status);
 	(void) data;
 	return in_place_valid;

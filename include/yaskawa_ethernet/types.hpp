@@ -56,6 +56,24 @@ enum class CoordinateSystem {
 	master = 19,
 };
 
+enum class SpeedType {
+	joint,       // 0.01% of max speed
+	translation, // 0.1 mm/s
+	rotation     // 0.1 degrees/s
+};
+
+struct Speed {
+	SpeedType type;
+	std::uint32_t value;
+};
+
+enum class MoveFrame {
+	base  = 16,
+	robot = 17,
+	user  = 18,
+	tool  = 19,
+};
+
 /// Check if a coordinate system is a user coordinate system.
 constexpr bool isUserCoordinateSystem(CoordinateSystem system) {
 	return system >= CoordinateSystem::user1 && system <= CoordinateSystem::user16;

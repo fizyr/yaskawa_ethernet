@@ -94,5 +94,11 @@ struct FileData {
 	static ErrorOr<std::string> decode(string_view & data);
 };
 
+struct MoveL {
+	using type = void;
+	constexpr static std::size_t encoded_size = 25 * 4;
+	static void encode(std::vector<std::uint8_t> & output, CartesianPosition const & target, int control_group, Speed speed);
+	static ErrorOr<void> decode(string_view & data);
+};
 
 }}}

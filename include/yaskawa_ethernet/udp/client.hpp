@@ -127,6 +127,14 @@ public:
 		std::function<void(ErrorOr<void>)> callback
 	);
 
+	void moveL(
+		CartesianPosition const & target,
+		Speed speed,
+		int control_group,
+		std::chrono::milliseconds timeout,
+		std::function<void(ErrorOr<void>)> callback
+	);
+
 private:
 	/// Called when a connection attempt finishes.
 	void onConnect(DetailedError, Callback callback);

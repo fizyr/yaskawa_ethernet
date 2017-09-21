@@ -129,4 +129,39 @@ ErrorOr<std::string> FileData::decode(string_view & data) {
 	return result;
 }
 
+int systemToMoveLSystem(CoordinateSystem system) {
+	if (system == CoordinateSystem::base) return 16;
+	if (system == CoordinateSystem::robot) return 17;
+	if (isUserCoordinateSystem(system)) return 18;
+	if (system == CoordinateSystem::tool) return 19;
+	throw std::runtime_error{"invalid coordinate system for MoveL: " + std::to_string(int(system))};
+}
+
+void MoveL::encode(std::vector<std::uint8_t> & out, CartesianPosition const & target, int control_group, Speed speed) {
+	writeLittleEndian<std::uint32_t>(out, control_group + 1);
+	writeLittleEndian<std::uint32_t>(out, 1); // Station control group.
+	writeLittleEndian<std::uint32_t>(out, std::int32_t(speed.type));
+	writeLittleEndian<std::uint32_t>(out, std::int32_t(speed.value));
+	writeLittleEndian<std::uint32_t>(out, systemToMoveLSystem(target.frame()));
+
+	// Translation coordinates in 1e-6 meters.
+	writeLittleEndian<std::int32_t>(out, target[0] * 1000);
+	writeLittleEndian<std::int32_t>(out, target[1] * 1000);
+	writeLittleEndian<std::int32_t>(out, target[2] * 1000);
+	// Rotation components in 1e-4 degrees.
+	writeLittleEndian<std::int32_t>(out, target[3] * 10000);
+	writeLittleEndian<std::int32_t>(out, target[4] * 10000);
+	writeLittleEndian<std::int32_t>(out, target[5] * 10000);
+
+	writeLittleEndian<std::uint32_t>(out, 0); // reserved
+	writeLittleEndian<std::uint32_t>(out, target.configuration());
+	writeLittleEndian<std::uint32_t>(out, 0); // extended type
+	writeLittleEndian<std::uint32_t>(out, target.tool());
+	writeLittleEndian<std::uint32_t>(out, userCoordinateNumber(target.frame()));
+
+	// unsupported base and station axes.
+	for (int i = 17; i <= 25; ++i) writeLittleEndian<std::uint32_t>(out, 0);
+
+}
+
 }}}

@@ -88,7 +88,7 @@ namespace {
 	) {
 		std::vector<std::uint8_t> message = encodeRequestHeader(makeRobotRequestHeader(T::encoded_size, T::command_single, index, 0, service::set_all, request_id));
 		T::encode(message, value);
-		impl::sendCommand(client, request_id, std::move(message), decodeWriteResponse<T>, timeout, std::move(callback));
+		impl::sendCommand(client, request_id, std::move(message), decodeEmptyResponse, timeout, std::move(callback));
 	}
 
 	/// Write multiple variables to a robot.
@@ -104,7 +104,7 @@ namespace {
 		std::vector<std::uint8_t> message = encodeRequestHeader(makeRobotRequestHeader(4 + values.size() * T::encoded_size, T::command_multiple, index, 0, service::write_multiple, request_id));
 		writeLittleEndian<std::uint32_t>(message, values.size());
 		for (auto const & value : values) T::encode(message, value);
-		impl::sendCommand(client, request_id, std::move(message), decodeWriteResponse<T>, timeout, std::move(callback));
+		impl::sendCommand(client, request_id, std::move(message), decodeEmptyResponse, timeout, std::move(callback));
 	}
 }
 
@@ -246,6 +246,17 @@ void Client::deleteFile(string_view name, std::chrono::milliseconds timeout, std
 	std::vector<std::uint8_t> message = encodeRequestHeader(makeFileRequestHeader(name.size(), commands::file::delete_file, request_id));
 	DeleteFile::encode(message, name);
 	impl::sendCommand(*this, request_id, std::move(message), decodePlainResponse<DeleteFile>, timeout, std::move(callback));
+}
+
+// MoveL
+
+void Client::moveL(CartesianPosition const & target, Speed speed, int control_group, std::chrono::milliseconds timeout, std::function<void(ErrorOr<void>)> callback) {
+	std::uint8_t request_id = request_id_++;
+	int instance = 2; // Absolute cartesian interpolated move.
+	int attribute = 1;
+	std::vector<std::uint8_t> message = encodeRequestHeader(makeRobotRequestHeader(MoveL::encoded_size, commands::robot::move_cartesian, instance, attribute, service::set_all, request_id));
+	MoveL::encode(message, target, control_group, speed);
+	impl::sendCommand(*this, request_id, std::move(message), decodeEmptyResponse, timeout, std::move(callback));
 }
 
 // Other stuff
