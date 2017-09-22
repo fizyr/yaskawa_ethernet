@@ -20,12 +20,12 @@ ErrorOr<Status> StatusInformation::decode(string_view & data) {
 	result.play          = data[0] & (1 << 6);
 	result.remote        = data[0] & (1 << 7);
 
-	result.teach_pendant_hold = data[5] & (1 << 1);
-	result.external_hold      = data[5] & (1 << 2);
-	result.command_hold       = data[5] & (1 << 3);
-	result.alarm              = data[5] & (1 << 4);
-	result.error              = data[5] & (1 << 5);
-	result.servo_on           = data[5] & (1 << 6);
+	result.teach_pendant_hold = data[4] & (1 << 1);
+	result.external_hold      = data[4] & (1 << 2);
+	result.command_hold       = data[4] & (1 << 3);
+	result.alarm              = data[4] & (1 << 4);
+	result.error              = data[4] & (1 << 5);
+	result.servo_on           = data[4] & (1 << 6);
 	return result;
 }
 
