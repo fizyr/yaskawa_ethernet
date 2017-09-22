@@ -102,7 +102,7 @@ struct FileData {
 
 struct MoveL {
 	using type = void;
-	constexpr static std::size_t encoded_size = 25 * 4;
+	constexpr static std::size_t encoded_size = 26 * 4;
 	static void encode(std::vector<std::uint8_t> & output, CartesianPosition const & target, int control_group, Speed speed);
 	static ErrorOr<void> decode(string_view & data);
 };

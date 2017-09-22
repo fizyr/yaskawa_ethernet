@@ -159,7 +159,7 @@ int systemToMoveLSystem(CoordinateSystem system) {
 
 void MoveL::encode(std::vector<std::uint8_t> & out, CartesianPosition const & target, int control_group, Speed speed) {
 	writeLittleEndian<std::uint32_t>(out, control_group + 1);
-	writeLittleEndian<std::uint32_t>(out, 1); // Station control group.
+	writeLittleEndian<std::uint32_t>(out, 0); // Station control group.
 	writeLittleEndian<std::uint32_t>(out, std::int32_t(speed.type));
 	writeLittleEndian<std::uint32_t>(out, std::int32_t(speed.value));
 	writeLittleEndian<std::uint32_t>(out, systemToMoveLSystem(target.frame()));
@@ -174,13 +174,14 @@ void MoveL::encode(std::vector<std::uint8_t> & out, CartesianPosition const & ta
 	writeLittleEndian<std::int32_t>(out, target[5] * 10000);
 
 	writeLittleEndian<std::uint32_t>(out, 0); // reserved
+	writeLittleEndian<std::uint32_t>(out, 0); // reserved
 	writeLittleEndian<std::uint32_t>(out, target.configuration());
 	writeLittleEndian<std::uint32_t>(out, 0); // extended type
 	writeLittleEndian<std::uint32_t>(out, target.tool());
 	writeLittleEndian<std::uint32_t>(out, userCoordinateNumber(target.frame()));
 
 	// unsupported base and station axes.
-	for (int i = 17; i <= 25; ++i) writeLittleEndian<std::uint32_t>(out, 0);
+	for (int i = 18; i <= 26; ++i) writeLittleEndian<std::uint32_t>(out, 0);
 
 }
 
