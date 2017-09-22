@@ -114,7 +114,7 @@ void Client::readStatus(std::chrono::milliseconds timeout, std::function<void(Er
 	std::uint8_t request_id = request_id_++;
 	int instance = 1;
 	int attribute = 0;
-	std::vector<std::uint8_t> message = encodeRequestHeader(makeRobotRequestHeader(0, commands::robot::read_robot_position, instance, attribute, service::get_all, request_id));
+	std::vector<std::uint8_t> message = encodeRequestHeader(makeRobotRequestHeader(0, commands::robot::read_status_information, instance, attribute, service::get_all, request_id));
 	impl::sendCommand(*this, request_id, std::move(message), decodeSizedResponse<StatusInformation>, timeout, std::move(callback));
 }
 
