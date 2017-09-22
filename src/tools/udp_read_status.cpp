@@ -14,7 +14,8 @@ std::chrono::milliseconds timeout = 200ms;
 void readStatus(dr::yaskawa::udp::Client & client) {
 	client.readStatus(timeout, [&client] (dr::ErrorOr<dr::yaskawa::Status> const & result) {
 		if (!result) {
-			std::cout << "Error reading status: " << result.error().category().name() << ":" << result.error().value() << ": " << result.error().message() << "\n";
+			std::cout << "Error reading status: " << result.error().category().name() << ":" << result.error().value() << ": " << result.error().message() << ": " << result.error().details() << "\n";
+			client.close();
 			return;
 		}
 		std::cout
@@ -32,8 +33,7 @@ void readStatus(dr::yaskawa::udp::Client & client) {
 			<< "command_hold:       " << (result->command_hold       ? "true" : "false") << "\n"
 			<< "alarm:              " << (result->alarm              ? "true" : "false") << "\n"
 			<< "error:              " << (result->error              ? "true" : "false") << "\n"
-			<< "servo_on:           " << (result->servo_on           ? "true" : "false") << "\n"
-			<< "----------\n";
+			<< "servo_on:           " << (result->servo_on           ? "true" : "false") << "\n";
 
 		readStatus(client);
 	});
@@ -42,7 +42,8 @@ void readStatus(dr::yaskawa::udp::Client & client) {
 void connect(dr::yaskawa::udp::Client & client, std::string host, std::string port) {
 	client.connect(host, port, timeout, [&client] (dr::DetailedError error) {
 		if (error) {
-			std::cout << "Error " << error.category().name() << ":" << error.value() << ": " << error.message() << "\n";
+			std::cout << "Error " << error.category().name() << ":" << error.value() << ": " << error.message() << ": " << error.details() << "\n";
+			client.close();
 			return;
 		}
 		std::cout << "Connected to " << client.socket().remote_endpoint() << ".\n";
@@ -54,10 +55,10 @@ int main(int argc, char * * argv) {
 	boost::asio::io_service ios;
 	dr::yaskawa::udp::Client client(ios);
 
-	client.on_error = [] (dr::DetailedError const & error) {
+	client.on_error = [&client] (dr::DetailedError const & error) {
 		std::cout << "Communication error: " << error.fullMessage() << "\n";
+		client.close();
 	};
-
 
 	std::string host = "10.0.0.2";
 	std::string port = "10040";
