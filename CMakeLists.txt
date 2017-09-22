@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.1.0)
 project(yaskawa_ethernet)
 
+option(BUILD_TOOLS "Build test/developer tools" ON)
+
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 add_compile_options(-Wall -Wextra -Wpedantic)
@@ -50,11 +52,6 @@ target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC
 
 target_link_libraries(${PROJECT_NAME} PUBLIC Threads::Threads ${Boost_LIBRARIES})
 
-# Test executables
-add_executable(${PROJECT_NAME}_tcp_test src/tcp_test.cpp)
-add_executable(${PROJECT_NAME}_udp_test src/udp_test.cpp)
-target_link_libraries(${PROJECT_NAME}_tcp_test ${PROJECT_NAME})
-target_link_libraries(${PROJECT_NAME}_udp_test ${PROJECT_NAME})
 
 install(TARGETS "${PROJECT_NAME}"
 	ARCHIVE DESTINATION "${CATKIN_PACKAGE_LIB_DESTINATION}"
@@ -68,3 +65,7 @@ install(
 )
 
 add_subdirectory(src/file_manager)
+
+if (BUILD_TOOLS)
+	add_subdirectory(src/tools)
+endif()
