@@ -58,7 +58,7 @@ namespace {
 		std::function<void (ErrorOr<typename T::type>)> callback
 	) {
 		std::vector<std::uint8_t> message = encodeRequestHeader(makeRobotRequestHeader(0, T::command_single, index, 0, service::get_all, request_id));
-		impl::sendCommand(client, request_id, std::move(message), decodeReadResponse<T>, timeout, std::move(callback));
+		impl::sendCommand(client, request_id, std::move(message), decodeSizedResponse<T>, timeout, std::move(callback));
 	}
 
 	/// Read multiple variables from a robot.
@@ -106,6 +106,16 @@ namespace {
 		for (auto const & value : values) T::encode(message, value);
 		impl::sendCommand(client, request_id, std::move(message), decodeEmptyResponse, timeout, std::move(callback));
 	}
+}
+
+// Current status
+
+void Client::readStatus(std::chrono::milliseconds timeout, std::function<void(ErrorOr<Status>)> callback) {
+	std::uint8_t request_id = request_id_++;
+	int instance = 1;
+	int attribute = 0;
+	std::vector<std::uint8_t> message = encodeRequestHeader(makeRobotRequestHeader(0, commands::robot::read_robot_position, instance, attribute, service::get_all, request_id));
+	impl::sendCommand(*this, request_id, std::move(message), decodeSizedResponse<StatusInformation>, timeout, std::move(callback));
 }
 
 // Current position

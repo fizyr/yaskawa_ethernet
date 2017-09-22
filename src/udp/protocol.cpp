@@ -9,6 +9,26 @@ namespace dr {
 namespace yaskawa {
 namespace udp {
 
+ErrorOr<Status> StatusInformation::decode(string_view & data) {
+	Status result;
+	result.step          = data[0] & (1 << 0);
+	result.one_cycle     = data[0] & (1 << 1);
+	result.continuous    = data[0] & (1 << 2);
+	result.running       = data[0] & (1 << 3);
+	result.speed_limited = data[0] & (1 << 4);
+	result.teach         = data[0] & (1 << 5);
+	result.play          = data[0] & (1 << 6);
+	result.remote        = data[0] & (1 << 7);
+
+	result.teach_pendant_hold = data[5] & (1 << 1);
+	result.external_hold      = data[5] & (1 << 2);
+	result.command_hold       = data[5] & (1 << 3);
+	result.alarm              = data[5] & (1 << 4);
+	result.error              = data[5] & (1 << 5);
+	result.servo_on           = data[5] & (1 << 6);
+	return result;
+}
+
 ErrorOr<Position> ReadCurrentRobotPosition::decode(string_view & data) {
 	if (data.size() > 13 * 4) return DetailedError{std::errc::invalid_argument, "current robot position response larger than expected, expected at most 52 bytes, got " + std::to_string(data.size()) + " bytes"};
 	std::string padded_data;

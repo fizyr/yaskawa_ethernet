@@ -57,7 +57,7 @@ ErrorOr<typename T::type> decodePlainResponse(ResponseHeader const & header, str
 
 /// Decode a read response.
 template<typename T>
-ErrorOr<typename T::type> decodeReadResponse(ResponseHeader const & header, string_view & data) {
+ErrorOr<typename T::type> decodeSizedResponse(ResponseHeader const & header, string_view & data) {
 	if (header.status != 0) return commandFailed(header.status, header.extra_status);
 	if (data.size() != T::encoded_size) return unexpectedValue("data size", data.size(), T::encoded_size);
 	return T::decode(data);

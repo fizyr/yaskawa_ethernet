@@ -14,6 +14,12 @@ namespace dr {
 namespace yaskawa {
 namespace udp {
 
+struct StatusInformation {
+	using type = yaskawa::Status;
+	constexpr static std::size_t encoded_size = 2 * 4;
+	static ErrorOr<yaskawa::Status> decode(string_view & data);
+};
+
 struct ReadCurrentRobotPosition {
 	using type = Position;
 	static ErrorOr<Position> decode(string_view & data);

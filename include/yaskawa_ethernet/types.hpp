@@ -10,6 +10,25 @@
 namespace dr {
 namespace yaskawa {
 
+struct Status {
+	bool step;
+	bool one_cycle;
+	bool continuous;
+	bool running;
+	bool speed_limited;
+	bool teach;
+	bool play;
+	bool remote;
+	bool teach_pendant_hold;
+	bool external_hold;
+	bool command_hold;
+	bool alarm;
+	bool error;
+	bool servo_on;
+};
+
+
+
 enum class VariableType {
 	byte_type             = 0,
 	integer_type          = 1,
