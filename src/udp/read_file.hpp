@@ -6,13 +6,14 @@
 #include "encode.hpp"
 #include "decode.hpp"
 
-#include <boost/asio/steady_timer.hpp>
-#include <boost/system/error_code.hpp>
+#include <asio/steady_timer.hpp>
 
 #include <algorithm>
 #include <atomic>
 #include <cstdint>
+#include <functional>
 #include <memory>
+#include <system_error>
 #include <utility>
 
 #include <iostream>
@@ -31,7 +32,7 @@ public:
 	Client * client_;
 	std::uint8_t request_id_;
 	Client::HandlerToken handler_;
-	boost::asio::steady_timer timer_;
+	asio::steady_timer timer_;
 	std::chrono::milliseconds timeout_;
 	std::vector<std::uint8_t> write_buffer_;
 	std::string file_data_;
@@ -74,7 +75,7 @@ public:
 		std::cout << "write buffer size: "  << this << " "<< write_buffer_.size() << "\n";
 
 		auto callback = std::bind(&ReadFileSession::onWriteCommand, this, self(), std::placeholders::_1, std::placeholders::_2);
-		client_->socket().async_send(boost::asio::buffer(write_buffer_.data(), write_buffer_.size()), callback);
+		client_->socket().async_send(asio::buffer(write_buffer_.data(), write_buffer_.size()), callback);
 		resetTimeout();
 	}
 
@@ -83,7 +84,7 @@ protected:
 	Ptr self() { return this->shared_from_this(); }
 
 	/// Called when the message has been written.
-	void onWriteCommand(Ptr, boost::system::error_code const & error, std::size_t) {
+	void onWriteCommand(Ptr, std::error_code const & error, std::size_t) {
 		if (done_.load()) return;
 		if (error && done_.exchange(true) == false) {
 			timer_.cancel();
@@ -97,11 +98,11 @@ protected:
 	void writeAck(std::uint32_t block_number) {
 		std::vector<std::uint8_t> write_buffer_ = encodeRequestHeader(makeFileRequestHeader(0, commands::file::read_file, request_id_, block_number, true));
 		auto callback = std::bind(&ReadFileSession::onWriteAck, this, self(), std::placeholders::_1, std::placeholders::_2);
-		client_->socket().async_send(boost::asio::buffer(write_buffer_.data(), write_buffer_.size()), callback);
+		client_->socket().async_send(asio::buffer(write_buffer_.data(), write_buffer_.size()), callback);
 	}
 
 	/// Called when an ack has been written.
-	void onWriteAck(Ptr, boost::system::error_code const & error, std::size_t) {
+	void onWriteAck(Ptr, std::error_code const & error, std::size_t) {
 		if (done_.load()) return;
 		if (error && done_.exchange(true) == false) {
 			timer_.cancel();
@@ -130,7 +131,7 @@ protected:
 
 	void resetTimeout() {
 		timer_.expires_from_now(timeout_);
-		timer_.async_wait([this, self=self()] (boost::system::error_code error) {
+		timer_.async_wait([this, self=self()] (std::error_code error) {
 			if (done_.exchange(true)) return;
 			client_->removeHandler(handler_);
 			if (error) return on_done_(DetailedError(std::errc(error.value()), "waiting for reply to request " + std::to_string(request_id_)));

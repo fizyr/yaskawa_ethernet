@@ -1,7 +1,7 @@
 #include "../include/yaskawa_ethernet/udp/client.hpp"
 
-#include <boost/asio/io_service.hpp>
-#include <boost/asio/steady_timer.hpp>
+#include <asio/io_service.hpp>
+#include <asio/steady_timer.hpp>
 
 #include <chrono>
 #include <iostream>
@@ -11,7 +11,7 @@ using namespace dr::yaskawa;
 
 dr::yaskawa::udp::Client * client;
 int command_count = 0;
-boost::asio::steady_timer * timer;
+asio::steady_timer * timer;
 
 std::uint8_t byte_value    = 0;
 std::int16_t int16_value   = -5;
@@ -40,8 +40,8 @@ void onReadFloat(dr::ErrorOr<float> result);
 void onWritePosition(dr::ErrorOr<void> result);
 void onReadPosition(dr::ErrorOr<Position> const & result);
 
-void onTimeout(boost::system::error_code const & error) {
-	if (error) throw boost::system::system_error(error);
+void onTimeout(std::error_code const & error) {
+	if (error) throw std::system_error(error);
 	std::cout << "Executing commands at " << command_count << " Hz.\n";
 	command_count = 0;
 	timer->expires_from_now(std::chrono::seconds(1));
@@ -167,10 +167,10 @@ void onConnect(std::error_code const & error) {
 }
 
 int main(int argc, char * * argv) {
-	boost::asio::io_service ios;
+	asio::io_service ios;
 	dr::yaskawa::udp::Client client(ios);
 	::client = &client;
-	boost::asio::steady_timer timer(ios);
+	asio::steady_timer timer(ios);
 	::timer = &timer;
 
 	client.on_error = [] (dr::DetailedError const & error) {

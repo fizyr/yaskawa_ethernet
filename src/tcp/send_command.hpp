@@ -3,13 +3,14 @@
 #include "error.hpp"
 #include "string_view.hpp"
 
-#include <boost/asio/read_until.hpp>
-#include <boost/asio/streambuf.hpp>
-#include <boost/asio/write.hpp>
-#include <boost/system/error_code.hpp>
+#include <asio/read_until.hpp>
+#include <asio/streambuf.hpp>
+#include <asio/write.hpp>
 
 #include <cstdint>
+#include <functional>
 #include <memory>
+#include <system_error>
 #include <utility>
 
 namespace dr {
@@ -49,14 +50,14 @@ namespace impl {
 		Decoder decoder;
 		Callback callback;
 		Socket * socket;
-		boost::asio::streambuf * read_buffer;
+		asio::streambuf * read_buffer;
 
 	public:
-		boost::asio::streambuf command_buffer;
-		boost::asio::streambuf data_buffer;
+		asio::streambuf command_buffer;
+		asio::streambuf data_buffer;
 
 		/// Construct a command session.
-		CommandSession(Decoder decoder, Callback callback, Socket & socket, boost::asio::streambuf & read_buffer) :
+		CommandSession(Decoder decoder, Callback callback, Socket & socket, asio::streambuf & read_buffer) :
 			decoder(std::move(decoder)),
 			callback(std::move(callback)),
 			socket(&socket),
@@ -65,17 +66,17 @@ namespace impl {
 		/// Start the session by writing the command.
 		void send() {
 			auto callback = std::bind(&CommandSession::onWriteCommand, this, this->shared_from_this(), std::placeholders::_1, std::placeholders::_2);
-			boost::asio::async_write(*socket, command_buffer.data(), callback);
+			asio::async_write(*socket, command_buffer.data(), callback);
 		}
 
 	protected:
 		/// Called when the command has been written.
-		void onWriteCommand(Ptr, boost::system::error_code const & error, std::size_t bytes_transferred) {
+		void onWriteCommand(Ptr, std::error_code const & error, std::size_t bytes_transferred) {
 			command_buffer.consume(bytes_transferred);
 			if (error) callback(DetailedError(std::errc(error.value())));
 
 			auto callback = std::bind(&CommandSession::onReadResponse<StartCommand>, this, this->shared_from_this(), std::placeholders::_1, std::placeholders::_2);
-			boost::asio::async_read_until(*socket, *read_buffer, ResponseMatcher{}, callback);
+			asio::async_read_until(*socket, *read_buffer, ResponseMatcher{}, callback);
 		}
 
 		/// Called when the command response has been read.
@@ -84,9 +85,9 @@ namespace impl {
 		 */
 		template<bool R2 = StartCommand>
 		typename std::enable_if<R2>::type
-		onReadResponse(Ptr, boost::system::error_code const & error, std::size_t bytes_transferred) {
+		onReadResponse(Ptr, std::error_code const & error, std::size_t bytes_transferred) {
 			if (error) callback(DetailedError(std::errc(error.value())));
-			ErrorOr<std::string> decoded = decodeCommandResponse(string_view{boost::asio::buffer_cast<char const *>(read_buffer->data()), bytes_transferred});
+			ErrorOr<std::string> decoded = decodeCommandResponse(string_view{asio::buffer_cast<char const *>(read_buffer->data()), bytes_transferred});
 			read_buffer->consume(bytes_transferred);
 			return callback(decoded);
 		}
@@ -97,37 +98,37 @@ namespace impl {
 		 */
 		template<bool R2 = StartCommand>
 		typename std::enable_if<not R2>::type
-		onReadResponse(Ptr, boost::system::error_code const & error, std::size_t bytes_transferred) {
+		onReadResponse(Ptr, std::error_code const & error, std::size_t bytes_transferred) {
 			if (error) callback(DetailedError(std::errc(error.value())));
-			ErrorOr<std::string> decoded = decodeCommandResponse(string_view{boost::asio::buffer_cast<char const *>(read_buffer->data()), bytes_transferred});
+			ErrorOr<std::string> decoded = decodeCommandResponse(string_view{asio::buffer_cast<char const *>(read_buffer->data()), bytes_transferred});
 			read_buffer->consume(bytes_transferred);
 			if (!decoded) return callback(decoded.error());
 
 			// If the command has data, write it.
 			if (data_buffer.size()) {
 				auto callback = std::bind(&CommandSession::onWriteData, this, this->shared_from_this(), std::placeholders::_1, std::placeholders::_2);
-				boost::asio::async_write(*socket, data_buffer.data(), callback);
+				asio::async_write(*socket, data_buffer.data(), callback);
 
 			// Otherwise read the response directly.
 			} else {
 				auto callback = std::bind(&CommandSession::onReadData, this, this->shared_from_this(), std::placeholders::_1, std::placeholders::_2);
-				boost::asio::async_read_until(*socket, *read_buffer, ResponseMatcher{}, callback);
+				asio::async_read_until(*socket, *read_buffer, ResponseMatcher{}, callback);
 			}
 		}
 
 		/// Called when the command data has been written.
-		void onWriteData(Ptr, boost::system::error_code const & error, std::size_t bytes_transferred) {
+		void onWriteData(Ptr, std::error_code const & error, std::size_t bytes_transferred) {
 			if (error) callback(DetailedError(std::errc(error.value())));
 			data_buffer.consume(bytes_transferred);
 
 			auto callback = std::bind(&CommandSession::onReadData, this, this->shared_from_this(), std::placeholders::_1, std::placeholders::_2);
-			boost::asio::async_read_until(*socket, *read_buffer, ResponseMatcher{}, callback);
+			asio::async_read_until(*socket, *read_buffer, ResponseMatcher{}, callback);
 		}
 
 		/// Called when the command data has been read.
-		void onReadData(Ptr, boost::system::error_code const & error, std::size_t bytes_transferred) {
+		void onReadData(Ptr, std::error_code const & error, std::size_t bytes_transferred) {
 			if (error) callback(DetailedError(std::errc(error.value())));
-			ErrorOr<ResultType> result = decoder(string_view{boost::asio::buffer_cast<char const *>(read_buffer->data()), bytes_transferred});
+			ErrorOr<ResultType> result = decoder(string_view{asio::buffer_cast<char const *>(read_buffer->data()), bytes_transferred});
 			read_buffer->consume(bytes_transferred);
 			callback(std::move(result));
 		}
@@ -135,13 +136,13 @@ namespace impl {
 }
 
 template<typename Decoder, typename Callback, typename Socket>
-auto makeCommandSesssion(Decoder && decoder, Callback && callback, Socket & socket, boost::asio::streambuf & read_buffer) {
+auto makeCommandSesssion(Decoder && decoder, Callback && callback, Socket & socket, asio::streambuf & read_buffer) {
 	using type = impl::CommandSession<std::decay_t<Decoder>, std::decay_t<Callback>, Socket, false>;
 	return std::make_shared<type>(std::forward<Decoder>(decoder), std::forward<Callback>(callback), socket, read_buffer);
 }
 
 template<typename Callback, typename Socket>
-auto makeStartCommandSesssion(Callback && callback, Socket & socket, boost::asio::streambuf & read_buffer) {
+auto makeStartCommandSesssion(Callback && callback, Socket & socket, asio::streambuf & read_buffer) {
 	using type = impl::CommandSession<decltype(&decodeCommandResponse), std::decay_t<Callback>, Socket, true>;
 	return std::make_shared<type>(decodeCommandResponse, std::forward<Callback>(callback), socket, read_buffer);
 }

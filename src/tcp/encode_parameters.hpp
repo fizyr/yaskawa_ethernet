@@ -1,5 +1,5 @@
 #pragma once
-#include <boost/asio/streambuf.hpp>
+#include <asio/streambuf.hpp>
 
 #include <ostream>
 #include <utility>
@@ -39,7 +39,7 @@ namespace {
 	 * Paremeters are seperated by a space, and the list is terminated by a '\r'.
 	 */
 	template<typename... T>
-	void encodeParameters(boost::asio::streambuf & buffer, T const & ... params) {
+	void encodeParameters(asio::streambuf & buffer, T const & ... params) {
 		EncodeParametersImp<T...>::addParameters(std::ostream{&buffer}, params...);
 	}
 }

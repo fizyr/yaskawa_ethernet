@@ -4,9 +4,9 @@
 #include "../string_view.hpp"
 #include "message.hpp"
 
-#include <boost/asio/io_service.hpp>
-#include <boost/asio/ip/udp.hpp>
-#include <boost/asio/streambuf.hpp>
+#include <asio/io_service.hpp>
+#include <asio/ip/udp.hpp>
+#include <asio/streambuf.hpp>
 
 #include <dr_error/error_or.hpp>
 
@@ -22,7 +22,7 @@ namespace udp {
 
 class Client {
 public:
-	using Socket   = boost::asio::ip::udp::socket;
+	using Socket   = asio::ip::udp::socket;
 	using Callback = std::function<void (DetailedError error)>;
 
 	struct OpenRequest {
@@ -42,7 +42,7 @@ private:
 	std::map<std::uint8_t, OpenRequest> requests_;
 
 public:
-	Client(boost::asio::io_service & ios);
+	Client(asio::io_service & ios);
 
 	/// Open a connection.
 	void connect(
@@ -64,7 +64,7 @@ public:
 	void close();
 
 	/// Get the IO service used by the client.
-	boost::asio::io_service & ios() { return socket_.get_io_service(); }
+	asio::io_service & ios() { return socket_.get_io_service(); }
 
 	/// Get the socket used by the client.
 	Socket        & socket()       { return socket_; }
@@ -144,7 +144,7 @@ private:
 	void receive();
 
 	/// Process incoming messages.
-	void onReceive(boost::system::error_code error, std::size_t message_size);
+	void onReceive(std::error_code error, std::size_t message_size);
 };
 
 }}}

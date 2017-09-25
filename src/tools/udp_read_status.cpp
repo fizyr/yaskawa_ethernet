@@ -1,7 +1,7 @@
 #include "../include/yaskawa_ethernet/udp/client.hpp"
 
-#include <boost/asio/io_service.hpp>
-#include <boost/asio/steady_timer.hpp>
+#include <asio/io_service.hpp>
+#include <asio/steady_timer.hpp>
 
 #include <chrono>
 #include <iostream>
@@ -52,7 +52,7 @@ void connect(dr::yaskawa::udp::Client & client, std::string host, std::string po
 }
 
 int main(int argc, char * * argv) {
-	boost::asio::io_service ios;
+	asio::io_service ios;
 	dr::yaskawa::udp::Client client(ios);
 
 	client.on_error = [&client] (dr::DetailedError const & error) {

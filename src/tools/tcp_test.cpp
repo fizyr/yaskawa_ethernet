@@ -1,7 +1,7 @@
 #include "../include/yaskawa_ethernet/tcp/client.hpp"
 
-#include <boost/asio/io_service.hpp>
-#include <boost/asio/steady_timer.hpp>
+#include <asio/io_service.hpp>
+#include <asio/steady_timer.hpp>
 
 #include <iostream>
 #include <chrono>
@@ -10,10 +10,10 @@ using namespace std::chrono_literals;
 
 dr::yaskawa::tcp::Client * client;
 int read_count = 0;
-boost::asio::steady_timer * timer;
+asio::steady_timer * timer;
 
-void onTimeout(boost::system::error_code const & error) {
-	if (error) throw boost::system::system_error(error);
+void onTimeout(std::error_code const & error) {
+	if (error) throw std::system_error(error);
 	std::cout << "Reading at " << read_count << " Hz.\n";
 	read_count = 0;
 	timer->expires_from_now(std::chrono::seconds(1));
@@ -52,10 +52,10 @@ void onConnect(std::error_code const & error) {
 }
 
 int main(int argc, char * * argv) {
-	boost::asio::io_service ios;
+	asio::io_service ios;
 	dr::yaskawa::tcp::Client client(ios);
 	::client = &client;
-	boost::asio::steady_timer timer(ios);
+	asio::steady_timer timer(ios);
 	::timer = &timer;
 
 	std::string host = "10.0.0.2";

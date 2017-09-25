@@ -13,14 +13,14 @@ namespace tcp {
 
 namespace {
 	template<typename Encoder, typename Decoder, typename Callback, typename Socket, typename ...Args>
-	void sendCommand(Encoder && encoder, Decoder && decoder, Callback && callback, Socket & socket, boost::asio::streambuf & read_buffer, Args && ...args) {
+	void sendCommand(Encoder && encoder, Decoder && decoder, Callback && callback, Socket & socket, asio::streambuf & read_buffer, Args && ...args) {
 		auto session = makeCommandSesssion(std::forward<Decoder>(decoder), std::forward<Callback>(callback), socket, read_buffer);
 		std::forward<Encoder>(encoder)(session->command_buffer, session->data_buffer, std::forward<Args>(args)...);
 		session->send();
 	}
 }
 
-Client::Client(boost::asio::io_service & ios) : socket_(ios) {}
+Client::Client(asio::io_service & ios) : socket_(ios) {}
 
 void Client::connect(std::string const & host, std::string const & port, std::chrono::milliseconds timeout, Callback const & callback) {
 	asyncResolveConnect({host, port}, timeout, socket_, callback);

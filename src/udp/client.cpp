@@ -18,7 +18,7 @@ namespace dr {
 namespace yaskawa {
 namespace udp {
 
-Client::Client(boost::asio::io_service & ios) :
+Client::Client(asio::io_service & ios) :
 	socket_(ios),
 	read_buffer_{std::make_unique<std::array<std::uint8_t, 512>>()} {}
 
@@ -282,11 +282,11 @@ void Client::receive() {
 	// in on_receive and continue reading forever.
 	if (!socket_.is_open()) return;
 	auto callback = std::bind(&Client::onReceive, this, std::placeholders::_1, std::placeholders::_2);
-	socket_.async_receive(boost::asio::buffer(read_buffer_->data(), read_buffer_->size()), callback);
+	socket_.async_receive(asio::buffer(read_buffer_->data(), read_buffer_->size()), callback);
 }
 
-void Client::onReceive(boost::system::error_code error, std::size_t message_size) {
-	if (error == boost::system::errc::operation_canceled) return;
+void Client::onReceive(std::error_code error, std::size_t message_size) {
+	if (error == std::errc::operation_canceled) return;
 	if (error) {
 		if (on_error) on_error(make_error_code(std::errc(error.value())));
 		receive();

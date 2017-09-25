@@ -6,7 +6,7 @@
 
 #include <dr_error/error_or.hpp>
 
-#include <boost/asio/streambuf.hpp>
+#include <asio/streambuf.hpp>
 
 #include <vector>
 #include <cstdint>
@@ -17,33 +17,33 @@ namespace tcp {
 
 /// Default constructible function object type that matches response messages.
 /**
- * For use with boost::asio::read_until.
+ * For use with asio::read_until.
  */
 using ResponseMatcher = impl::ResponseMatcher;
 
-void encodeStartCommand(boost::asio::streambuf & command, int keep_alive);
+void encodeStartCommand(asio::streambuf & command, int keep_alive);
 
-void encodeServoOn(boost::asio::streambuf & command, boost::asio::streambuf & params, bool on);
-void encodeStartJob(boost::asio::streambuf & command, boost::asio::streambuf & params, std::string const & name);
+void encodeServoOn(asio::streambuf & command, asio::streambuf & params, bool on);
+void encodeStartJob(asio::streambuf & command, asio::streambuf & params, std::string const & name);
 
-void encodeReadPulsePosition(boost::asio::streambuf & command, boost::asio::streambuf & params);
-void encodeReadCartesianPosition(boost::asio::streambuf & command, boost::asio::streambuf & params, CoordinateSystem system);
+void encodeReadPulsePosition(asio::streambuf & command, asio::streambuf & params);
+void encodeReadCartesianPosition(asio::streambuf & command, asio::streambuf & params, CoordinateSystem system);
 
-void encodeReadIo(boost::asio::streambuf & command, boost::asio::streambuf & params, unsigned int start, unsigned int count);
-void encodeWriteIo(boost::asio::streambuf & command, boost::asio::streambuf & params, unsigned int start, std::vector<std::uint8_t> const & data);
+void encodeReadIo(asio::streambuf & command, asio::streambuf & params, unsigned int start, unsigned int count);
+void encodeWriteIo(asio::streambuf & command, asio::streambuf & params, unsigned int start, std::vector<std::uint8_t> const & data);
 
-void encodeReadVariable(boost::asio::streambuf & command, boost::asio::streambuf & params, VariableType type, unsigned int index);
-void encodeReadByteVariable(boost::asio::streambuf & command, boost::asio::streambuf & params, unsigned int index);
-void encodeReadIntVariable(boost::asio::streambuf & command, boost::asio::streambuf & params, unsigned int index);
-void encodeReadDoubleIntVariable(boost::asio::streambuf & command, boost::asio::streambuf & params, unsigned int index);
-void encodeReadRealVariable(boost::asio::streambuf & command, boost::asio::streambuf & params, unsigned int index);
-void encodeReadPositionVariable(boost::asio::streambuf & command, boost::asio::streambuf & params, unsigned int index);
+void encodeReadVariable(asio::streambuf & command, asio::streambuf & params, VariableType type, unsigned int index);
+void encodeReadByteVariable(asio::streambuf & command, asio::streambuf & params, unsigned int index);
+void encodeReadIntVariable(asio::streambuf & command, asio::streambuf & params, unsigned int index);
+void encodeReadDoubleIntVariable(asio::streambuf & command, asio::streambuf & params, unsigned int index);
+void encodeReadRealVariable(asio::streambuf & command, asio::streambuf & params, unsigned int index);
+void encodeReadPositionVariable(asio::streambuf & command, asio::streambuf & params, unsigned int index);
 
-void encodeWriteByteVariable(boost::asio::streambuf & command, boost::asio::streambuf & params, unsigned int index, std::uint8_t value);
-void encodeWriteIntVariable(boost::asio::streambuf & command, boost::asio::streambuf & params, unsigned int index, std::int16_t value);
-void encodeWriteDoubleIntVariable(boost::asio::streambuf & command, boost::asio::streambuf & params, unsigned int index, std::int32_t value);
-void encodeWriteRealVariable(boost::asio::streambuf & command, boost::asio::streambuf & params, unsigned int index, float value);
-void encodeWritePositionVariable(boost::asio::streambuf & command, boost::asio::streambuf & params, unsigned int index, Position const & position);
+void encodeWriteByteVariable(asio::streambuf & command, asio::streambuf & params, unsigned int index, std::uint8_t value);
+void encodeWriteIntVariable(asio::streambuf & command, asio::streambuf & params, unsigned int index, std::int16_t value);
+void encodeWriteDoubleIntVariable(asio::streambuf & command, asio::streambuf & params, unsigned int index, std::int32_t value);
+void encodeWriteRealVariable(asio::streambuf & command, asio::streambuf & params, unsigned int index, float value);
+void encodeWritePositionVariable(asio::streambuf & command, asio::streambuf & params, unsigned int index, Position const & position);
 
 ErrorOr<std::string> decodeCommandResponse(string_view);
 ErrorOr<void> decodeEmptyData(string_view);

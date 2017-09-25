@@ -24,7 +24,7 @@ struct Options {
 
 void executeCommand(dr::yaskawa::udp::Client & client, Options const & options) {
 	if (options.command == "ls") {
-		client.readFileList(options.args[0], 100ms, [&options] (dr::ErrorOr<std::vector<std::string>> result) {
+		client.readFileList(options.args[0], 100ms, [] (dr::ErrorOr<std::vector<std::string>> result) {
 			if (!result) {
 				std::cerr << "Failed to read file list: " << result.error().fullMessage() << "\n";
 				std::exit(2);
@@ -34,7 +34,7 @@ void executeCommand(dr::yaskawa::udp::Client & client, Options const & options) 
 			}
 		});
 	} else if (options.command == "get") {
-		client.readFile(options.args[0], 3s, [&options] (dr::ErrorOr<std::string> result) {
+		client.readFile(options.args[0], 3s, [] (dr::ErrorOr<std::string> result) {
 			if (!result) {
 				std::cerr << "Failed to read file: " << result.error().fullMessage() << "\n";
 				std::exit(2);
@@ -44,14 +44,14 @@ void executeCommand(dr::yaskawa::udp::Client & client, Options const & options) 
 	} else if (options.command == "put") {
 		std::stringstream data;
 		data << std::cin.rdbuf();
-		client.writeFile(options.args[0], data.str(), 3s, [&options] (dr::ErrorOr<void> result) {
+		client.writeFile(options.args[0], data.str(), 3s, [] (dr::ErrorOr<void> result) {
 			if (!result) {
 				std::cerr << "Failed to write file: " << result.error().fullMessage() << "\n";
 				std::exit(2);
 			}
 		}, nullptr);
 	} else if (options.command == "delete") {
-		client.deleteFile(options.args[0], 3s, [&options] (dr::ErrorOr<void> result) {
+		client.deleteFile(options.args[0], 3s, [] (dr::ErrorOr<void> result) {
 			if (!result) {
 				std::cerr << "Failed to delete file: " << result.error().fullMessage() << "\n";
 				std::exit(2);
@@ -95,7 +95,7 @@ int main(int argc, char * * argv) {
 	}
 
 
-	boost::asio::io_service ios;
+	asio::io_service ios;
 	dr::yaskawa::udp::Client client{ios};
 	client.connect(argv[1], 10040, 100ms, [&client, &options] (std::error_code error) {
 		if (error) {
