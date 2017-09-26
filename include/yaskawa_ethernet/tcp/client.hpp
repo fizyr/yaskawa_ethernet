@@ -5,9 +5,9 @@
 
 #include <dr_error/error_or.hpp>
 
-#include <boost/asio/io_service.hpp>
-#include <boost/asio/ip/tcp.hpp>
-#include <boost/asio/streambuf.hpp>
+#include <asio/io_service.hpp>
+#include <asio/ip/tcp.hpp>
+#include <asio/streambuf.hpp>
 
 #include <chrono>
 #include <cstdint>
@@ -20,7 +20,7 @@ namespace tcp {
 
 class Client {
 public:
-	using Socket   = boost::asio::ip::tcp::socket;
+	using Socket   = asio::ip::tcp::socket;
 	using Callback = std::function<void (std::error_code const & error)>;
 
 	template<typename T>
@@ -28,10 +28,10 @@ public:
 
 private:
 	Socket socket_;
-	boost::asio::streambuf read_buffer_;
+	asio::streambuf read_buffer_;
 
 public:
-	Client(boost::asio::io_service & ios);
+	Client(asio::io_service & ios);
 
 	/// Open a connection.
 	void connect(
@@ -53,7 +53,7 @@ public:
 	void close();
 
 	/// Get the IO service.
-	boost::asio::io_service & ios() { return socket_.get_io_service(); }
+	asio::io_service & ios() { return socket_.get_io_service(); }
 
 	/// Get the socket used by the client.
 	Socket       & socket()       { return socket_; }

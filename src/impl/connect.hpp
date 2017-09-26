@@ -2,8 +2,10 @@
 #include <memory>
 #include <atomic>
 
-#include <boost/asio/steady_timer.hpp>
-#include <boost/asio/connect.hpp>
+#include <asio/steady_timer.hpp>
+#include <asio/connect.hpp>
+
+#include <functional>
 
 namespace dr {
 namespace yaskawa {
@@ -25,7 +27,7 @@ class ConnectionAttempt : public std::enable_shared_from_this<ConnectionAttempt<
 	Resolver resolver;
 
 	/// Timer to keep track of the timeout with.
-	boost::asio::steady_timer timer;
+	asio::steady_timer timer;
 
 	/// Flag to remember if the callback has been invoked already.
 	std::atomic<bool> finished{false};
@@ -56,7 +58,7 @@ protected:
 	Ptr self() { return this->shared_from_this(); }
 
 	/// Called when the resolver has a result.
-	void onResolve(Ptr, boost::system::error_code const & error, Iterator iterator) {
+	void onResolve(Ptr, std::error_code const & error, Iterator iterator) {
 		if (error) {
 			if (finished.exchange(true)) return;
 			callback(make_error_code(std::errc(error.value())));
@@ -65,15 +67,15 @@ protected:
 		if (finished.load()) return;
 
 		auto connect_callback = std::bind(&ConnectionAttempt::onConnect, this, self(), std::placeholders::_1, std::placeholders::_2);
-		boost::asio::async_connect(*socket, iterator, connect_callback);
+		asio::async_connect(*socket, iterator, connect_callback);
 	}
 
 	/// Called when a connection attempt finished.
-	void onConnect(Ptr, boost::system::error_code const & error, Iterator iterator) {
+	void onConnect(Ptr, std::error_code const & error, Iterator iterator) {
 		(void) iterator;
 
 		if (finished.exchange(true)) {
-			boost::system::error_code discard_error;
+			std::error_code discard_error;
 			socket->close(discard_error);
 			return;
 		}
@@ -84,7 +86,7 @@ protected:
 	}
 
 	/// Called when a connection attempt times out.
-	void onConnectTimeout(Ptr, boost::system::error_code const & error) {
+	void onConnectTimeout(Ptr, std::error_code const & error) {
 		if (finished.exchange(true)) return;
 		resolver.cancel();
 		socket->cancel();

@@ -1,9 +1,6 @@
 #pragma once
 #include "impl/error.hpp"
 
-#include <boost/system/error_code.hpp>
-#include <boost/system/system_error.hpp>
-
 #include <string>
 #include <system_error>
 #include <type_traits>
@@ -21,8 +18,8 @@ namespace errc {
 		command_failed      = 0x02,
 	};
 
-	inline impl::YaskawaError make_error_code(errc_t code)      { return {code}; }
-	inline impl::YaskawaError make_error_condition(errc_t code) { return {code}; }
+	inline std::error_code      make_error_code(errc_t code)      { return {code, yaskawa_category()}; }
+	inline std::error_condition make_error_condition(errc_t code) { return {code, yaskawa_category()}; }
 }
 
 /// Enum type for protocol error codes.
@@ -34,9 +31,3 @@ namespace std {
 	template<> class is_error_code_enum     <dr::yaskawa::errc_t> : std::true_type {};
 	template<> class is_error_condition_enum<dr::yaskawa::errc_t> : std::true_type {};
 }
-
-namespace boost {
-namespace system {
-	template<> struct is_error_code_enum     <dr::yaskawa::errc_t> : std::true_type {};
-	template<> struct is_error_condition_enum<dr::yaskawa::errc_t> : std::true_type {};
-}}

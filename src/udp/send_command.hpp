@@ -4,12 +4,13 @@
 #include "udp/client.hpp"
 #include "udp/protocol.hpp"
 
-#include <boost/asio/steady_timer.hpp>
-#include <boost/system/error_code.hpp>
+#include <asio/steady_timer.hpp>
 
 #include <atomic>
 #include <cstdint>
+#include <functional>
 #include <memory>
+#include <system_error>
 #include <utility>
 
 namespace dr {
@@ -32,7 +33,7 @@ class CommandSession : public std::enable_shared_from_this<CommandSession<Decode
 	Client * client_;
 	std::uint8_t request_id_;
 	Client::HandlerToken handler_;
-	boost::asio::steady_timer timer_;
+	asio::steady_timer timer_;
 	std::vector<std::uint8_t> write_buffer_;
 
 	std::atomic_bool done{false};
@@ -55,7 +56,7 @@ public:
 		handler_ = client_->registerHandler(request_id, response_callback);
 
 		auto callback = std::bind(&CommandSession::onWriteCommand, this, self(), std::placeholders::_1, std::placeholders::_2);
-		client_->socket().async_send(boost::asio::buffer(write_buffer_.data(), write_buffer_.size()), callback);
+		client_->socket().async_send(asio::buffer(write_buffer_.data(), write_buffer_.size()), callback);
 
 		timer_.expires_from_now(timeout);
 		timer_.async_wait(std::bind(&CommandSession::onTimeout, this, self(), std::placeholders::_1));
@@ -66,7 +67,7 @@ protected:
 	Ptr self() { return this->shared_from_this(); }
 
 	/// Called when the message has been written.
-	void onWriteCommand(Ptr, boost::system::error_code const & error, std::size_t) {
+	void onWriteCommand(Ptr, std::error_code const & error, std::size_t) {
 		if (done.load()) return;
 		if (error && done.exchange(true) == false) {
 			timer_.cancel();
@@ -86,7 +87,7 @@ protected:
 	}
 
 	/// Called when the request times out.
-	void onTimeout(Ptr, boost::system::error_code const & error) {
+	void onTimeout(Ptr, std::error_code const & error) {
 		if (done.exchange(true)) return;
 		client_->removeHandler(handler_);
 		if (error) return callback(DetailedError(std::errc(error.value()), "waiting for reply to request " + std::to_string(request_id_)));
