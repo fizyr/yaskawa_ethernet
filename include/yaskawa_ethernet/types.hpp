@@ -27,8 +27,6 @@ struct Status {
 	bool servo_on;
 };
 
-
-
 enum class VariableType {
 	byte_type             = 0,
 	integer_type          = 1,

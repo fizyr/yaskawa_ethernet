@@ -29,9 +29,6 @@ find_package(Eigen3)
 add_library(${PROJECT_NAME}
 	src/eigen.cpp
 	src/error.cpp
-	src/tcp/client.cpp
-	src/tcp/decode.cpp
-	src/tcp/encode.cpp
 	src/types.cpp
 	src/udp/client.cpp
 	src/udp/decode.cpp
