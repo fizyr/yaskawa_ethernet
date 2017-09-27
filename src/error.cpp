@@ -6,24 +6,24 @@ namespace dr {
 namespace yaskawa {
 
 namespace {
-	impl::YaskawaCategory yaskawa_category_;
-}
+	class : public std::error_category {
+		/// Get the name of the error category
+		char const * name() const noexcept override {
+			return "yaskawa";
+		}
 
-char const * impl::YaskawaCategory::name() const noexcept {
-	return "yaskawa";
-}
-
-std::string impl::YaskawaCategory::message(int error) const noexcept {
-	switch (errc::errc_t(error)) {
-		case errc::malformed_response:    return "malformed message";
-		case errc::command_failed:        return "command failed";
-	}
-
-	return "unknown error: " + std::to_string(error);
+		/// Get a descriptive error message for an error code.
+		std::string message(int error) const noexcept override {
+			switch (errc::errc_t(error)) {
+				case errc::malformed_response:    return "malformed message";
+				case errc::command_failed:        return "command failed";
+			}
+		}
+	} yaskawa_category_;
 }
 
 /// The error category for protocol errors.
-impl::YaskawaCategory const & yaskawa_category() {
+std::error_category const & yaskawa_category() {
 	return yaskawa_category_;
 }
 

@@ -1,6 +1,4 @@
 #pragma once
-#include "impl/error.hpp"
-
 #include <string>
 #include <system_error>
 #include <type_traits>
@@ -9,7 +7,7 @@ namespace dr {
 namespace yaskawa {
 
 /// Get a reference to the Yaskawa error category.
-impl::YaskawaCategory const & yaskawa_category();
+std::error_category const & yaskawa_category();
 
 /// Protocol error code constants.
 namespace errc {
