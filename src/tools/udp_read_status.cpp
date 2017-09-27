@@ -11,8 +11,8 @@ using namespace dr::yaskawa;
 
 std::chrono::milliseconds timeout = 200ms;
 
-void readStatus(dr::yaskawa::udp::Client & client) {
-	client.readStatus(timeout, [&client] (dr::ErrorOr<dr::yaskawa::Status> const & result) {
+void readStatus(udp::Client & client) {
+	client.sendCommand(ReadStatus{}, timeout, [&client] (dr::ErrorOr<dr::yaskawa::Status> const & result) {
 		if (!result) {
 			std::cout << "Error reading status: " << result.error().category().name() << ":" << result.error().value() << ": " << result.error().message() << ": " << result.error().details() << "\n";
 			client.close();
@@ -39,7 +39,7 @@ void readStatus(dr::yaskawa::udp::Client & client) {
 	});
 }
 
-void connect(dr::yaskawa::udp::Client & client, std::string host, std::string port) {
+void connect(udp::Client & client, std::string host, std::string port) {
 	client.connect(host, port, timeout, [&client] (dr::DetailedError error) {
 		if (error) {
 			std::cout << "Error " << error.category().name() << ":" << error.value() << ": " << error.message() << ": " << error.details() << "\n";

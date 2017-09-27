@@ -17,7 +17,9 @@ namespace {
 			switch (errc::errc_t(error)) {
 				case errc::malformed_response:    return "malformed message";
 				case errc::command_failed:        return "command failed";
+				case errc::unknown_request:       return "unknown request";
 			}
+			return "unkown error: " + std::to_string(error);
 		}
 	} yaskawa_category_;
 }

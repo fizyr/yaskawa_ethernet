@@ -11,21 +11,6 @@ namespace dr {
 namespace yaskawa {
 namespace udp {
 
-template<typename T>
-void writeLittleEndian(std::vector<std::uint8_t> & out, T value) {
-	static_assert(std::is_integral<T>::value, "T must be an integral type.");
-	for (unsigned int i = 0; i < sizeof(T); ++i) {
-		out.push_back(value >> i * 8 & 0xff);
-	}
-}
-
-void encodeRequestHeader(
-	std::vector<std::uint8_t> & out,
-	RequestHeader const & header
-);
-
-std::vector<std::uint8_t> encodeRequestHeader(RequestHeader const & header);
-
 RequestHeader makeRobotRequestHeader(
 	std::uint16_t payload_size,
 	std::uint16_t command,
@@ -43,19 +28,21 @@ RequestHeader makeFileRequestHeader(
 	bool ack = false
 );
 
-void encodePulsePosition(
-	std::vector<std::uint8_t> & out,
-	PulsePosition const & position
-);
+template<typename T>
+void writeLittleEndian(std::vector<std::uint8_t> & out, T value) {
+	static_assert(std::is_integral<T>::value, "T must be an integral type.");
+	for (unsigned int i = 0; i < sizeof(T); ++i) {
+		out.push_back(value >> i * 8 & 0xff);
+	}
+}
 
-void encodeCartesianPosition(
-	std::vector<std::uint8_t> & out,
-	CartesianPosition const & position
-);
-
-void encodePosition(
-	std::vector<std::uint8_t> & out,
-	Position const & position
-);
+void encode(std::vector<std::uint8_t> & out, RequestHeader const & header);
+void encode(std::vector<std::uint8_t> & out, std::uint8_t value);
+void encode(std::vector<std::uint8_t> & out, std::int16_t value);
+void encode(std::vector<std::uint8_t> & out, std::int32_t value);
+void encode(std::vector<std::uint8_t> & out, float value);
+void encode(std::vector<std::uint8_t> & out, PulsePosition const & position);
+void encode(std::vector<std::uint8_t> & out, CartesianPosition const & position);
+void encode(std::vector<std::uint8_t> & out, Position const & position);
 
 }}}

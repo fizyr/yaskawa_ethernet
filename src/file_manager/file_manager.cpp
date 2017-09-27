@@ -32,7 +32,7 @@ void executeCommand(dr::yaskawa::udp::Client & client, Options const & options) 
 			for (std::string const & file : *result) {
 				std::cout << file << "\n";
 			}
-		});
+		}, nullptr);
 	} else if (options.command == "get") {
 		client.readFile(options.args[0], 3s, [] (dr::ErrorOr<std::string> result) {
 			if (!result) {

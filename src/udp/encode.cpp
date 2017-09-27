@@ -5,52 +5,6 @@ namespace dr {
 namespace yaskawa {
 namespace udp {
 
-void encodeRequestHeader(
-	std::vector<std::uint8_t> & out,
-	RequestHeader const & header
-) {
-	out.reserve(out.size() + header_size + header.payload_size);
-	// Magic bytes.
-	out.insert(out.end(), {'Y', 'E', 'R', 'C'});
-
-	// Header size, payload size.
-	writeLittleEndian<std::uint16_t>(out, header_size);
-	writeLittleEndian<std::uint16_t>(out, header.payload_size);
-
-	// Reserved magic constant.
-	out.push_back(3);
-
-	// "Division" (robot command or file command)
-	out.push_back(std::uint8_t(header.division));
-
-	// Ack (should always be zero for requests).
-	out.push_back(header.ack);
-
-	// Request ID.
-	out.push_back(header.request_id);
-
-	// Block number.
-	writeLittleEndian<std::uint32_t>(out, header.block_number);
-
-	// Reserved.
-	out.insert(out.end(), 8, '9');
-
-	// Subrequest details
-	writeLittleEndian<std::uint16_t>(out, header.command);
-	writeLittleEndian<std::uint16_t>(out, header.instance);
-	out.push_back(header.attribute);
-	out.push_back(header.service);
-
-	// Padding.
-	out.insert(out.end(), 2, 0);
-}
-
-std::vector<std::uint8_t> encodeRequestHeader(RequestHeader const & header) {
-	std::vector<std::uint8_t> result;
-	encodeRequestHeader(result, header);
-	return result;
-}
-
 RequestHeader makeRobotRequestHeader(
 	std::uint16_t payload_size,
 	std::uint16_t command,
@@ -92,17 +46,74 @@ RequestHeader makeFileRequestHeader(
 	return header;
 }
 
-std::uint32_t encodeFrameType(CoordinateSystem frame) {
-	if (isUserCoordinateSystem(frame)) return 19;
-	switch (frame) {
-		case CoordinateSystem::base:  return 16;
-		case CoordinateSystem::robot: return 17;
-		case CoordinateSystem::tool:  return 18;
-		default: throw std::logic_error("unknown coordinate system type: " + std::to_string(int(frame)));
+void encode(std::vector<std::uint8_t> & out, RequestHeader const & header) {
+	out.reserve(out.size() + header_size + header.payload_size);
+	// Magic bytes.
+	out.insert(out.end(), {'Y', 'E', 'R', 'C'});
+
+	// Header size, payload size.
+	writeLittleEndian<std::uint16_t>(out, header_size);
+	writeLittleEndian<std::uint16_t>(out, header.payload_size);
+
+	// Reserved magic constant.
+	out.push_back(3);
+
+	// "Division" (robot command or file command)
+	out.push_back(std::uint8_t(header.division));
+
+	// Ack (should always be zero for requests).
+	out.push_back(header.ack);
+
+	// Request ID.
+	out.push_back(header.request_id);
+
+	// Block number.
+	writeLittleEndian<std::uint32_t>(out, header.block_number);
+
+	// Reserved.
+	out.insert(out.end(), 8, '9');
+
+	// Subrequest details
+	writeLittleEndian<std::uint16_t>(out, header.command);
+	writeLittleEndian<std::uint16_t>(out, header.instance);
+	out.push_back(header.attribute);
+	out.push_back(header.service);
+
+	// Padding.
+	out.insert(out.end(), 2, 0);
+}
+
+void encode(std::vector<std::uint8_t> & out, std::uint8_t value) {
+	writeLittleEndian<std::uint8_t>(out, value);
+}
+void encode(std::vector<std::uint8_t> & out, std::int16_t value) {
+	writeLittleEndian<std::int16_t>(out, value);
+}
+void encode(std::vector<std::uint8_t> & out, std::int32_t value) {
+	writeLittleEndian<std::int32_t>(out, value);
+}
+void encode(std::vector<std::uint8_t> & out, float value) {
+	writeLittleEndian<std::uint32_t>(out, reinterpret_cast<std::uint32_t const &>(value));
+}
+
+namespace {
+	std::uint32_t encodeFrameType(CoordinateSystem frame) {
+		if (isUserCoordinateSystem(frame)) return 19;
+		switch (frame) {
+			case CoordinateSystem::base:  return 16;
+			case CoordinateSystem::robot: return 17;
+			case CoordinateSystem::tool:  return 18;
+			default: throw std::logic_error("unknown coordinate system type: " + std::to_string(int(frame)));
+		}
 	}
 }
 
-void encodePulsePosition(std::vector<std::uint8_t> & out, PulsePosition const & position) {
+void encode(std::vector<std::uint8_t> & out, Position const & position) {
+	if (position.isPulse()) encode(out, position.pulse());
+	else encode(out, position.cartesian());
+}
+
+void encode(std::vector<std::uint8_t> & out, PulsePosition const & position) {
 	// Position type: pulse.
 	writeLittleEndian<std::uint32_t>(out, 0);
 	// Joint configuration, meaningless with pulse positions.
@@ -121,7 +132,7 @@ void encodePulsePosition(std::vector<std::uint8_t> & out, PulsePosition const & 
 	}
 }
 
-void encodeCartesianPosition(std::vector<std::uint8_t> & out, CartesianPosition const & position) {
+void encode(std::vector<std::uint8_t> & out, CartesianPosition const & position) {
 	// Position type.
 	writeLittleEndian<std::uint32_t>(out, encodeFrameType(position.frame()));
 	// Joint configuration.

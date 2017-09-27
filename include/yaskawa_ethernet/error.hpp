@@ -14,6 +14,7 @@ namespace errc {
 	enum errc_t {
 		malformed_response  = 0x01,
 		command_failed      = 0x02,
+		unknown_request     = 0x03,
 	};
 
 	inline std::error_code      make_error_code(errc_t code)      { return {code, yaskawa_category()}; }

@@ -1,4 +1,5 @@
 #pragma once
+#include "../commands.hpp"
 #include "../error.hpp"
 #include "../types.hpp"
 #include "../string_view.hpp"
@@ -19,6 +20,13 @@
 namespace dr {
 namespace yaskawa {
 namespace udp {
+
+class Client;
+
+namespace impl {
+	template<typename Command, typename Callback>
+	void sendCommand(Client & client, std::uint8_t request_id, Command command, std::chrono::milliseconds timeout, Callback callback);
+}
 
 class Client {
 public:
@@ -76,62 +84,34 @@ public:
 	/// Remove a handler for a request id.
 	void removeHandler(HandlerToken);
 
-	void readStatus(std::chrono::milliseconds timeout, std::function<void(ErrorOr<Status>)> callback);
-	void readCurrentPosition(int control_group, CoordinateSystemType type, std::chrono::milliseconds timeout, std::function<void(ErrorOr<Position>)> callback);
-
-	void readByte(int index, std::chrono::milliseconds timeout, std::function<void(ErrorOr<std::uint8_t>)> callback);
-	void readBytes(int index, int count, std::chrono::milliseconds timeout, std::function<void(ErrorOr<std::vector<std::uint8_t>>)> callback);
-	void writeByte(int index, std::uint8_t value, std::chrono::milliseconds timeout, std::function<void(ErrorOr<void>)> callback);
-	void writeBytes(int index, std::vector<std::uint8_t> const & value, std::chrono::milliseconds timeout, std::function<void(ErrorOr<void>)> callback);
-
-	void readInt16(int index, std::chrono::milliseconds timeout, std::function<void(ErrorOr<std::int16_t>)> callback);
-	void readInt16s(int index, int count, std::chrono::milliseconds timeout, std::function<void(ErrorOr<std::vector<std::int16_t>>)> callback);
-	void writeInt16(int index, std::int16_t value, std::chrono::milliseconds timeout, std::function<void(ErrorOr<void>)> callback);
-	void writeInt16s(int index, std::vector<std::int16_t> const & value, std::chrono::milliseconds timeout, std::function<void(ErrorOr<void>)> callback);
-
-	void readInt32(int index, std::chrono::milliseconds timeout, std::function<void(ErrorOr<std::int32_t>)> callback);
-	void readInt32s(int index, int count, std::chrono::milliseconds timeout, std::function<void(ErrorOr<std::vector<std::int32_t>>)> callback);
-	void writeInt32(int index, std::int32_t value, std::chrono::milliseconds timeout, std::function<void(ErrorOr<void>)> callback);
-	void writeInt32s(int index, std::vector<std::int32_t> const & value, std::chrono::milliseconds timeout, std::function<void(ErrorOr<void>)> callback);
-
-	void readFloat32(int index, std::chrono::milliseconds timeout, std::function<void(ErrorOr<float>)> callback);
-	void readFloat32s(int index, int count, std::chrono::milliseconds timeout, std::function<void(ErrorOr<std::vector<float>>)> callback);
-	void writeFloat32(int index, float value, std::chrono::milliseconds timeout, std::function<void(ErrorOr<void>)> callback);
-	void writeFloat32s(int index, std::vector<float> const & value, std::chrono::milliseconds timeout, std::function<void(ErrorOr<void>)> callback);
-
-	void readRobotPosition(int index, std::chrono::milliseconds timeout, std::function<void(ErrorOr<Position>)> callback);
-	void readRobotPositions(int index, int count, std::chrono::milliseconds timeout, std::function<void(ErrorOr<std::vector<Position>>)> callback);
-	void writeRobotPosition(int index, Position value, std::chrono::milliseconds timeout, std::function<void(ErrorOr<void>)> callback);
-	void writeRobotPositions(int index, std::vector<Position> const & value, std::chrono::milliseconds timeout, std::function<void(ErrorOr<void>)> callback);
+	template<typename T, typename Callback>
+	void sendCommand(T command, std::chrono::milliseconds timeout, Callback callback) {
+		impl::sendCommand(*this, request_id_++, std::move(command), timeout, std::move(callback));
+	}
 
 	void readFileList(
-		string_view type,
+		std::string type,
 		std::chrono::milliseconds timeout,
-		std::function<void(ErrorOr<std::vector<std::string>>)> callback
+		std::function<void(ErrorOr<std::vector<std::string>>)> callback,
+		std::function<void(std::size_t bytes_received)> on_progress
 	);
+
 	void readFile(
-		string_view name,
+		std::string name,
 		std::chrono::milliseconds timeout,
 		std::function<void(ErrorOr<std::string>)> on_done,
 		std::function<void(std::size_t bytes_received)> on_progress
 	);
 	void writeFile(
-		string_view name,
+		std::string name,
 		std::string data,
 		std::chrono::milliseconds timeout,
 		std::function<void(ErrorOr<void>)> on_done,
 		std::function<void(std::size_t bytes_sent, std::size_t bytes_total)> on_progress
 	);
-	void deleteFile(
-		string_view name,
-		std::chrono::milliseconds timeout,
-		std::function<void(ErrorOr<void>)> callback
-	);
 
-	void moveL(
-		CartesianPosition const & target,
-		Speed speed,
-		int control_group,
+	void deleteFile(
+		std::string name,
 		std::chrono::milliseconds timeout,
 		std::function<void(ErrorOr<void>)> callback
 	);
@@ -148,3 +128,5 @@ private:
 };
 
 }}}
+
+#include "impl/send_command.hpp"
