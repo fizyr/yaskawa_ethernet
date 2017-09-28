@@ -90,7 +90,7 @@ public:
 	}
 
 	template<typename Callback, typename... Commands>
-	std::function<void()> sendCommands(std::chrono::steady_clock::time_point deadline, Callback && callback, Commands && ...commands);
+	std::function<void()> sendCommands(std::chrono::steady_clock::time_point deadline, Callback && callback, std::tuple<Commands...> && commands);
 
 	template<typename Callback, typename... Commands>
 	std::function<void()> sendCommands(std::chrono::steady_clock::duration timeout, Callback && callback, Commands && ...commands) {
@@ -150,8 +150,8 @@ std::function<void()> Client::sendCommand(T command, std::chrono::steady_clock::
 }
 
 template<typename Callback, typename... Commands>
-std::function<void()> Client::sendCommands(std::chrono::steady_clock::time_point deadline, Callback && callback, Commands && ...commands) {
-	return impl::sendMultipleCommands(*this, deadline, std::forward<Callback>(callback), std::forward<Commands>(commands)...);
+std::function<void()> Client::sendCommands(std::chrono::steady_clock::time_point deadline, Callback && callback, std::tuple<Commands...> && commands) {
+	return impl::sendMultipleCommands(*this, deadline, std::forward<Callback>(callback), std::move(commands));
 }
 
 }}}
