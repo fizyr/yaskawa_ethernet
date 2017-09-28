@@ -47,10 +47,10 @@ void write() {
 		read();
 	};
 	client->sendCommands(timeout, std::move(callback), std::make_tuple(
-		WriteInt8Variable{5, {byte_value}},
-		WriteInt16Variable{6, {int16_value}},
-		WriteInt32Variable{7, {int32_value}},
-		WriteFloat32Variable{8, {float32_value}}
+		WriteInt8Var{5, {byte_value}},
+		WriteInt16Var{6, {int16_value}},
+		WriteInt32Var{7, {int32_value}},
+		WriteFloat32Var{8, {float32_value}}
 	));
 }
 
@@ -76,10 +76,10 @@ void read() {
 		write();
 	};
 	client->sendCommands(timeout, std::move(callback), std::make_tuple(
-		ReadInt8Variable{5, 1},
-		ReadInt16Variable{6, 1},
-		ReadInt32Variable{7, 1},
-		ReadFloat32Variable{8, 1}
+		ReadInt8Var{5, 1},
+		ReadInt16Var{6, 1},
+		ReadInt32Var{7, 1},
+		ReadFloat32Var{8, 1}
 	));
 }
 

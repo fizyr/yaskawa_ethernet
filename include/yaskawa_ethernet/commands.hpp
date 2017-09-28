@@ -24,61 +24,61 @@ struct MoveL {
 	Speed speed;
 };
 
-struct ReadInt8Variable {
+struct ReadInt8Var {
 	using Response = std::vector<std::uint8_t>;
 	std::uint8_t index;
 	std::uint8_t count;
 };
 
-struct ReadInt16Variable {
+struct ReadInt16Var {
 	using Response = std::vector<std::int16_t>;
 	std::uint8_t index;
 	std::uint8_t count;
 };
 
-struct ReadInt32Variable {
+struct ReadInt32Var {
 	using Response = std::vector<std::int32_t>;
 	std::uint8_t index;
 	std::uint8_t count;
 };
 
-struct ReadFloat32Variable {
+struct ReadFloat32Var {
 	using Response = std::vector<float>;
 	std::uint8_t index;
 	std::uint8_t count;
 };
 
-struct ReadPositionVariable {
+struct ReadPositionVar {
 	using Response = std::vector<Position>;
 	std::uint8_t index;
 	std::uint8_t count;
 };
 
-struct WriteInt8Variable {
+struct WriteInt8Var {
 	using Response = void;
 	std::uint8_t index;
 	std::vector<std::uint8_t> values;
 };
 
-struct WriteInt16Variable {
+struct WriteInt16Var {
 	using Response = void;
 	std::uint8_t index;
 	std::vector<std::int16_t> values;
 };
 
-struct WriteInt32Variable {
+struct WriteInt32Var {
 	using Response = void;
 	std::uint8_t index;
 	std::vector<std::int32_t> values;
 };
 
-struct WriteFloat32Variable {
+struct WriteFloat32Var {
 	using Response = void;
 	std::uint8_t index;
 	std::vector<float> values;
 };
 
-struct WritePositionVariable {
+struct WritePositionVar {
 	using Response = void;
 	std::uint8_t index;
 	std::vector<Position> values;

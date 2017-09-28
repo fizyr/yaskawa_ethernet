@@ -50,7 +50,7 @@ void onTimeout(std::error_code const & error) {
 }
 
 void writeByte() {
-	client->sendCommand(WriteInt8Variable{5, {byte_value}}, timeout, [] (dr::ErrorOr<void> const & result) {
+	client->sendCommand(WriteInt8Var{5, {byte_value}}, timeout, [] (dr::ErrorOr<void> const & result) {
 		if (!result) {
 			std::cerr << "Failed to write byte: " << result.error().fullMessage() << "\n";
 		} else {
@@ -61,7 +61,7 @@ void writeByte() {
 }
 
 void readByte() {
-	client->sendCommand(ReadInt8Variable{5, 1}, timeout, [] (dr::ErrorOr<std::vector<std::uint8_t>> const & result) {
+	client->sendCommand(ReadInt8Var{5, 1}, timeout, [] (dr::ErrorOr<std::vector<std::uint8_t>> const & result) {
 		if (!result) {
 			std::cout << "Failed to read byte: " << result.error().fullMessage() << "\n";
 		} else {
@@ -75,7 +75,7 @@ void readByte() {
 }
 
 void writeInt16() {
-	client->sendCommand(WriteInt16Variable{6, {int16_value}}, timeout, [] (dr::ErrorOr<void> const & result) {
+	client->sendCommand(WriteInt16Var{6, {int16_value}}, timeout, [] (dr::ErrorOr<void> const & result) {
 		if (!result) {
 			std::cerr << "Failed to write int16: " << result.error().fullMessage() << "\n";
 		} else {
@@ -86,7 +86,7 @@ void writeInt16() {
 }
 
 void readInt16() {
-	client->sendCommand(ReadInt16Variable{6, 1}, timeout, [] (dr::ErrorOr<std::vector<std::int16_t>> result) {
+	client->sendCommand(ReadInt16Var{6, 1}, timeout, [] (dr::ErrorOr<std::vector<std::int16_t>> result) {
 		if (!result) {
 			std::cout << "Failed to read int16: " << result.error().fullMessage() << "\n";
 		} else {
@@ -100,7 +100,7 @@ void readInt16() {
 }
 
 void writeInt32() {
-	client->sendCommand(WriteInt32Variable{7, {int32_value}}, timeout, [] (dr::ErrorOr<void> const & result) {
+	client->sendCommand(WriteInt32Var{7, {int32_value}}, timeout, [] (dr::ErrorOr<void> const & result) {
 		if (!result) {
 			std::cerr << "Failed to write int32: " << result.error().fullMessage() << "\n";
 		} else {
@@ -111,7 +111,7 @@ void writeInt32() {
 }
 
 void readInt32() {
-	client->sendCommand(ReadInt32Variable{7, 1}, timeout, [] (dr::ErrorOr<std::vector<std::int32_t>> result) {
+	client->sendCommand(ReadInt32Var{7, 1}, timeout, [] (dr::ErrorOr<std::vector<std::int32_t>> result) {
 		if (!result) {
 			std::cout << "Failed to read int32: " << result.error().fullMessage() << "\n";
 		} else {
@@ -125,7 +125,7 @@ void readInt32() {
 }
 
 void writeFloat32() {
-	client->sendCommand(WriteFloat32Variable{8, {float32_value}}, timeout, [] (dr::ErrorOr<void> result) {
+	client->sendCommand(WriteFloat32Var{8, {float32_value}}, timeout, [] (dr::ErrorOr<void> result) {
 		if (!result) {
 			std::cerr << "Failed to write float32 value: " << result.error().fullMessage() << "\n";
 		} else {
@@ -135,7 +135,7 @@ void writeFloat32() {
 }
 
 void readFloat32() {
-	client->sendCommand(ReadFloat32Variable{8, 1}, timeout, [] (dr::ErrorOr<std::vector<float>> result) {
+	client->sendCommand(ReadFloat32Var{8, 1}, timeout, [] (dr::ErrorOr<std::vector<float>> result) {
 		if (!result) {
 			std::cout << "Failed to read float32: " << result.error().fullMessage() << "\n";
 		} else {
@@ -148,7 +148,7 @@ void readFloat32() {
 }
 
 void writePosition() {
-	client->sendCommand(WritePositionVariable{9, {positions[position_index]}}, timeout, [] (dr::ErrorOr<void> result) {
+	client->sendCommand(WritePositionVar{9, {positions[position_index]}}, timeout, [] (dr::ErrorOr<void> result) {
 		if (!result) {
 			std::cerr << "Failed to write position value: " << result.error().fullMessage() << "\n";
 		} else {
@@ -158,7 +158,7 @@ void writePosition() {
 }
 
 void readPosition() {
-	client->sendCommand(ReadPositionVariable{9, 1}, timeout, [] (dr::ErrorOr<std::vector<Position>> const & result) {
+	client->sendCommand(ReadPositionVar{9, 1}, timeout, [] (dr::ErrorOr<std::vector<Position>> const & result) {
 		if (!result) {
 			std::cout << "Failed to read position: " << result.error().fullMessage() << "\n";
 		} else {

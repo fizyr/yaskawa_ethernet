@@ -143,9 +143,9 @@ ErrorOr<void> decode(ResponseHeader const &, string_view & data, MoveL const &) 
 }
 
 namespace {
-	/// Encode a ReadVariable command.
+	/// Encode a ReadVar command.
 	template<typename Command>
-	void encodeReadVariable(std::vector<std::uint8_t> & output, std::uint8_t request_id, Command const & command) {
+	void encodeReadVar(std::vector<std::uint8_t> & output, std::uint8_t request_id, Command const & command) {
 		if (command.count == 1) {
 			encode(output, makeRobotRequestHeader(0, single_command<Command>(), command.index, 0, service::get_all, request_id));
 		} else {
@@ -154,9 +154,9 @@ namespace {
 		}
 	}
 
-	/// Decode a ReadVariable response.
+	/// Decode a ReadVar response.
 	template<typename Command>
-	ErrorOr<typename Command::Response> decodeReadVariable(string_view & message, Command const & command) {
+	ErrorOr<typename Command::Response> decodeReadVar(string_view & message, Command const & command) {
 		using Type = typename Command::Response::value_type;
 
 		// Read a single value (data is exactly one element).
@@ -185,9 +185,9 @@ namespace {
 		return result;
 	}
 
-	/// Encode a WriteVariable command.
+	/// Encode a WriteVar command.
 	template<typename Command>
-	void encodeWriteVariable(std::vector<std::uint8_t> & output, std::uint8_t request_id, Command const & command) {
+	void encodeWriteVar(std::vector<std::uint8_t> & output, std::uint8_t request_id, Command const & command) {
 		std::uint32_t data_size = command.values.size() * encoded_size<Command>();
 
 		// Write a single value.
@@ -205,38 +205,38 @@ namespace {
 		}
 	}
 
-	/// Decode a WriteVariable response.
+	/// Decode a WriteVar response.
 	template<typename Command>
-	ErrorOr<void> decodeWriteVariable(string_view & data, Command const &) {
+	ErrorOr<void> decodeWriteVar(string_view & data, Command const &) {
 		if (auto error = checkSize("response data", data, 0)) return error;
 		return in_place_valid;
 	}
 }
 
 
-void encode(std::vector<std::uint8_t> & out, std::uint8_t id, ReadInt8Variable      const & cmd) { return encodeReadVariable(out, id, cmd); }
-void encode(std::vector<std::uint8_t> & out, std::uint8_t id, ReadInt16Variable     const & cmd) { return encodeReadVariable(out, id, cmd); }
-void encode(std::vector<std::uint8_t> & out, std::uint8_t id, ReadInt32Variable     const & cmd) { return encodeReadVariable(out, id, cmd); }
-void encode(std::vector<std::uint8_t> & out, std::uint8_t id, ReadFloat32Variable   const & cmd) { return encodeReadVariable(out, id, cmd); }
-void encode(std::vector<std::uint8_t> & out, std::uint8_t id, ReadPositionVariable  const & cmd) { return encodeReadVariable(out, id, cmd); }
+void encode(std::vector<std::uint8_t> & out, std::uint8_t id, ReadInt8Var      const & cmd) { return encodeReadVar(out, id, cmd); }
+void encode(std::vector<std::uint8_t> & out, std::uint8_t id, ReadInt16Var     const & cmd) { return encodeReadVar(out, id, cmd); }
+void encode(std::vector<std::uint8_t> & out, std::uint8_t id, ReadInt32Var     const & cmd) { return encodeReadVar(out, id, cmd); }
+void encode(std::vector<std::uint8_t> & out, std::uint8_t id, ReadFloat32Var   const & cmd) { return encodeReadVar(out, id, cmd); }
+void encode(std::vector<std::uint8_t> & out, std::uint8_t id, ReadPositionVar  const & cmd) { return encodeReadVar(out, id, cmd); }
 
-void encode(std::vector<std::uint8_t> & out, std::uint8_t id, WriteInt8Variable     const & cmd) { return encodeWriteVariable(out, id, cmd); }
-void encode(std::vector<std::uint8_t> & out, std::uint8_t id, WriteInt16Variable    const & cmd) { return encodeWriteVariable(out, id, cmd); }
-void encode(std::vector<std::uint8_t> & out, std::uint8_t id, WriteInt32Variable    const & cmd) { return encodeWriteVariable(out, id, cmd); }
-void encode(std::vector<std::uint8_t> & out, std::uint8_t id, WriteFloat32Variable  const & cmd) { return encodeWriteVariable(out, id, cmd); }
-void encode(std::vector<std::uint8_t> & out, std::uint8_t id, WritePositionVariable const & cmd) { return encodeWriteVariable(out, id, cmd); }
+void encode(std::vector<std::uint8_t> & out, std::uint8_t id, WriteInt8Var     const & cmd) { return encodeWriteVar(out, id, cmd); }
+void encode(std::vector<std::uint8_t> & out, std::uint8_t id, WriteInt16Var    const & cmd) { return encodeWriteVar(out, id, cmd); }
+void encode(std::vector<std::uint8_t> & out, std::uint8_t id, WriteInt32Var    const & cmd) { return encodeWriteVar(out, id, cmd); }
+void encode(std::vector<std::uint8_t> & out, std::uint8_t id, WriteFloat32Var  const & cmd) { return encodeWriteVar(out, id, cmd); }
+void encode(std::vector<std::uint8_t> & out, std::uint8_t id, WritePositionVar const & cmd) { return encodeWriteVar(out, id, cmd); }
 
-ErrorOr<std::vector<std::uint8_t>>  decode(ResponseHeader const &, string_view & data, ReadInt8Variable      const & cmd) { return decodeReadVariable(data, cmd); }
-ErrorOr<std::vector<std::int16_t>>  decode(ResponseHeader const &, string_view & data, ReadInt16Variable     const & cmd) { return decodeReadVariable(data, cmd); }
-ErrorOr<std::vector<std::int32_t>>  decode(ResponseHeader const &, string_view & data, ReadInt32Variable     const & cmd) { return decodeReadVariable(data, cmd); }
-ErrorOr<std::vector<float>>         decode(ResponseHeader const &, string_view & data, ReadFloat32Variable   const & cmd) { return decodeReadVariable(data, cmd); }
-ErrorOr<std::vector<Position>>      decode(ResponseHeader const &, string_view & data, ReadPositionVariable  const & cmd) { return decodeReadVariable(data, cmd); }
+ErrorOr<std::vector<std::uint8_t>>  decode(ResponseHeader const &, string_view & data, ReadInt8Var      const & cmd) { return decodeReadVar(data, cmd); }
+ErrorOr<std::vector<std::int16_t>>  decode(ResponseHeader const &, string_view & data, ReadInt16Var     const & cmd) { return decodeReadVar(data, cmd); }
+ErrorOr<std::vector<std::int32_t>>  decode(ResponseHeader const &, string_view & data, ReadInt32Var     const & cmd) { return decodeReadVar(data, cmd); }
+ErrorOr<std::vector<float>>         decode(ResponseHeader const &, string_view & data, ReadFloat32Var   const & cmd) { return decodeReadVar(data, cmd); }
+ErrorOr<std::vector<Position>>      decode(ResponseHeader const &, string_view & data, ReadPositionVar  const & cmd) { return decodeReadVar(data, cmd); }
 
-ErrorOr<void> decode(ResponseHeader const &, string_view & data, WriteInt8Variable     const & cmd) { return decodeWriteVariable(data, cmd); }
-ErrorOr<void> decode(ResponseHeader const &, string_view & data, WriteInt16Variable    const & cmd) { return decodeWriteVariable(data, cmd); }
-ErrorOr<void> decode(ResponseHeader const &, string_view & data, WriteInt32Variable    const & cmd) { return decodeWriteVariable(data, cmd); }
-ErrorOr<void> decode(ResponseHeader const &, string_view & data, WriteFloat32Variable  const & cmd) { return decodeWriteVariable(data, cmd); }
-ErrorOr<void> decode(ResponseHeader const &, string_view & data, WritePositionVariable const & cmd) { return decodeWriteVariable(data, cmd); }
+ErrorOr<void> decode(ResponseHeader const &, string_view & data, WriteInt8Var     const & cmd) { return decodeWriteVar(data, cmd); }
+ErrorOr<void> decode(ResponseHeader const &, string_view & data, WriteInt16Var    const & cmd) { return decodeWriteVar(data, cmd); }
+ErrorOr<void> decode(ResponseHeader const &, string_view & data, WriteInt32Var    const & cmd) { return decodeWriteVar(data, cmd); }
+ErrorOr<void> decode(ResponseHeader const &, string_view & data, WriteFloat32Var  const & cmd) { return decodeWriteVar(data, cmd); }
+ErrorOr<void> decode(ResponseHeader const &, string_view & data, WritePositionVar const & cmd) { return decodeWriteVar(data, cmd); }
 
 /// Encode a ReadFileList command.
 void encode(std::vector<std::uint8_t> & out, std::uint8_t request_id, ReadFileList const & command) {
