@@ -138,8 +138,9 @@ void encode(std::vector<std::uint8_t> & output, std::uint8_t request_id, MoveL c
 }
 
 /// Decode a MoveL response.
-ErrorOr<void> decode(ResponseHeader const &, string_view & message, MoveL const &) {
-	return checkSize("response data", message, 0);
+ErrorOr<void> decode(ResponseHeader const &, string_view & data, MoveL const &) {
+	if (auto error = checkSize("response data", data, 0)) return error;
+	return in_place_valid;
 }
 
 namespace {
@@ -200,7 +201,8 @@ namespace {
 	/// Decode a WriteVariable response.
 	template<typename Command>
 	ErrorOr<void> decodeWriteVariable(string_view & data, Command const &) {
-		return checkSize("response data", data, 0);
+		if (auto error = checkSize("response data", data, 0)) return error;
+		return in_place_valid;
 	}
 }
 
@@ -271,7 +273,8 @@ void encode(std::vector<std::uint8_t> & out, std::uint8_t request_id, WriteFile 
 
 /// Decode a WriteFile response.
 ErrorOr<void> decode(ResponseHeader const &, string_view & data, WriteFile const &) {
-	return checkSize("response data", data, 0);
+	if (auto error = checkSize("response data", data, 0)) return error;
+	return in_place_valid;
 }
 
 /// Encode a DeleteFile command.
@@ -282,7 +285,8 @@ void encode(std::vector<std::uint8_t> & out, std::uint8_t request_id, DeleteFile
 
 /// Decode a DeleteFile response.
 ErrorOr<void> decode(ResponseHeader const &, string_view & data, DeleteFile const &) {
-	return checkSize("response data", data, 0);
+	if (auto error = checkSize("response data", data, 0)) return error;
+	return in_place_valid;
 }
 
 }}}
