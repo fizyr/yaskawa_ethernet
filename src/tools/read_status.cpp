@@ -1,4 +1,4 @@
-#include "../include/yaskawa_ethernet/udp/client.hpp"
+#include "udp/client.hpp"
 
 #include <asio/io_service.hpp>
 #include <asio/steady_timer.hpp>

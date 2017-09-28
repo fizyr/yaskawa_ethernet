@@ -36,10 +36,7 @@ add_library(${PROJECT_NAME}
 	src/udp/protocol.cpp
 )
 
-target_include_directories(${PROJECT_NAME}
-	INTERFACE include
-	PRIVATE include/${PROJECT_NAME}
-)
+include_directories(include/${PROJECT_NAME})
 
 target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC
 	${catkin_INCLUDE_DIRS}

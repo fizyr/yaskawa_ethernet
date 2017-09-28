@@ -1,6 +1,5 @@
 #include "udp/protocol.hpp"
 #include "udp/message.hpp"
-#include "udp/commands.hpp"
 #include "udp/command_traits.hpp"
 
 #include "encode.hpp"

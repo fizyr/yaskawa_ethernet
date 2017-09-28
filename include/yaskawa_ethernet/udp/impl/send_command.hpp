@@ -1,7 +1,8 @@
 #pragma once
+#include "../client.hpp"
+#include "../protocol.hpp"
 #include "../../error.hpp"
 #include "../../string_view.hpp"
-#include "../protocol.hpp"
 
 #include <asio/steady_timer.hpp>
 #include <asio/buffer.hpp>

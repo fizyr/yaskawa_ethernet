@@ -1,7 +1,7 @@
+#include "udp/client.hpp"
+
 #include <iostream>
 #include <string>
-
-#include <yaskawa_ethernet/udp/client.hpp>
 
 using namespace std::string_literals;
 using namespace std::chrono_literals;

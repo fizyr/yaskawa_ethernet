@@ -1,13 +1,11 @@
+#include "../connect.hpp"
 #include "./read_file.hpp"
 #include "./write_file.hpp"
-#include "../impl/connect.hpp"
+
+#include "commands.hpp"
 #include "udp/client.hpp"
-#include "udp/commands.hpp"
 #include "udp/message.hpp"
 #include "udp/protocol.hpp"
-
-#include "encode.hpp"
-#include "decode.hpp"
 
 #include <atomic>
 #include <memory>
