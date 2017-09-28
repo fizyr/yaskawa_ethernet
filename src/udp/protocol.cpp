@@ -160,10 +160,18 @@ namespace {
 	ErrorOr<typename Command::Response> decodeReadVariable(string_view & message, Command const & command) {
 		using Type = typename Command::Response::value_type;
 
-		// Check the response size.
+		// Read a single value (data is exactly one element).
+		if (command.count == 1) {
+			if (auto error = checkSize( "response data", message, encoded_size<Command>())) return error;
+			ErrorOr<Type> decoded = decode<Type>(message);
+			if (!decoded) return decoded.error_unchecked();
+			return std::vector<Type>{*decoded};
+		}
+
+		// Read multiple values (data starts with a 32 bit value count).
 		if (auto error = checkSize( "response data", message, 4 + command.count * encoded_size<Command>())) return error;
 
-		// Check reported value count.
+		// Check if value count matches our request.
 		std::uint32_t count = readLittleEndian<std::uint32_t>(message);
 		if (auto error = checkValue("value count", count, command.count)) return error;
 
