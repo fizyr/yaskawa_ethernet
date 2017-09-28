@@ -19,14 +19,14 @@ Client::Client(asio::io_service & ios) :
 	socket_(ios),
 	read_buffer_{std::make_unique<std::array<std::uint8_t, 512>>()} {}
 
-void Client::connect(std::string const & host, std::string const & port, std::chrono::milliseconds timeout, Callback callback) {
+void Client::connect(std::string const & host, std::string const & port, std::chrono::milliseconds timeout, ErrorCallback callback) {
 	auto on_connect = [this, callback = std::move(callback)] (DetailedError error) {
 		onConnect(error, std::move(callback));
 	};
 	asyncResolveConnect({host, port}, timeout, socket_, on_connect);
 }
 
-void Client::connect(std::string const & host, std::uint16_t port, std::chrono::milliseconds timeout, Callback callback) {
+void Client::connect(std::string const & host, std::uint16_t port, std::chrono::milliseconds timeout, ErrorCallback callback) {
 	connect(host, std::to_string(port), timeout, callback);
 }
 
@@ -84,7 +84,7 @@ void Client::deleteFile(
 
 // Other stuff
 
-void Client::onConnect(DetailedError error, Callback callback) {
+void Client::onConnect(DetailedError error, ErrorCallback callback) {
 	callback(error);
 	if (!error) receive();
 }

@@ -21,17 +21,10 @@ namespace dr {
 namespace yaskawa {
 namespace udp {
 
-class Client;
-
-namespace impl {
-	template<typename Command, typename Callback>
-	void sendCommand(Client & client, std::uint8_t request_id, Command command, std::chrono::milliseconds timeout, Callback callback);
-}
-
 class Client {
 public:
 	using Socket   = asio::ip::udp::socket;
-	using Callback = std::function<void (DetailedError error)>;
+	using ErrorCallback = std::function<void (DetailedError error)>;
 
 	struct OpenRequest {
 		std::chrono::steady_clock::time_point start_time;
@@ -40,7 +33,7 @@ public:
 
 	using HandlerToken = std::map<std::uint8_t, OpenRequest>::iterator;
 
-	Callback on_error;
+	ErrorCallback on_error;
 
 private:
 	Socket socket_;
@@ -57,7 +50,7 @@ public:
 		std::string const & host,          ///< Hostname or IP address to connect to.
 		std::string const & port,          ///< Port number or service name to connect to.
 		std::chrono::milliseconds timeout, ///< Timeout for the connection attempt in milliseconds.
-		Callback callback                  ///< Callback to call when the connection attempt finished.
+		ErrorCallback callback             ///< Callback to call when the connection attempt finished.
 	);
 
 	/// Open a connection.
@@ -65,7 +58,7 @@ public:
 		std::string const & host,          ///< Hostname or IP address to connect to.
 		std::uint16_t port,                ///< Port number to connect to.
 		std::chrono::milliseconds timeout, ///< Timeout for the connection attempt in milliseconds.
-		Callback callback                  ///< Callback to call when the connection attempt finished.
+		ErrorCallback callback             ///< Callback to call when the connection attempt finished.
 	);
 
 	/// Close the connection.
@@ -84,9 +77,24 @@ public:
 	/// Remove a handler for a request id.
 	void removeHandler(HandlerToken);
 
+	/// Send a command.
+	/**
+	 * \return a functor which tries to stop the command as soon as possible when invoked.
+	 */
 	template<typename T, typename Callback>
-	void sendCommand(T command, std::chrono::milliseconds timeout, Callback callback) {
-		impl::sendCommand(*this, request_id_++, std::move(command), timeout, std::move(callback));
+	std::function<void()> sendCommand(T command, std::chrono::steady_clock::time_point deadline, Callback && callback);
+
+	template<typename T, typename Callback>
+	std::function<void()> sendCommand(T command, std::chrono::steady_clock::duration timeout, Callback && callback) {
+		return sendCommand(std::forward<T>(command), std::chrono::steady_clock::now() + timeout, std::forward<Callback>(callback));
+	}
+
+	template<typename Callback, typename... Commands>
+	std::function<void()> sendCommands(std::chrono::steady_clock::time_point deadline, Callback && callback, Commands && ...commands);
+
+	template<typename Callback, typename... Commands>
+	std::function<void()> sendCommands(std::chrono::steady_clock::duration timeout, Callback && callback, Commands && ...commands) {
+		return sendCommands(std::chrono::steady_clock::now() + timeout, std::forward<Callback>(callback), std::forward<Commands>(commands)...);
 	}
 
 	void readFileList(
@@ -118,7 +126,7 @@ public:
 
 private:
 	/// Called when a connection attempt finishes.
-	void onConnect(DetailedError, Callback callback);
+	void onConnect(DetailedError, ErrorCallback callback);
 
 	/// Start an asynchronous receive.
 	void receive();
@@ -130,3 +138,20 @@ private:
 }}}
 
 #include "impl/send_command.hpp"
+#include "impl/send_commands.hpp"
+
+namespace dr {
+namespace yaskawa {
+namespace udp {
+
+template<typename T, typename Callback>
+std::function<void()> Client::sendCommand(T command, std::chrono::steady_clock::time_point deadline, Callback && callback) {
+	return impl::sendCommand(*this, request_id_++, std::move(command), deadline, std::forward<Callback>(callback));
+}
+
+template<typename Callback, typename... Commands>
+std::function<void()> Client::sendCommands(std::chrono::steady_clock::time_point deadline, Callback && callback, Commands && ...commands) {
+	return impl::sendMultipleCommands(*this, deadline, std::forward<Callback>(callback), std::forward<Commands>(commands)...);
+}
+
+}}}

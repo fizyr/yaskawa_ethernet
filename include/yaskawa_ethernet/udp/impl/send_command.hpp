@@ -52,7 +52,7 @@ public:
 		timer_{client.ios()}
 	{}
 
-	void start(std::chrono::milliseconds timeout) {
+	auto start(std::chrono::steady_clock::time_point deadline) {
 		// Encode the command.
 		encode(write_buffer_, request_id_, command_);
 
@@ -67,7 +67,17 @@ public:
 		});
 
 		// Start the timout.
-		resetTimeout(timeout);
+		resetTimeout(deadline);
+
+		// Return a lambda to stop the session.
+		return [this, self = self()] () {
+			cancel();
+		};
+	}
+
+	// Stop the session as soon as possible.
+	void cancel() {
+		stopSession(DetailedError{asio::error::operation_aborted});
 	}
 
 protected:
@@ -75,8 +85,8 @@ protected:
 	std::shared_ptr<CommandSession> self() { return this->shared_from_this(); }
 
 	/// Called when the request times out.
-	void resetTimeout(std::chrono::milliseconds timeout) {
-		timer_.expires_from_now(timeout);
+	void resetTimeout(std::chrono::steady_clock::time_point deadline) {
+		timer_.expires_at(deadline);
 		timer_.async_wait([this, self = self()] (std::error_code error) {
 			if (error == asio::error::operation_aborted) return;
 			if (error) return stopSession(DetailedError(error, "waiting for reply to request " + std::to_string(request_id_)));
@@ -92,11 +102,15 @@ protected:
 	}
 };
 
+/// Start a command session.
+/**
+ * \returns a functor to stop the session.
+ */
 template<typename Command, typename Callback>
-void sendCommand(Client & client, std::uint8_t request_id, Command command, std::chrono::milliseconds timeout, Callback callback) {
+std::function<void()> sendCommand(Client & client, std::uint8_t request_id, Command command, std::chrono::steady_clock::time_point deadline, Callback callback) {
 	using Session = impl::CommandSession<std::decay_t<Command>, std::decay_t<Callback>>;
 	auto session = std::make_shared<Session>(client, request_id, std::move(command), std::forward<Callback>(callback));
-	session->start(timeout);
+	return session->start(deadline);
 }
 
 }}}}
