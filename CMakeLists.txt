@@ -3,7 +3,7 @@ project(yaskawa_ethernet)
 
 option(BUILD_TOOLS "Build test/developer tools" ON)
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 add_compile_options(-Wall -Wextra -Wpedantic)
 

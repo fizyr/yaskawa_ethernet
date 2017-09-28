@@ -1,8 +1,15 @@
 #pragma once
-#include "../client.hpp"
+#include "./send_command.hpp"
+#include "./deadline_session.hpp"
 
+#include <atomic>
+#include <cstdint>
 #include <chrono>
+#include <functional>
+#include <optional>
+#include <tuple>
 #include <type_traits>
+#include <utility>
 
 namespace dr {
 namespace yaskawa {
@@ -10,108 +17,82 @@ namespace udp {
 
 namespace impl {
 
-/// Helper to map a type From to type To (for the case where T != From).
-template<typename T, typename From, typename To>
-struct map_type_impl { using type = T; };
+namespace detail {
+	/// Helper to map a type From to type To (for the case where T != From).
+	template<typename T, typename From, typename To>
+	struct map_type { using type = T; };
 
-/// Helper to map a type From to type To (for the case where T == From).
-template<typename From, typename To>
-struct map_type_impl<From, From, To> { using type = To; };
+	/// Helper to map a type From to type To (for the case where T == From).
+	template<typename From, typename To>
+	struct map_type<From, From, To> { using type = To; };
+}
 
 /// Map type From to type To, return other types unmodified.
 template<typename T, typename From, typename To>
-using map_type = typename map_type_impl<T, From, To>::type;
+using map_type = typename detail::map_type<T, From, To>::type;
 
 /// Map void to type To (defaults to std::nullptr_t), return other types unmodified.
 template<typename T, typename To = std::nullptr_t>
 using map_void = map_type<T, void, To>;
 
-/// Helper function to unpack a Command tuple and get the type of a Response tuple.
-template<typename... Commands>
-auto response_tuple_impl(std::tuple<Commands...> t) -> std::tuple<map_void<typename std::decay_t<Commands>::Response>...>;
+namespace detail {
+	/// Helper function to unpack a command tuple and make a tuple of responses.
+	template<typename... Commands>
+	auto response_tuple(std::tuple<Commands...>) -> std::tuple<map_void<typename Commands::Response>...>;
 
-/// Response tuple to go with a Command tuple.
-/**
- * Each type T of the input tuple the tuple is replaced with T::Response,
- * or std::nullptr_t if T::Response is void.
- */
-template<typename Tuple>
-using ResponseTuple = decltype(response_tuple_impl(std::declval<Tuple>()));
-
-/// Forward declaration of MultiCommandSession.
-template<typename Commands> class MultiCommandSession;
-
-/// Start all given commands and return an array of their stop functors (helper).
-template<typename Commands, std::size_t... Is>
-std::array<std::function<void()>, sizeof...(Is)> startCommandsImpl(Client & client, MultiCommandSession<Commands> & session, std::chrono::steady_clock::time_point deadline, Commands && commands, std::index_sequence<Is...>) {
-	return {{
-		client.sendCommand(std::move(std::get<Is>(commands)), deadline, session.template callback<Is, std::tuple_element_t<Is, Commands>>())...,
-	}};
+	/// Unpack a command tuple and make a tuple of optional command sessions.
+	template<typename... Commands>
+	auto session_tuple(std::tuple<Commands...>) -> std::tuple<std::optional<CommandSession<Commands>>...>;
 }
 
-/// Start all given commands and return an array of their stop functors.
+/// Get the type of a tuple of command sessions.
 template<typename Commands>
-std::array<std::function<void()>, std::tuple_size<Commands>::value> startCommands(
-	Client & client,
-	MultiCommandSession<Commands> & session,
-	std::chrono::steady_clock::time_point deadline,
-	Commands && commands
-) {
-	constexpr std::size_t N = std::tuple_size<Commands>::value;
-	return startCommandsImpl(client, session, deadline, std::forward<Commands>(commands), std::make_index_sequence<N>());
-}
-
-/// Store something in a tuple, unless it is void, then do nothing.
-template<std::size_t Index, typename Tuple, typename T>
-std::enable_if_t<std::is_same<decltype(*std::declval<T>()), void>() == false>
-move_deref_in_tuple(Tuple & tuple, T && value) {
-	std::get<Index>(tuple) = std::move(*value);
-}
-
-/// Store something in a tuple, unless it is void, then do nothing (void version).
-template<std::size_t Index, typename Tuple, typename T>
-std::enable_if_t<std::is_same<decltype(*std::declval<T>()), void>() == true>
-move_deref_in_tuple(Tuple &, T &&) {}
+using CommandSessionsTuple = decltype(detail::session_tuple<Commands>(std::make_index_sequence<std::tuple_size<Commands>{}>{}));
 
 template<typename Commands>
-class MultiCommandSession : public std::enable_shared_from_this<MultiCommandSession<Commands>> {
-public:
-	using Callback = std::function<void (ErrorOr<ResponseTuple<Commands>>)>;
-
-private:
+class MultiCommandSession {
 	constexpr static int Count = std::tuple_size<Commands>::value;
 
-	std::atomic<int> finished_commands_{0};
-	std::atomic_flag done_ = ATOMIC_FLAG_INIT;
-	Callback callback_;
-
-	ResponseTuple<Commands> result_;
-	std::array<std::function<void ()>, Count> stop_callbacks_;
+	using ResponseTuple        = decltype(detail::response_tuple(std::declval<Commands>()));
+	using CommandSessionsTuple = decltype(detail::session_tuple(std::declval<Commands>()));
 
 public:
-	MultiCommandSession(Callback callback) :
-		callback_{std::move(callback)} {}
+	using result_type = ErrorOr<ResponseTuple>;
 
-	std::function<void()> start(Client & client, std::chrono::steady_clock::time_point deadline, Commands && commands) {
-		stop_callbacks_ = startCommands(client, *this, deadline, std::move(commands));
-		return [this, self = self()] () {
-			resolve(DetailedError{asio::error::operation_aborted});
-		};
+private:
+	/// Sub-sessions.
+	CommandSessionsTuple sessions_;
+
+	/// Result storage.
+	ResponseTuple result_;
+
+	std::atomic_flag started_ = ATOMIC_FLAG_INIT;
+	std::atomic_flag done_ = ATOMIC_FLAG_INIT;
+	std::atomic<int> finished_commands_{0};
+	std::function<void(result_type)> callback_;
+
+public:
+	MultiCommandSession(Client & client, Commands && commands) {
+		init_session_<0>(client, std::move(commands));
 	}
 
-	template<std::size_t I> void setStop(std::function<void ()> && stop_callback) {
-		static_assert(I < Count, "stop callback index exceeds valid range");
-		stop_callbacks_[I] = std::move(stop_callback);
+public:
+	void start(std::function<void(result_type)> callback) {
+		if (started_.test_and_set()) throw std::logic_error("CommandSession::start: session already started");
+		callback_ = std::move(callback);
+		start_session_<0>();
 	}
 
-	template<std::size_t I, typename Command>
+	template<std::size_t I>
 	auto callback() {
 		static_assert(I < Count, "command callback index exceeds valid range");
-		using Response = typename Command::Response;
+		using Response = typename std::tuple_element_t<I, Commands>::Response;
 
-		return [this, self = self()] (ErrorOr<Response> result) {
+		return [this] (ErrorOr<Response> result) {
 			if (!result) return resolve(result.error_unchecked());
-			move_deref_in_tuple<I>(result_, std::move(result));
+			if constexpr (std::is_same<Response, void>() == false) {
+				std::get<I>(result_) = std::move(*result);
+			}
 			if (++finished_commands_ == Count) resolve(DetailedError{});
 		};
 	}
@@ -119,30 +100,69 @@ public:
 	void resolve(DetailedError error) {
 		if (done_.test_and_set()) return;
 		if (error) {
-			for (auto const & f : stop_callbacks_) f();
+			stop_session_<0>(asio::error::operation_aborted);
 			std::move(callback_)(std::move(error));
 		} else {
 			std::move(callback_)(std::move(result_));
 		}
-		for (auto & f : stop_callbacks_) f = nullptr;
 	}
 
-private:
-	std::shared_ptr<MultiCommandSession> self() {
-		return this->shared_from_this();
+protected:
+	/// Recursively initialize sub-sessions.
+	template<std::size_t I>
+	void init_session_(Client & client, Commands && commands) {
+		if constexpr(I < Count) {
+			std::get<I>(sessions_).emplace(client, std::move(std::get<I>(commands)));
+			init_session_<I + 1>(client, std::move(commands));
+		}
+	}
+
+	/// Recursively start sub-sessions.
+	template<std::size_t I>
+	void start_session_() {
+		if constexpr(I < Count) {
+			std::get<I>(sessions_)->start(callback<I>());
+			start_session_<I + 1>();
+		}
+	}
+
+	/// Recursively start sub-sessions.
+	template<std::size_t I>
+	void stop_session_(DetailedError const & error) {
+		if constexpr(I < Count) {
+			std::get<I>(sessions_)->resolve(error);
+			stop_session_<I + 1>(error);
+		}
 	}
 };
 
 template<typename Commands>
-std::function<void()> sendMultipleCommands(
+auto sendMultipleCommands(
 	Client & client,
 	std::chrono::steady_clock::time_point deadline,
-	typename MultiCommandSession<Commands>::Callback callback,
+	std::function<void(typename MultiCommandSession<Commands>::result_type)> callback,
 	Commands && commands
 ) {
-	using Session = MultiCommandSession<Commands>;
-	auto session = std::make_shared<Session>(std::move(callback));
-	return session->start(client, deadline, std::forward<Commands>(commands));
+	using Session = DeadlineSession<MultiCommandSession<Commands>>;
+	auto session = std::make_shared<Session>(client.ios(), client, std::move(commands));
+	session->start(deadline, [&client, session, callback = std::move(callback)] (typename Session::result_type && result) mutable {
+		session->cancelTimeout();
+		std::move(callback)(std::move(result));
+
+		// Move the shared_ptr into a posted handler which resets it.
+		// That way, any queued event handlers can still completer succesfully.
+		client.ios().post([session = std::move(session)] () mutable {
+			session.reset();
+		});
+
+		// Reset our own shared_ptr.
+		// Not really needed since we've moved out of it,
+		// but if the lambda is made non-mutable std::move silently doesn't move,
+		// and then we have a memory leak.
+		// This will make the compiler bark in that case.
+		session.reset();
+	});
+	return session;
 }
 
 }}}}
