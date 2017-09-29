@@ -143,7 +143,7 @@ private:
 }}}
 
 #include "impl/send_command.hpp"
-#include "impl/send_commands.hpp"
+#include "impl/send_multiple_commands.hpp"
 
 namespace dr {
 namespace yaskawa {

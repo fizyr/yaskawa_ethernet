@@ -67,20 +67,21 @@ private:
 	ResponseTuple result_;
 
 	std::atomic_flag started_ = ATOMIC_FLAG_INIT;
-	std::atomic_flag done_ = ATOMIC_FLAG_INIT;
+	std::atomic_flag done_    = ATOMIC_FLAG_INIT;
+
 	std::atomic<int> finished_commands_{0};
 	std::function<void(result_type)> callback_;
 
 public:
 	MultiCommandSession(Client & client, Commands && commands) {
-		init_session_<0>(client, std::move(commands));
+		init_sessions_<0>(client, std::move(commands));
 	}
 
 public:
 	void start(std::function<void(result_type)> callback) {
 		if (started_.test_and_set()) throw std::logic_error("CommandSession::start: session already started");
 		callback_ = std::move(callback);
-		start_session_<0>();
+		start_sessions_<0>();
 	}
 
 	template<std::size_t I>
@@ -100,7 +101,7 @@ public:
 	void resolve(DetailedError error) {
 		if (done_.test_and_set()) return;
 		if (error) {
-			stop_session_<0>(asio::error::operation_aborted);
+			stop_sessions_<0>(asio::error::operation_aborted);
 			std::move(callback_)(std::move(error));
 		} else {
 			std::move(callback_)(std::move(result_));
@@ -110,28 +111,28 @@ public:
 protected:
 	/// Recursively initialize sub-sessions.
 	template<std::size_t I>
-	void init_session_(Client & client, Commands && commands) {
+	void init_sessions_(Client & client, Commands && commands) {
 		if constexpr(I < Count) {
 			std::get<I>(sessions_).emplace(client, std::move(std::get<I>(commands)));
-			init_session_<I + 1>(client, std::move(commands));
+			init_sessions_<I + 1>(client, std::move(commands));
 		}
 	}
 
 	/// Recursively start sub-sessions.
 	template<std::size_t I>
-	void start_session_() {
+	void start_sessions_() {
 		if constexpr(I < Count) {
 			std::get<I>(sessions_)->start(callback<I>());
-			start_session_<I + 1>();
+			start_sessions_<I + 1>();
 		}
 	}
 
 	/// Recursively start sub-sessions.
 	template<std::size_t I>
-	void stop_session_(DetailedError const & error) {
+	void stop_sessions_(DetailedError const & error) {
 		if constexpr(I < Count) {
 			std::get<I>(sessions_)->resolve(error);
-			stop_session_<I + 1>(error);
+			stop_sessions_<I + 1>(error);
 		}
 	}
 };
