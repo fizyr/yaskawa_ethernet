@@ -25,21 +25,22 @@ ErrorOr<TYPE::Response> decode(ResponseHeader const & header, string_view & data
 void encode(std::vector<std::uint8_t> & output, std::uint8_t request_id, TYPE const & command); \
 ErrorOr<TYPE::Response> decode(ResponseHeader const & header, std::string && data, TYPE const & command)
 
+// Declare ReadVar<TYPE>, ReadVars<TYPE>, WriteVar<TYPE> and WriteVars<TYPE> commands.
+#define DECLARE_VAR(TYPE) \
+DECLARE_COMMAND(ReadVar<TYPE>); \
+DECLARE_COMMAND(ReadVars<TYPE>); \
+DECLARE_COMMAND(WriteVar<TYPE>); \
+DECLARE_COMMAND(WriteVars<TYPE>)
+
 DECLARE_COMMAND(ReadStatus);
 DECLARE_COMMAND(ReadCurrentPosition);
 DECLARE_COMMAND(MoveL);
 
-DECLARE_COMMAND(ReadInt8Var);
-DECLARE_COMMAND(ReadInt16Var);
-DECLARE_COMMAND(ReadInt32Var);
-DECLARE_COMMAND(ReadFloat32Var);
-DECLARE_COMMAND(ReadPositionVar);
-
-DECLARE_COMMAND(WriteInt8Var);
-DECLARE_COMMAND(WriteInt16Var);
-DECLARE_COMMAND(WriteInt32Var);
-DECLARE_COMMAND(WriteFloat32Var);
-DECLARE_COMMAND(WritePositionVar);
+DECLARE_VAR(std::uint8_t);
+DECLARE_VAR(std::int16_t);
+DECLARE_VAR(std::int32_t);
+DECLARE_VAR(float);
+DECLARE_VAR(Position);
 
 DECLARE_FILE_READ_COMMAND(ReadFileList);
 DECLARE_FILE_READ_COMMAND(ReadFile);
@@ -47,5 +48,7 @@ DECLARE_COMMAND(WriteFile);
 DECLARE_COMMAND(DeleteFile);
 
 #undef DECLARE_COMMAND
+#undef DECLARE_FILE_READ_COMMAND
+#undef DECLARE_VAR
 
 }}}
