@@ -34,6 +34,7 @@ add_library(${PROJECT_NAME}
 	src/udp/decode.cpp
 	src/udp/encode.cpp
 	src/udp/protocol.cpp
+	src/rpc_server/rpc_server.cpp
 )
 
 include_directories(include/${PROJECT_NAME})
