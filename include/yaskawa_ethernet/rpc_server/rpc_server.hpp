@@ -11,7 +11,7 @@ namespace yaskawa {
 namespace detail {
 	class RpcService {
 	public:
-		using OnExecute = std::function<void(udp::Client & client, std::function<void(DetailedError)> resolve)>;
+		using OnExecute = std::function<void(std::function<void(DetailedError)> resolve)>;
 
 		/// Atomic flag to remember if the service is currently busy.
 		std::atomic_flag busy = ATOMIC_FLAG_INIT;
@@ -63,18 +63,17 @@ public:
 	 * If an error occurs for one of the commands, the RPC server error handler is called with the error.
 	 * If all commands succeeded, the service callback is invoked as:
 	 *   callback(result, resolve)
-	 *
-	 * Here, result is a tuple with the results of each pre_command and resolve is a functor taking a DetailedError
+	 * where `result` is a tuple with the results of each pre_command and `resolve` is a functor taking a DetailedError
 	 * that the service should invoke to notify the RPC server that the service call is finished.
 	 */
 	template<typename PreCommands, typename Callback>
 	void addService(std::string name, PreCommands && pre_commands, std::chrono::steady_clock::duration timeout, Callback && callback) {
 		services_.push_back(std::make_unique<detail::RpcService>(std::move(name)), [
+			&client = *client_,
 			pre_commands = std::forward<PreCommands>(pre_commands),
 			timeout,
 			callback = std::forward<Callback>(callback)
 		] (
-			udp::Client & client,
 			std::function<void(DetailedError)> resolve
 		) {
 			client.sendCommands(timeout, [&client, resolve = std::move(resolve)] (udp::MultiCommandResponse<PreCommands> && result) {

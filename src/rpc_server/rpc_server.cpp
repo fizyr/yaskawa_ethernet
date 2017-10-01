@@ -49,7 +49,7 @@ bool RpcServer::execute(std::size_t index) {
 
 	// Execute service.
 	std::uint8_t status_var = base_register_ + index;
-	service.execute(*client_, [this, &service, status_var] (DetailedError error) {
+	service.execute([this, &service, status_var] (DetailedError error) {
 		// Handle error.
 		if (error) on_error_(prefixError(std::move(error), "executing service " + service.name + ": "));
 
