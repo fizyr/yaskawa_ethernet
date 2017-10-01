@@ -159,4 +159,9 @@ void Client::sendCommands(std::chrono::steady_clock::time_point deadline, Callba
 	impl::sendMultipleCommands(*this, deadline, std::forward<Callback>(callback), std::move(commands));
 }
 
+template<typename Commands>
+using MultiCommandResult = typename impl::MultiCommandSession<std::decay_t<Commands>>::result_type;
+template<typename Commands>
+using MultiCommandResponse = typename impl::MultiCommandSession<std::decay_t<Commands>>::response_type;
+
 }}}
