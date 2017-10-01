@@ -38,7 +38,7 @@ void onTimeout(std::error_code const & error) {
 }
 
 void write() {
-	auto callback = [] (dr::ErrorOr<std::tuple<std::nullptr_t, std::nullptr_t, std::nullptr_t, std::nullptr_t>> result) {
+	auto callback = [] (dr::ErrorOr<std::tuple<Empty, Empty, Empty, Empty>> result) {
 		if (!result) {
 			std::cerr << "Failed to write: " << result.error().fullMessage() << "\n";
 		} else {

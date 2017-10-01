@@ -18,4 +18,7 @@ namespace detail {
 template<typename Tuple, template<typename> typename Converter>
 using map_tuple_t = decltype(detail::map_tuple_elements<Converter>(std::declval<Tuple>()));
 
+/// Empty type.
+struct Empty {};
+
 }}

@@ -18,34 +18,34 @@ namespace udp {
 
 namespace impl {
 
-namespace detail {
-	template<typename Command>
-	struct response_tuple_element {
-		using type = map_type_t<typename Command::Response, void, std::nullptr_t>;
-	};
-
-	template<typename Command>
-	struct command_session_tuple_element {
-		using type = std::optional<CommandSession<Command>>;
-	};
-}
-
 template<typename Commands>
 class MultiCommandSession {
 	constexpr static int Count = std::tuple_size<Commands>::value;
 
-	using ResponseTuple        = map_tuple_t<Commands, detail::response_tuple_element>;
-	using CommandSessionsTuple = map_tuple_t<Commands, detail::command_session_tuple_element>;
+	/// Map a Command to the result_type (or Empty for void results).
+	template<typename Command>
+	struct response_tuple_element {
+		using type = map_type_t<typename Command::Response, void, Empty>;
+	};
+
+	/// Map a Command to an std::optional<CommandSession<Command>>.
+	template<typename Command>
+	struct command_session_tuple_element {
+		using type = std::optional<CommandSession<Command>>;
+	};
+
+	using CommandSessionsTuple = map_tuple_t<Commands, command_session_tuple_element>;
 
 public:
-	using result_type = ErrorOr<ResponseTuple>;
+	using response_type  = map_tuple_t<Commands, response_tuple_element>;
+	using result_type    = ErrorOr<response_type>;
 
 private:
 	/// Sub-sessions.
 	CommandSessionsTuple sessions_;
 
 	/// Result storage.
-	ResponseTuple result_;
+	response_type result_;
 
 	std::atomic_flag started_ = ATOMIC_FLAG_INIT;
 	std::atomic_flag done_    = ATOMIC_FLAG_INIT;
