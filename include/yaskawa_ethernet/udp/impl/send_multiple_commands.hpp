@@ -1,10 +1,11 @@
 #pragma once
 #include "./send_command.hpp"
 #include "./deadline_session.hpp"
+#include "../../type_traits.hpp"
 
 #include <atomic>
-#include <cstdint>
 #include <chrono>
+#include <cstdint>
 #include <functional>
 #include <optional>
 #include <tuple>
@@ -18,43 +19,23 @@ namespace udp {
 namespace impl {
 
 namespace detail {
-	/// Helper to map a type From to type To (for the case where T != From).
-	template<typename T, typename From, typename To>
-	struct map_type { using type = T; };
+	template<typename Command>
+	struct response_tuple_element {
+		using type = map_type_t<typename Command::Response, void, std::nullptr_t>;
+	};
 
-	/// Helper to map a type From to type To (for the case where T == From).
-	template<typename From, typename To>
-	struct map_type<From, From, To> { using type = To; };
+	template<typename Command>
+	struct command_session_tuple_element {
+		using type = std::optional<CommandSession<Command>>;
+	};
 }
-
-/// Map type From to type To, return other types unmodified.
-template<typename T, typename From, typename To>
-using map_type = typename detail::map_type<T, From, To>::type;
-
-/// Map void to type To (defaults to std::nullptr_t), return other types unmodified.
-template<typename T, typename To = std::nullptr_t>
-using map_void = map_type<T, void, To>;
-
-namespace detail {
-	/// Helper function to unpack a command tuple and make a tuple of responses.
-	template<typename... Commands>
-	auto response_tuple(std::tuple<Commands...>) -> std::tuple<map_void<typename Commands::Response>...>;
-
-	/// Unpack a command tuple and make a tuple of optional command sessions.
-	template<typename... Commands>
-	auto session_tuple(std::tuple<Commands...>) -> std::tuple<std::optional<CommandSession<Commands>>...>;
-}
-
-/// Get the type of a tuple of command sessions.
-template<typename Commands>
-using CommandSessionsTuple = decltype(detail::session_tuple<Commands>(std::make_index_sequence<std::tuple_size<Commands>{}>{}));
 
 template<typename Commands>
 class MultiCommandSession {
 	constexpr static int Count = std::tuple_size<Commands>::value;
 
-	using ResponseTuple        = decltype(detail::response_tuple(std::declval<Commands>()));
-	using CommandSessionsTuple = decltype(detail::session_tuple(std::declval<Commands>()));
+	using ResponseTuple        = map_tuple_t<Commands, detail::response_tuple_element>;
+	using CommandSessionsTuple = map_tuple_t<Commands, detail::command_session_tuple_element>;
 
 public:
 	using result_type = ErrorOr<ResponseTuple>;
