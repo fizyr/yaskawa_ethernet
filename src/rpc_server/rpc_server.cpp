@@ -11,6 +11,10 @@ namespace {
 	}
 }
 
+void disabledService(udp::Client &, std::function<void(DetailedError)> resolve) {
+	resolve({std::errc::invalid_argument, "service is disabled"});
+}
+
 RpcServer::RpcServer(udp::Client & client, std::uint8_t base_register, std::function<void(DetailedError)> on_error) :
 	client_{&client},
 	base_register_{base_register},

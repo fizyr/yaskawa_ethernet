@@ -1,3 +1,4 @@
+#pragma once
 #include "../udp/client.hpp"
 
 #include <atomic>
@@ -15,16 +16,16 @@ namespace detail {
 
 		/// Atomic flag to remember if the service is currently busy.
 		std::atomic_flag busy = ATOMIC_FLAG_INIT;
+
+		/// Name of the service (for debugging purposes).
 		std::string name;
+
+		/// Functor to call when executing the service.
 		OnExecute execute;
 
+		/// Construct an RpcService.
 		RpcService(std::string name, OnExecute execute) : name{std::move(name)}, execute{std::move(execute)} {}
 	};
-}
-
-
-void disabledService(udp::Client &, std::function<void(DetailedError)> resolve) {
-	resolve({std::errc::invalid_argument, "service is disabled"});
 }
 
 namespace service_status {
@@ -32,6 +33,8 @@ namespace service_status {
 	constexpr std::uint8_t requested = 1;
 	constexpr std::uint8_t error     = 2;
 }
+
+void disabledService(udp::Client &, std::function<void(DetailedError)> resolve);
 
 class RpcServer {
 	/// The client to use for reading/writing command status.
