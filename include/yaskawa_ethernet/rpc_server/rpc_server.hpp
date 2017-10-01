@@ -91,11 +91,11 @@ public:
 		] (
 			std::function<void(DetailedError)> resolve
 		) {
-			client.sendCommands(timeout, [&client, resolve = std::move(resolve)] (udp::MultiCommandResponse<PreCommands> && result) {
+			client.sendCommands(timeout, [&client, resolve = std::move(resolve), callback = std::move(callback)] (udp::MultiCommandResult<PreCommands> && result) {
 				if (!result) std::move(resolve)(std::move(result.error_unchecked()));
-				else callback_(*result, std::move(resolve));
+				else callback(std::move(*result), std::move(resolve));
 			}, pre_commands);
-		});
+		}));
 	}
 
 	/// Start the RPC server.
