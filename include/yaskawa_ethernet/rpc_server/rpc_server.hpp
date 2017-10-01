@@ -43,6 +43,12 @@ class RpcServer {
 	/// The base register to use when reading command status.
 	std::uint8_t base_register_;
 
+	/// Delay between reading commands.
+	std::chrono::steady_clock::duration read_commands_delay_;
+
+	/// Timer to wait between reading commands.
+	asio::steady_timer read_commands_timer_;
+
 	/// Vector of services.
 	std::vector<std::unique_ptr<detail::RpcService>> services_;
 
@@ -57,6 +63,7 @@ public:
 	RpcServer(
 		udp::Client & client,                       ///< The client to use for reading/writing command status.
 		std::uint8_t base_register,                 ///< The base register to use for reading/writing command status.
+		std::chrono::steady_clock::duration delay,  ///< Delay between reading command registers.
 		std::function<void(DetailedError)> on_error ///< The callback to invoke when an error occurs.
 	);
 
@@ -113,6 +120,9 @@ public:
 	bool stop();
 
 protected:
+	/// Start the timer for reading commands.
+	void startReadCommandsTimer();
+
 	/// Read command status.
 	void readCommands();
 

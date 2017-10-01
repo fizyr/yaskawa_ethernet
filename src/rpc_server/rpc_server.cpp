@@ -15,9 +15,11 @@ void disabledService(udp::Client &, std::function<void(DetailedError)> resolve) 
 	resolve({std::errc::invalid_argument, "service is disabled"});
 }
 
-RpcServer::RpcServer(udp::Client & client, std::uint8_t base_register, std::function<void(DetailedError)> on_error) :
+RpcServer::RpcServer(udp::Client & client, std::uint8_t base_register, std::chrono::steady_clock::duration delay, std::function<void(DetailedError)> on_error) :
 	client_{&client},
 	base_register_{base_register},
+	read_commands_delay_{delay},
+	read_commands_timer_{client.ios()},
 	on_error_{std::move(on_error)} {}
 
 bool RpcServer::start() {
@@ -28,6 +30,26 @@ bool RpcServer::start() {
 
 bool RpcServer::stop() {
 	return started_.exchange(false);
+}
+
+void RpcServer::startReadCommandsTimer() {
+	// Zero delay? Read commands immediately.
+	if (read_commands_delay_.count() == 0) {
+		readCommands();
+		return;
+	}
+
+	// Otherwise wait for the specified delay and then execute readCommands().
+	read_commands_timer_.expires_from_now(read_commands_delay_);
+	read_commands_timer_.async_wait([this] (std::error_code error) {
+		if (error == asio::error::operation_aborted) return;
+		if (error) {
+			on_error_(DetailedError{error, "waiting for read_commands_timer_"});
+			startReadCommandsTimer();
+			return;
+		}
+		readCommands();
+	});
 }
 
 void RpcServer::readCommands() {
@@ -42,7 +64,7 @@ void RpcServer::readCommands() {
 		}
 
 		// Read status registers again until started_ becomes false.
-		if (started_) readCommands();
+		if (started_) startReadCommandsTimer();
 	});
 }
 
