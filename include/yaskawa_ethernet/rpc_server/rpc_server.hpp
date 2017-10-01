@@ -57,7 +57,19 @@ public:
 		std::function<void(DetailedError)> on_error ///< The callback to invoke when an error occurs.
 	);
 
-	/// Register a new service.
+	/// Register a new service without parameters.
+	/**
+	 * The service callback is invoked as:
+	 *   callback(resolve)
+	 * where `resolve` is a functor taking a DetailedError that the service should invoke
+	 * to notify the RPC server that the service call is finished.
+	 */
+	template<typename Callback>
+	void addService(std::string name, Callback && callback) {
+		services_.push_back(std::make_unique<detail::RpcService>(std::move(name)), callback);
+	}
+
+	/// Register a new service with parameters.
 	/**
 	 * When the service is invoked, all pre_commands are executed.
 	 * If an error occurs for one of the commands, the RPC server error handler is called with the error.
