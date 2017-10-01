@@ -69,7 +69,7 @@ public:
 	 */
 	template<typename Callback>
 	void addService(std::string name, Callback && callback) {
-		services_.push_back(std::make_unique<detail::RpcService>(std::move(name)), callback);
+		services_.push_back(std::make_unique<detail::RpcService>(std::move(name), callback));
 	}
 
 	/// Register a new service with parameters.
@@ -83,7 +83,7 @@ public:
 	 */
 	template<typename PreCommands, typename Callback>
 	void addService(std::string name, PreCommands && pre_commands, std::chrono::steady_clock::duration timeout, Callback && callback) {
-		services_.push_back(std::make_unique<detail::RpcService>(std::move(name)), [
+		services_.push_back(std::make_unique<detail::RpcService>(std::move(name), [
 			&client = *client_,
 			pre_commands = std::forward<PreCommands>(pre_commands),
 			timeout,
