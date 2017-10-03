@@ -53,8 +53,12 @@ void RpcServer::startReadCommandsTimer() {
 }
 
 void RpcServer::readCommands() {
+	// We must read a multiple of 2 B vars :/
+	std::size_t size = services_.size();
+	std::uint8_t count = (size + 1) / 2 * 2;
+
 	// Read command registers.
-	client_->sendCommand(ReadUint8Vars{base_register_, std::uint8_t(services_.size())}, 100ms, [this] (ErrorOr<std::vector<std::uint8_t>> const & statuses) {
+	client_->sendCommand(ReadUint8Vars{base_register_, count}, 100ms, [this, size] (ErrorOr<std::vector<std::uint8_t>> const & statuses) {
 		// Report error
 		if (!statuses) {
 			on_error_(prefixError(std::move(statuses.error_unchecked()), "reading commands status variables: "));
@@ -63,7 +67,7 @@ void RpcServer::readCommands() {
 		}
 
 		// Check each status register for requested service calls.
-		for (std::size_t i = 0; i < statuses->size(); ++i) {
+		for (std::size_t i = 0; i < size; ++i) {
 			if (statuses->operator[](i) == service_status::requested) execute(i);
 		}
 
