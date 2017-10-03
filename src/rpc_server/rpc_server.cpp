@@ -56,7 +56,11 @@ void RpcServer::readCommands() {
 	// Read command registers.
 	client_->sendCommand(ReadUint8Vars{base_register_, std::uint8_t(services_.size())}, 100ms, [this] (ErrorOr<std::vector<std::uint8_t>> const & statuses) {
 		// Report error
-		if (!statuses) return on_error_(prefixError(std::move(statuses.error_unchecked()), "reading parameters: "));
+		if (!statuses) {
+			on_error_(prefixError(std::move(statuses.error_unchecked()), "reading commands status variables: "));
+			if (started_) startReadCommandsTimer();
+			return;
+		}
 
 		// Check each status register for requested service calls.
 		for (std::size_t i = 0; i < statuses->size(); ++i) {
