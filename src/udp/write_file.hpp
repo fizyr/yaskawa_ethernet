@@ -120,11 +120,11 @@ protected:
 	void onResponse(ResponseHeader const & header, string_view data) {
 		if (done_.load()) return;
 		if (header.status != 0) return stopSession(commandFailed(header.status, header.extra_status));
-		if (auto error = checkSize("response data", data, 0)) return stopSession(error);
+		if (auto error = expectSize("response data", data.size(), 0)) return stopSession(error);
 
 		// TODO: Implement retransmission logic.
-		if (!header.ack) return stopSession(unexpectedValue("ack", false, true));
-		if (auto error = checkValue("block number", header.block_number, blocks_sent_)) return stopSession(error);
+		if (auto error = expectValue("ack", header.ack, true)) return stopSession(error);
+		if (auto error = expectValue("block number", header.block_number, blocks_sent_)) return stopSession(error);
 
 		if (on_progress_) on_progress_(bytesSent(), command_.data.size());
 		if (bytesSent() >= command_.data.size()) stopSession(in_place_valid);

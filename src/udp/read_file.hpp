@@ -105,7 +105,7 @@ protected:
 		std::size_t block = header.block_number & 0x7fffffff;
 		bool last_block = header.block_number & 0x80000000;
 
-		if (auto error = checkValue("block number", block, blocks_received_ + 1)) return stopSession(error);
+		if (auto error = expectValue("block number", block, blocks_received_ + 1)) return stopSession(error);
 		writeAck(block);
 
 		read_buffer_.insert(read_buffer_.end(), data.begin(), data.end());

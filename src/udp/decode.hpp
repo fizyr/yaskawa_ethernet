@@ -33,17 +33,6 @@ T readLittleEndian(string_view & data) {
 	return readLittleEndian<T>(reinterpret_cast<std::uint8_t const *>(data.data() - sizeof(T)));
 }
 
-DetailedError malformedResponse(std::string message);
-DetailedError maximumExceeded(std::string field, int value, int max);
-DetailedError unexpectedValue(std::string field, int value, int expected);
-DetailedError commandFailed(std::uint16_t status, std::uint16_t extra_status);
-
-DetailedError checkValue(std::string name, int value, int expected);
-DetailedError checkValueMax(std::string name, int value, int max);
-DetailedError checkSize(std::string description, string_view data, std::size_t expected_size);
-DetailedError checkSizeMin(std::string description, string_view data, std::size_t minimum_size);
-DetailedError checkSizeMax(std::string description, string_view data, std::size_t maximum_size);
-
 /// Decode a response header.
 ErrorOr<ResponseHeader> decodeResponseHeader(string_view & data);
 

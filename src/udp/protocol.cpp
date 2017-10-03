@@ -1,6 +1,7 @@
 #include "udp/protocol.hpp"
 #include "udp/message.hpp"
 #include "udp/command_traits.hpp"
+#include "error.hpp"
 
 #include "encode.hpp"
 #include "decode.hpp"
@@ -28,7 +29,7 @@ void encode(std::vector<std::uint8_t> & output, std::uint8_t request_id, ReadSta
 
 /// Decode a ReadStatus response.
 ErrorOr<Status> decode(ResponseHeader const &, string_view & data, ReadStatus const &) {
-	if (auto error = checkSize("status data", data, 8)) return error;
+	if (auto error = expectSize("status data", data.size(), 8)) return error;
 
 	Status result;
 	result.step          = data[0] & (1 << 0);
@@ -74,7 +75,7 @@ void encode(std::vector<std::uint8_t> & output, std::uint8_t request_id, ReadCur
 
 /// Decode a ReadCurrentPosition command.
 ErrorOr<Position> decode(ResponseHeader const &, string_view & message, ReadCurrentPosition const &) {
-	if (auto error = checkSizeMax("position data", message, 13 * 4)) return error;
+	if (auto error = expectSizeMax("position data", message.size(), 13 * 4)) return error;
 
 	// Pad the data until it is 13 * 4 bytes.
 	std::string padded_data;
@@ -138,7 +139,7 @@ void encode(std::vector<std::uint8_t> & output, std::uint8_t request_id, MoveL c
 
 /// Decode a MoveL response.
 ErrorOr<void> decode(ResponseHeader const &, string_view & data, MoveL const &) {
-	if (auto error = checkSize("response data", data, 0)) return error;
+	if (auto error = expectSize("response data", data.size(), 0)) return error;
 	return in_place_valid;
 }
 
@@ -164,7 +165,7 @@ namespace {
 	template<typename T>
 	ErrorOr<T> decodeReadVar(string_view & message, ReadVar<T> const &) {
 		// Read a single value (data is exactly one element).
-		if (auto error = checkSize( "response data", message, encoded_size<T>())) return error;
+		if (auto error = expectSize( "response data", message.size(), encoded_size<T>())) return error;
 		return decode<T>(message);
 	}
 
@@ -179,11 +180,11 @@ namespace {
 		}
 
 		// Read multiple values (data starts with a 32 bit value count).
-		if (auto error = checkSize( "response data", message, 4 + command.count * encoded_size<T>())) return error;
+		if (auto error = expectSize( "response data", message.size(), 4 + command.count * encoded_size<T>())) return error;
 
 		// Check if value count matches our request.
 		std::uint32_t count = readLittleEndian<std::uint32_t>(message);
-		if (auto error = checkValue("value count", count, command.count)) return error;
+		if (auto error = expectValue("value count", count, command.count)) return error;
 
 		// Decode and return values.
 		std::vector<T> result;
@@ -226,14 +227,14 @@ namespace {
 	/// Decode a WriteVar response.
 	template<typename T>
 	ErrorOr<void> decodeWriteVar(string_view & data, WriteVar<T> const &) {
-		if (auto error = checkSize("response data", data, 0)) return error;
+		if (auto error = expectSize("response data", data.size(), 0)) return error;
 		return in_place_valid;
 	}
 
 	/// Decode a WriteVars response.
 	template<typename T>
 	ErrorOr<void> decodeWriteVars(string_view & data, WriteVars<T> const &) {
-		if (auto error = checkSize("response data", data, 0)) return error;
+		if (auto error = expectSize("response data", data.size(), 0)) return error;
 		return in_place_valid;
 	}
 }
@@ -298,7 +299,7 @@ void encode(std::vector<std::uint8_t> & out, std::uint8_t request_id, WriteFile 
 
 /// Decode a WriteFile response.
 ErrorOr<void> decode(ResponseHeader const &, string_view & data, WriteFile const &) {
-	if (auto error = checkSize("response data", data, 0)) return error;
+	if (auto error = expectSize("response data", data.size(), 0)) return error;
 	return in_place_valid;
 }
 
@@ -310,7 +311,7 @@ void encode(std::vector<std::uint8_t> & out, std::uint8_t request_id, DeleteFile
 
 /// Decode a DeleteFile response.
 ErrorOr<void> decode(ResponseHeader const &, string_view & data, DeleteFile const &) {
-	if (auto error = checkSize("response data", data, 0)) return error;
+	if (auto error = expectSize("response data", data.size(), 0)) return error;
 	return in_place_valid;
 }
 

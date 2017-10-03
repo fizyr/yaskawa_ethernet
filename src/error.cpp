@@ -29,4 +29,105 @@ std::error_category const & yaskawa_category() {
 	return yaskawa_category_;
 }
 
+namespace {
+	char hexNibble(int value) {
+		if (value < 10) return '0' + value;
+		return 'A' + value - 10;
+	}
+
+	template<typename T>
+	std::string toHex(T val) {
+		static_assert(std::is_integral<T>::value, "");
+		std::string result(sizeof(T) * 2, '0');
+		for (unsigned int i = 0; i < sizeof(T); i++) {
+			result[(sizeof(T) - i) * 2 - 1] = hexNibble(val >> (8 * i)     & 0x0f);
+			result[(sizeof(T) - i) * 2 - 2] = hexNibble(val >> (8 * i + 4) & 0x0f);
+		}
+		return result;
+	}
+}
+
+DetailedError malformedResponse(std::string message) {
+	return {errc::malformed_response, std::move(message)};
+}
+
+DetailedError commandFailed(std::uint16_t status, std::uint16_t extra_status) {
+	return {errc::command_failed,
+		"command failed with status 0x" + toHex(status)
+		+ " and additional status 0x" + toHex(extra_status)
+	};
+}
+
+DetailedError expectValue(std::string name, int value, int expected) {
+	if (value == expected) return {};
+	return malformedResponse(
+		"unexpected " + std::move(name) + ", "
+		"expected exactly " + std::to_string(expected) + ", "
+		"got " + std::to_string(value)
+	);
+}
+
+DetailedError expectValueMin(std::string name, int value, int min) {
+	if (value >= min) return {};
+	return malformedResponse(
+		"unexpected " + std::move(name) + ", "
+		"expected at least " + std::to_string(min) + ", "
+		"got " + std::to_string(value)
+	);
+}
+
+DetailedError expectValueMax(std::string name, int value, int max) {
+	if (value <= max) return {};
+	return malformedResponse(
+		"unexpected " + std::move(name) + ", "
+		"expected at most " + std::to_string(max) + ", "
+		"got " + std::to_string(value)
+	);
+}
+
+DetailedError expectValueMinMax(std::string name, int value, int min, int max) {
+	if (value >= min && value <= max) return {};
+	return malformedResponse(
+		"unexpected " + std::move(name) + ", "
+		"expected a value in the range [" + std::to_string(min) + ", " + std::to_string(max) + "] (inclusive), "
+		"got " + std::to_string(value)
+	);
+}
+
+DetailedError expectSize(std::string description, std::size_t actual_size, std::size_t expected_size) {
+	if (actual_size == expected_size) return {};
+	return {errc::malformed_response,
+		"unexpected " + description + " size, "
+		"expected exactly " + std::to_string(expected_size) + " bytes, "
+		"got " + std::to_string(actual_size)
+	};
+}
+
+DetailedError expectSizeMin(std::string description, std::size_t actual_size, std::size_t minimum_size) {
+	if (actual_size >= minimum_size) return {};
+	return {errc::malformed_response,
+		"unexpected " + description + " size, "
+		"expected at least " + std::to_string(minimum_size) + " bytes, "
+		"got " + std::to_string(actual_size)
+	};
+}
+
+DetailedError expectSizeMax(std::string description, std::size_t actual_size, std::size_t maximum_size) {
+	if (actual_size <= maximum_size) return {};
+	return {errc::malformed_response,
+		"unexpected " + description + " size, "
+		"expected at most " + std::to_string(maximum_size) + " bytes, "
+		"got " + std::to_string(actual_size)
+	};
+}
+
+DetailedError expectSizeMinMax(std::string description, std::size_t actual_size, std::size_t min, std::size_t max) {
+	if (actual_size >= min &&  actual_size <= max) return {};
+	return {errc::malformed_response,
+		"unexpected " + description + " size, "
+		"expected a size in the range of [" + std::to_string(min) + ", " + std::to_string(max) + "] bytes (inclusive), "
+		"got " + std::to_string(actual_size)
+	};
+}
+
 }}
