@@ -121,9 +121,9 @@ protected:
 template<typename Commands>
 auto sendMultipleCommands(
 	Client & client,
+	Commands && commands,
 	std::chrono::steady_clock::time_point deadline,
-	std::function<void(typename MultiCommandSession<Commands>::result_type)> callback,
-	Commands && commands
+	std::function<void(typename MultiCommandSession<Commands>::result_type)> callback
 ) {
 	using Session = DeadlineSession<MultiCommandSession<Commands>>;
 	auto session = std::make_shared<Session>(client.ios(), client, std::move(commands));

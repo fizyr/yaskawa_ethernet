@@ -95,11 +95,11 @@ public:
 	}
 
 	template<typename Callback, typename... Commands>
-	void sendCommands(std::chrono::steady_clock::time_point deadline, Callback && callback, std::tuple<Commands...> commands);
+	void sendCommands(std::tuple<Commands...> commands, std::chrono::steady_clock::time_point deadline, Callback && callback);
 
 	template<typename Callback, typename... Commands>
-	void sendCommands(std::chrono::steady_clock::duration timeout, Callback && callback, std::tuple<Commands...> commands) {
-		return sendCommands(std::chrono::steady_clock::now() + timeout, std::forward<Callback>(callback), std::move(commands));
+	void sendCommands(std::tuple<Commands...> commands, std::chrono::steady_clock::duration timeout, Callback && callback) {
+		return sendCommands(std::move(commands), std::chrono::steady_clock::now() + timeout, std::forward<Callback>(callback));
 	}
 
 	void readFileList(
@@ -155,8 +155,8 @@ void Client::sendCommand(T command, std::chrono::steady_clock::time_point deadli
 }
 
 template<typename Callback, typename... Commands>
-void Client::sendCommands(std::chrono::steady_clock::time_point deadline, Callback && callback, std::tuple<Commands...> commands) {
-	impl::sendMultipleCommands(*this, deadline, std::forward<Callback>(callback), std::move(commands));
+void Client::sendCommands(std::tuple<Commands...> commands, std::chrono::steady_clock::time_point deadline, Callback && callback) {
+	impl::sendMultipleCommands(*this, std::move(commands), deadline, std::forward<Callback>(callback));
 }
 
 template<typename Commands>

@@ -90,19 +90,19 @@ public:
 	 */
 	template<typename PreCommands, typename Callback>
 	void addService(std::string name, PreCommands && pre_commands, std::chrono::steady_clock::duration timeout, Callback && callback) {
-		services_.push_back(std::make_unique<detail::RpcService>(std::move(name), [
+		auto service = std::make_unique<detail::RpcService>(std::move(name), [
 			&client = *client_,
 			pre_commands = std::forward<PreCommands>(pre_commands),
 			timeout,
 			callback = std::forward<Callback>(callback)
-		] (
-			std::function<void(DetailedError)> resolve
-		) {
-			client.sendCommands(timeout, [&client, resolve = std::move(resolve), callback = std::move(callback)] (udp::MultiCommandResult<PreCommands> && result) {
+		] (std::function<void(DetailedError)> resolve) {
+			auto on_response = [&client, resolve = std::move(resolve), callback = std::move(callback)] (udp::MultiCommandResult<PreCommands> && result) {
 				if (!result) std::move(resolve)(std::move(result.error_unchecked()));
 				else callback(std::move(*result), std::move(resolve));
-			}, pre_commands);
-		}));
+			};
+			client.sendCommands(pre_commands, timeout, std::move(on_response));
+		});
+		services_.push_back(std::move(service));
 	}
 
 	/// Start the RPC server.

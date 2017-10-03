@@ -38,49 +38,45 @@ void onTimeout(std::error_code const & error) {
 }
 
 void write() {
-	auto callback = [] (dr::ErrorOr<std::tuple<Empty, Empty, Empty, Empty>> result) {
-		if (!result) {
-			std::cerr << "Failed to write: " << result.error().fullMessage() << "\n";
-		} else {
-			++command_count;
+	client->sendCommands(
+		std::make_tuple(WriteUint8Var{5, byte_value}, WriteInt16Var{6, int16_value}, WriteInt32Var{7, int32_value}, WriteFloat32Var{8, float32_value}),
+		timeout,
+		[] (dr::ErrorOr<std::tuple<Empty, Empty, Empty, Empty>> result) {
+			if (!result) {
+				std::cerr << "Failed to write: " << result.error().fullMessage() << "\n";
+			} else {
+				++command_count;
+			}
+			read();
 		}
-		read();
-	};
-	client->sendCommands(timeout, std::move(callback), std::make_tuple(
-		WriteUint8Var{5, byte_value},
-		WriteInt16Var{6, int16_value},
-		WriteInt32Var{7, int32_value},
-		WriteFloat32Var{8, float32_value}
-	));
+	);
 }
 
 void read() {
-	auto callback = [] (dr::ErrorOr<std::tuple<std::uint8_t, std::int16_t, std::int32_t, float>> result) {
-		if (!result) {
-			std::cerr << "Failed to read: " << result.error().fullMessage() << "\n";
-		} else {
-			std::uint8_t int8    = std::get<0>(*result);
-			std::int16_t int16   = std::get<1>(*result);
-			std::int32_t int32   = std::get<2>(*result);
-			float        float32 = std::get<3>(*result);
-			checkValue("int8", int8, byte_value);
-			checkValue("int16", int16, int16_value);
-			checkValue("int32", int32, int32_value);
-			checkValue("float32", float32, float32_value);
-			++byte_value;
-			++int16_value;
-			++int32_value;
-			++float32_value;
-			++command_count;
+	client->sendCommands(
+		std::make_tuple(ReadUint8Var{5}, ReadInt16Var{6}, ReadInt32Var{7}, ReadFloat32Var{8}),
+		timeout,
+		[] (dr::ErrorOr<std::tuple<std::uint8_t, std::int16_t, std::int32_t, float>> result) {
+			if (!result) {
+				std::cerr << "Failed to read: " << result.error().fullMessage() << "\n";
+			} else {
+				std::uint8_t int8    = std::get<0>(*result);
+				std::int16_t int16   = std::get<1>(*result);
+				std::int32_t int32   = std::get<2>(*result);
+				float        float32 = std::get<3>(*result);
+				checkValue("int8", int8, byte_value);
+				checkValue("int16", int16, int16_value);
+				checkValue("int32", int32, int32_value);
+				checkValue("float32", float32, float32_value);
+				++byte_value;
+				++int16_value;
+				++int32_value;
+				++float32_value;
+				++command_count;
+			}
+			write();
 		}
-		write();
-	};
-	client->sendCommands(timeout, std::move(callback), std::make_tuple(
-		ReadUint8Var{5},
-		ReadInt16Var{6},
-		ReadInt32Var{7},
-		ReadFloat32Var{8}
-	));
+	);
 }
 
 
