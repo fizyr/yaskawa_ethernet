@@ -74,7 +74,11 @@ public:
 
 		// Register the response handler.
 		handler_ = client_->registerHandler(request_id_, [this] (ResponseHeader const & header, string_view data) {
-			resolve(decode(header, data, command_));
+			if (header.status != 0) {
+				resolve(commandFailed(header.status, header.extra_status));
+			} else {
+				resolve(decode(header, data, command_));
+			}
 		});
 
 		// Write the command.
