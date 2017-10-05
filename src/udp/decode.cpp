@@ -191,14 +191,19 @@ template<> ErrorOr<Position> decode<Position>(string_view & data) {
 	// Cartesian position.
 	// Position data is in micrometers.
 	// Rotation data is in 0.0001 degrees.
-	return Position{CartesianPosition{ {{
+	Position result = CartesianPosition{ {{
 		readLittleEndian<std::int32_t>(data) / 1e3,
 		readLittleEndian<std::int32_t>(data) / 1e3,
 		readLittleEndian<std::int32_t>(data) / 1e3,
 		readLittleEndian<std::int32_t>(data) / 1e4,
 		readLittleEndian<std::int32_t>(data) / 1e4,
 		readLittleEndian<std::int32_t>(data) / 1e4,
-	}}, *frame, PoseConfiguration(configuration), int(tool)}};
+	}}, *frame, PoseConfiguration(configuration), int(tool)};
+
+	// Remove padding.
+	data.remove_prefix(8);
+
+	return result;
 }
 
 }}}
