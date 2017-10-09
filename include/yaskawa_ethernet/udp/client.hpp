@@ -1,4 +1,5 @@
 #pragma once
+#include "../commands.hpp"
 #include "../error.hpp"
 #include "../types.hpp"
 #include "../string_view.hpp"
@@ -23,7 +24,7 @@ namespace udp {
 class Client {
 public:
 	using Socket   = asio::ip::udp::socket;
-	using Callback = std::function<void (DetailedError error)>;
+	using ErrorCallback = std::function<void (DetailedError error)>;
 
 	struct OpenRequest {
 		std::chrono::steady_clock::time_point start_time;
@@ -32,7 +33,7 @@ public:
 
 	using HandlerToken = std::map<std::uint8_t, OpenRequest>::iterator;
 
-	Callback on_error;
+	ErrorCallback on_error;
 
 private:
 	Socket socket_;
@@ -49,7 +50,7 @@ public:
 		std::string const & host,          ///< Hostname or IP address to connect to.
 		std::string const & port,          ///< Port number or service name to connect to.
 		std::chrono::milliseconds timeout, ///< Timeout for the connection attempt in milliseconds.
-		Callback callback                  ///< Callback to call when the connection attempt finished.
+		ErrorCallback callback             ///< Callback to call when the connection attempt finished.
 	);
 
 	/// Open a connection.
@@ -57,7 +58,7 @@ public:
 		std::string const & host,          ///< Hostname or IP address to connect to.
 		std::uint16_t port,                ///< Port number to connect to.
 		std::chrono::milliseconds timeout, ///< Timeout for the connection attempt in milliseconds.
-		Callback callback                  ///< Callback to call when the connection attempt finished.
+		ErrorCallback callback             ///< Callback to call when the connection attempt finished.
 	);
 
 	/// Close the connection.
@@ -76,69 +77,61 @@ public:
 	/// Remove a handler for a request id.
 	void removeHandler(HandlerToken);
 
-	void readStatus(std::chrono::milliseconds timeout, std::function<void(ErrorOr<Status>)> callback);
-	void readCurrentPosition(int control_group, CoordinateSystemType type, std::chrono::milliseconds timeout, std::function<void(ErrorOr<Position>)> callback);
+	/// Alocate a request ID.
+	std::uint8_t allocateId() {
+		return request_id_++;
+	}
 
-	void readByte(int index, std::chrono::milliseconds timeout, std::function<void(ErrorOr<std::uint8_t>)> callback);
-	void readBytes(int index, int count, std::chrono::milliseconds timeout, std::function<void(ErrorOr<std::vector<std::uint8_t>>)> callback);
-	void writeByte(int index, std::uint8_t value, std::chrono::milliseconds timeout, std::function<void(ErrorOr<void>)> callback);
-	void writeBytes(int index, std::vector<std::uint8_t> const & value, std::chrono::milliseconds timeout, std::function<void(ErrorOr<void>)> callback);
+	/// Send a command.
+	/**
+	 * \return a functor which tries to stop the command as soon as possible when invoked.
+	 */
+	template<typename T, typename Callback>
+	void sendCommand(T command, std::chrono::steady_clock::time_point deadline, Callback && callback);
 
-	void readInt16(int index, std::chrono::milliseconds timeout, std::function<void(ErrorOr<std::int16_t>)> callback);
-	void readInt16s(int index, int count, std::chrono::milliseconds timeout, std::function<void(ErrorOr<std::vector<std::int16_t>>)> callback);
-	void writeInt16(int index, std::int16_t value, std::chrono::milliseconds timeout, std::function<void(ErrorOr<void>)> callback);
-	void writeInt16s(int index, std::vector<std::int16_t> const & value, std::chrono::milliseconds timeout, std::function<void(ErrorOr<void>)> callback);
+	template<typename T, typename Callback>
+	void sendCommand(T command, std::chrono::steady_clock::duration timeout, Callback && callback) {
+		return sendCommand(std::forward<T>(command), std::chrono::steady_clock::now() + timeout, std::forward<Callback>(callback));
+	}
 
-	void readInt32(int index, std::chrono::milliseconds timeout, std::function<void(ErrorOr<std::int32_t>)> callback);
-	void readInt32s(int index, int count, std::chrono::milliseconds timeout, std::function<void(ErrorOr<std::vector<std::int32_t>>)> callback);
-	void writeInt32(int index, std::int32_t value, std::chrono::milliseconds timeout, std::function<void(ErrorOr<void>)> callback);
-	void writeInt32s(int index, std::vector<std::int32_t> const & value, std::chrono::milliseconds timeout, std::function<void(ErrorOr<void>)> callback);
+	template<typename Callback, typename... Commands>
+	void sendCommands(std::tuple<Commands...> commands, std::chrono::steady_clock::time_point deadline, Callback && callback);
 
-	void readFloat32(int index, std::chrono::milliseconds timeout, std::function<void(ErrorOr<float>)> callback);
-	void readFloat32s(int index, int count, std::chrono::milliseconds timeout, std::function<void(ErrorOr<std::vector<float>>)> callback);
-	void writeFloat32(int index, float value, std::chrono::milliseconds timeout, std::function<void(ErrorOr<void>)> callback);
-	void writeFloat32s(int index, std::vector<float> const & value, std::chrono::milliseconds timeout, std::function<void(ErrorOr<void>)> callback);
-
-	void readRobotPosition(int index, std::chrono::milliseconds timeout, std::function<void(ErrorOr<Position>)> callback);
-	void readRobotPositions(int index, int count, std::chrono::milliseconds timeout, std::function<void(ErrorOr<std::vector<Position>>)> callback);
-	void writeRobotPosition(int index, Position value, std::chrono::milliseconds timeout, std::function<void(ErrorOr<void>)> callback);
-	void writeRobotPositions(int index, std::vector<Position> const & value, std::chrono::milliseconds timeout, std::function<void(ErrorOr<void>)> callback);
+	template<typename Callback, typename... Commands>
+	void sendCommands(std::tuple<Commands...> commands, std::chrono::steady_clock::duration timeout, Callback && callback) {
+		return sendCommands(std::move(commands), std::chrono::steady_clock::now() + timeout, std::forward<Callback>(callback));
+	}
 
 	void readFileList(
-		string_view type,
+		std::string type,
 		std::chrono::milliseconds timeout,
-		std::function<void(ErrorOr<std::vector<std::string>>)> callback
+		std::function<void(ErrorOr<std::vector<std::string>>)> callback,
+		std::function<void(std::size_t bytes_received)> on_progress
 	);
+
 	void readFile(
-		string_view name,
+		std::string name,
 		std::chrono::milliseconds timeout,
 		std::function<void(ErrorOr<std::string>)> on_done,
 		std::function<void(std::size_t bytes_received)> on_progress
 	);
 	void writeFile(
-		string_view name,
+		std::string name,
 		std::string data,
 		std::chrono::milliseconds timeout,
 		std::function<void(ErrorOr<void>)> on_done,
 		std::function<void(std::size_t bytes_sent, std::size_t bytes_total)> on_progress
 	);
-	void deleteFile(
-		string_view name,
-		std::chrono::milliseconds timeout,
-		std::function<void(ErrorOr<void>)> callback
-	);
 
-	void moveL(
-		CartesianPosition const & target,
-		Speed speed,
-		int control_group,
+	void deleteFile(
+		std::string name,
 		std::chrono::milliseconds timeout,
 		std::function<void(ErrorOr<void>)> callback
 	);
 
 private:
 	/// Called when a connection attempt finishes.
-	void onConnect(DetailedError, Callback callback);
+	void onConnect(DetailedError, ErrorCallback callback);
 
 	/// Start an asynchronous receive.
 	void receive();
@@ -146,5 +139,29 @@ private:
 	/// Process incoming messages.
 	void onReceive(std::error_code error, std::size_t message_size);
 };
+
+}}}
+
+#include "impl/send_command.hpp"
+#include "impl/send_multiple_commands.hpp"
+
+namespace dr {
+namespace yaskawa {
+namespace udp {
+
+template<typename T, typename Callback>
+void Client::sendCommand(T command, std::chrono::steady_clock::time_point deadline, Callback && callback) {
+	impl::sendCommand(*this, std::move(command), deadline, std::forward<Callback>(callback));
+}
+
+template<typename Callback, typename... Commands>
+void Client::sendCommands(std::tuple<Commands...> commands, std::chrono::steady_clock::time_point deadline, Callback && callback) {
+	impl::sendMultipleCommands(*this, std::move(commands), deadline, std::forward<Callback>(callback));
+}
+
+template<typename Commands>
+using MultiCommandResult = typename impl::MultiCommandSession<std::decay_t<Commands>>::result_type;
+template<typename Commands>
+using MultiCommandResponse = typename impl::MultiCommandSession<std::decay_t<Commands>>::response_type;
 
 }}}

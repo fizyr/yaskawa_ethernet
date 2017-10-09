@@ -27,8 +27,6 @@ struct Status {
 	bool servo_on;
 };
 
-
-
 enum class VariableType {
 	byte_type             = 0,
 	integer_type          = 1,
@@ -142,7 +140,8 @@ private:
 	int tool_;
 
 public:
-	PulsePosition(unsigned int size, int tool = 0) noexcept : size_{size}, tool_(tool) {}
+	explicit PulsePosition(unsigned int size, int tool = 0) noexcept : size_{size}, tool_(tool) {}
+
 	PulsePosition(std::array<int, 8> const & array, int tool = 0) noexcept : size_(array.size()), tool_(tool) {
 		std::copy(array.begin(), array.end(), joints_.begin());
 	}
@@ -237,6 +236,7 @@ class Position {
 	Variant data_;
 
 public:
+	Position() : data_(PulsePosition{0}) {}
 	Position(PulsePosition      const & position) : data_(position) {}
 	Position(CartesianPosition  const & position) : data_(position) {}
 

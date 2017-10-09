@@ -1,9 +1,9 @@
 #pragma once
-#include "commands.hpp"
 #include "message.hpp"
-#include "../types.hpp"
+#include "../commands.hpp"
 #include "../error.hpp"
 #include "../string_view.hpp"
+#include "../types.hpp"
 
 #include <dr_error/error_or.hpp>
 
@@ -14,97 +14,40 @@ namespace dr {
 namespace yaskawa {
 namespace udp {
 
-struct StatusInformation {
-	using type = yaskawa::Status;
-	constexpr static std::size_t encoded_size = 2 * 4;
-	static ErrorOr<yaskawa::Status> decode(string_view & data);
-};
+// Macro to declare encode/decode functions in the dr::yaskawa::udp namespace.
+#define DECLARE_COMMAND(TYPE) \
+void encode(std::vector<std::uint8_t> & output, std::uint8_t request_id, TYPE const & command); \
+ErrorOr<TYPE::Response> decode(ResponseHeader const & header, string_view & data, TYPE const & command)
 
-struct ReadCurrentRobotPosition {
-	using type = Position;
-	static ErrorOr<Position> decode(string_view & data);
-};
+// File read functions get a string && owning the data to prevent needless copying.
+#define DECLARE_FILE_READ_COMMAND(TYPE) \
+void encode(std::vector<std::uint8_t> & output, std::uint8_t request_id, TYPE const & command); \
+ErrorOr<TYPE::Response> decode(ResponseHeader const & header, std::string && data, TYPE const & command)
 
-struct ByteVariable {
-	using type = std::uint8_t;
-	constexpr static std::uint16_t command_single   = commands::robot::readwrite_int8_variable;
-	constexpr static std::uint16_t command_multiple = commands::robot::readwrite_multiple_int8;
-	constexpr static std::size_t encoded_size = 1;
-	static void encode(std::vector<std::uint8_t> & output, std::uint8_t value);
-	static ErrorOr<std::uint8_t> decode(string_view & data);
-};
+// Declare ReadVar<TYPE>, ReadVars<TYPE>, WriteVar<TYPE> and WriteVars<TYPE> commands.
+#define DECLARE_VAR(TYPE) \
+DECLARE_COMMAND(ReadVar<TYPE>); \
+DECLARE_COMMAND(ReadVars<TYPE>); \
+DECLARE_COMMAND(WriteVar<TYPE>); \
+DECLARE_COMMAND(WriteVars<TYPE>)
 
-struct Int16Variable {
-	using type = std::int16_t;
-	constexpr static std::uint16_t command_single   = commands::robot::readwrite_int16_variable;
-	constexpr static std::uint16_t command_multiple = commands::robot::readwrite_multiple_int16;
-	constexpr static std::size_t encoded_size = 2;
-	static void encode(std::vector<std::uint8_t> & output, type value);
-	static ErrorOr<type> decode(string_view & data);
-};
+DECLARE_COMMAND(ReadStatus);
+DECLARE_COMMAND(ReadCurrentPosition);
+DECLARE_COMMAND(MoveL);
 
-struct Int32Variable {
-	using type = std::int32_t;
-	constexpr static std::uint16_t command_single   = commands::robot::readwrite_int32_variable;
-	constexpr static std::uint16_t command_multiple = commands::robot::readwrite_multiple_int32;
-	constexpr static std::size_t encoded_size = 4;
-	static void encode(std::vector<std::uint8_t> & output, std::int32_t value);
-	static ErrorOr<std::int32_t> decode(string_view & data);
-};
+DECLARE_VAR(std::uint8_t);
+DECLARE_VAR(std::int16_t);
+DECLARE_VAR(std::int32_t);
+DECLARE_VAR(float);
+DECLARE_VAR(Position);
 
-struct Float32Variable {
-	using type = float;
-	constexpr static std::uint16_t command_single   = commands::robot::readwrite_float_variable;
-	constexpr static std::uint16_t command_multiple = commands::robot::readwrite_multiple_float;
-	constexpr static std::size_t encoded_size = 4;
-	static void encode(std::vector<std::uint8_t> & output, float value);
-	static ErrorOr<float> decode(string_view & data);
-};
+DECLARE_FILE_READ_COMMAND(ReadFileList);
+DECLARE_FILE_READ_COMMAND(ReadFile);
+DECLARE_COMMAND(WriteFile);
+DECLARE_COMMAND(DeleteFile);
 
-struct PositionVariable {
-	using type = Position;
-	constexpr static std::uint16_t command_single   = commands::robot::readwrite_robot_position_variable;
-	constexpr static std::uint16_t command_multiple = commands::robot::readwrite_multiple_robot_position;
-	constexpr static std::size_t encoded_size = 13 * 4;
-	static void encode(std::vector<std::uint8_t> & output, Position const & value);
-	static ErrorOr<Position> decode(string_view & data);
-};
-
-struct ReadFileList {
-	using type = std::vector<std::string>;
-	static void encode(std::vector<std::uint8_t> & output, string_view type);
-	static ErrorOr<std::vector<std::string>> decode(string_view & data);
-};
-
-struct ReadFile {
-	using type = void;
-	static void encode(std::vector<std::uint8_t> & output, string_view name);
-	static ErrorOr<void> decode(string_view & data);
-};
-
-struct WriteFile {
-	using type = void;
-	static void encode(std::vector<std::uint8_t> & output, string_view name);
-	static ErrorOr<void> decode(string_view & data);
-};
-
-struct DeleteFile {
-	using type = void;
-	static void encode(std::vector<std::uint8_t> & output, string_view name);
-	static ErrorOr<void> decode(string_view & data);
-};
-
-struct FileData {
-	using type = std::string;
-	static void encode(std::vector<std::uint8_t> & output, string_view data);
-	static ErrorOr<std::string> decode(string_view & data);
-};
-
-struct MoveL {
-	using type = void;
-	constexpr static std::size_t encoded_size = 26 * 4;
-	static void encode(std::vector<std::uint8_t> & output, CartesianPosition const & target, int control_group, Speed speed);
-	static ErrorOr<void> decode(string_view & data);
-};
+#undef DECLARE_COMMAND
+#undef DECLARE_FILE_READ_COMMAND
+#undef DECLARE_VAR
 
 }}}

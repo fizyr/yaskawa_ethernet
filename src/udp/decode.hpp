@@ -2,7 +2,6 @@
 #include "error.hpp"
 #include "string_view.hpp"
 #include "types.hpp"
-#include "udp/commands.hpp"
 #include "udp/message.hpp"
 
 #include <dr_error/error_or.hpp>
@@ -34,60 +33,19 @@ T readLittleEndian(string_view & data) {
 	return readLittleEndian<T>(reinterpret_cast<std::uint8_t const *>(data.data() - sizeof(T)));
 }
 
-DetailedError malformedResponse(std::string message);
-
-DetailedError maximumExceeded(std::string field, int value, int max);
-
-DetailedError unexpectedValue(std::string field, int value, int expected);
-
-DetailedError commandFailed(std::uint16_t status, std::uint16_t extra_status);
-
 /// Decode a response header.
 ErrorOr<ResponseHeader> decodeResponseHeader(string_view & data);
 
-/// Decode a cartesian frame from a position type and a user frame.
-ErrorOr<CoordinateSystem> decodeCartesianFrame(int type, int user_frame);
-
-/// Decode a response without size checking.
+/// Generic decode function for raw types.
 template<typename T>
-ErrorOr<typename T::type> decodePlainResponse(ResponseHeader const & header, string_view & data) {
-	if (header.status != 0) return commandFailed(header.status, header.extra_status);
-	return T::decode(data);
-}
+ErrorOr<T> decode(string_view & data);
 
-/// Decode a read response.
-template<typename T>
-ErrorOr<typename T::type> decodeSizedResponse(ResponseHeader const & header, string_view & data) {
-	if (header.status != 0) return commandFailed(header.status, header.extra_status);
-	if (data.size() != T::encoded_size) return unexpectedValue("data size", data.size(), T::encoded_size);
-	return T::decode(data);
-}
-
-/// Decode a read multiple response.
-template<typename T>
-ErrorOr<std::vector<typename T::type>> decodeReadMultipleResponse(ResponseHeader const & header, string_view & data) {
-	using type = typename T::type;
-	if (header.status != 0) return commandFailed(header.status, header.extra_status);
-
-	if (data.size() < 4) return malformedResponse("payload size too small, got " + std::to_string(data.size()) + ", need atleast 4.");
-	std::uint32_t count = readLittleEndian<std::uint32_t>(data);
-	if (data.size() != count * T::encoded_size) return unexpectedValue("data size", data.size(), count * T::encoded_size);
-
-	std::vector<type> result;
-	result.reserve(count);
-	for (std::size_t i = 0; i < count; ++i) {
-		ErrorOr<type> element = T::decode(data);
-		if (!element) return element.error();
-		result.push_back(std::move(*element));
-	}
-	return result;
-}
-
-/// Decode a write response.
-inline ErrorOr<void> decodeEmptyResponse(ResponseHeader const & header, string_view & data) {
-	if (header.status != 0) return commandFailed(header.status, header.extra_status);
-	(void) data;
-	return in_place_valid;
-}
+template<> ErrorOr<std::uint8_t> decode<std::uint8_t>(string_view & data);
+template<> ErrorOr<std::int16_t> decode<std::int16_t>(string_view & data);
+template<> ErrorOr<std::int32_t> decode<std::int32_t>(string_view & data);
+template<> ErrorOr<float> decode<float>(string_view & data);
+template<> ErrorOr<Position> decode<Position>(string_view & data);
+template<> ErrorOr<PulsePosition> decode<PulsePosition>(string_view & data);
+template<> ErrorOr<CartesianPosition> decode<CartesianPosition>(string_view & data);
 
 }}}

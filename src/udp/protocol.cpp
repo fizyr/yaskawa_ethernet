@@ -1,6 +1,7 @@
 #include "udp/protocol.hpp"
 #include "udp/message.hpp"
-#include "udp/commands.hpp"
+#include "udp/command_traits.hpp"
+#include "error.hpp"
 
 #include "encode.hpp"
 #include "decode.hpp"
@@ -9,7 +10,27 @@ namespace dr {
 namespace yaskawa {
 namespace udp {
 
-ErrorOr<Status> StatusInformation::decode(string_view & data) {
+using namespace std::string_literals;
+
+/// Encode a ReadStatus command.
+void encode(std::vector<std::uint8_t> & output, std::uint8_t request_id, ReadStatus const &) {
+	int payload_size = 0;
+	int instance = 1;
+	int attribute = 0;
+	encode(output, makeRobotRequestHeader(
+		payload_size,
+		commands::robot::read_status_information,
+		instance,
+		attribute,
+		service::get_all,
+		request_id
+	));
+}
+
+/// Decode a ReadStatus response.
+ErrorOr<Status> decode(ResponseHeader const &, string_view & data, ReadStatus const &) {
+	if (auto error = expectSize("status data", data.size(), 8)) return error;
+
 	Status result;
 	result.step          = data[0] & (1 << 0);
 	result.one_cycle     = data[0] & (1 << 1);
@@ -29,80 +50,224 @@ ErrorOr<Status> StatusInformation::decode(string_view & data) {
 	return result;
 }
 
-ErrorOr<Position> ReadCurrentRobotPosition::decode(string_view & data) {
-	if (data.size() > 13 * 4) return DetailedError{std::errc::invalid_argument, "current robot position response larger than expected, expected at most 52 bytes, got " + std::to_string(data.size()) + " bytes"};
-	std::string padded_data;
-	padded_data.resize(13 * 4, '0');
-	std::copy(data.begin(), data.end(), padded_data.begin());
-	string_view padded_view = padded_data;
-	ErrorOr<Position> result = PositionVariable::decode(padded_view);
-	if (!result) return result.error();
-	return result;
-}
+/// Encode a ReadCurrentPosition command.
+void encode(std::vector<std::uint8_t> & output, std::uint8_t request_id, ReadCurrentPosition const & command) {
+	constexpr int payload_size = 0;
+	constexpr int attribute = 0;
+	int instance = command.control_group;
 
-void  ByteVariable::encode(std::vector<std::uint8_t> & out, std::uint8_t value) { writeLittleEndian<std::uint8_t>(out, value); }
-void Int16Variable::encode(std::vector<std::uint8_t> & out, std::int16_t value) { writeLittleEndian<std::int16_t>(out, value); }
-void Int32Variable::encode(std::vector<std::uint8_t> & out, std::int32_t value) { writeLittleEndian<std::int32_t>(out, value); }
-
-ErrorOr<std::uint8_t>  ByteVariable::decode(string_view & message) { return readLittleEndian<std::uint8_t>(message); }
-ErrorOr<std::int16_t> Int16Variable::decode(string_view & message) { return readLittleEndian<std::int16_t>(message); }
-ErrorOr<std::int32_t> Int32Variable::decode(string_view & message) { return readLittleEndian<std::int32_t>(message); }
-
-void Float32Variable::encode(std::vector<std::uint8_t> & out, float value) {
-	writeLittleEndian<std::uint32_t>(out, reinterpret_cast<std::uint32_t &>(value));
-}
-
-ErrorOr<float> Float32Variable::decode(string_view & message) {
-	std::int32_t parsed = readLittleEndian<std::int32_t>(message);
-	return reinterpret_cast<float &>(parsed);
-}
-
-void PositionVariable::encode(std::vector<std::uint8_t> & out, Position const & position) {
-	if (position.isPulse()) encodePulsePosition(out, position.pulse());
-	else encodeCartesianPosition(out, position.cartesian());
-}
-
-/// Decode a position variable.
-ErrorOr<Position> PositionVariable::decode(string_view & data) {
-	std::uint32_t type                   = readLittleEndian<std::uint32_t>(data);
-	std::uint8_t  configuration          = readLittleEndian<std::uint32_t>(data);
-	std::uint32_t tool                   = readLittleEndian<std::uint32_t>(data);
-	std::uint32_t user_frame             = readLittleEndian<std::uint32_t>(data);
-	std::uint8_t  extended_configuration = readLittleEndian<std::uint32_t>(data);
-
-	// Extended joint configuration is not supported.
-	(void) extended_configuration;
-
-	// Pulse position.
-	if (type == 0) {
-		PulsePosition result(8, tool);
-		for (int i = 0; i < 8; ++i) result.joints()[i] = readLittleEndian<std::int32_t>(data);
-		return Position{result};
+	switch (command.coordinate_system) {
+		case CoordinateSystemType::robot_pulse:     instance +=   1; break;
+		case CoordinateSystemType::base_pulse:      instance +=  11; break;
+		case CoordinateSystemType::station_pulse:   instance +=  21; break;
+		case CoordinateSystemType::robot_cartesian: instance += 101; break;
 	}
 
-	ErrorOr<CoordinateSystem> frame = decodeCartesianFrame(type, user_frame);
-	if (!frame) return frame.error();
-
-	// Cartesian position.
-	// Position data is in micrometers.
-	// Rotation data is in 0.0001 degrees.
-	return Position{CartesianPosition{ {{
-		readLittleEndian<std::int32_t>(data) / 1000.0,
-		readLittleEndian<std::int32_t>(data) / 1000.0,
-		readLittleEndian<std::int32_t>(data) / 1000.0,
-		readLittleEndian<std::int32_t>(data) / 10000.0,
-		readLittleEndian<std::int32_t>(data) / 10000.0,
-		readLittleEndian<std::int32_t>(data) / 10000.0,
-	}}, *frame, PoseConfiguration(configuration), int(tool)}};
+	encode(output, makeRobotRequestHeader(
+		payload_size,
+		commands::robot::read_robot_position,
+		instance,
+		attribute,
+		service::get_all,
+		request_id
+	));
 }
 
-void ReadFileList::encode(std::vector<std::uint8_t> & message, string_view type) {
-	std::copy(type.begin(), type.end(), std::back_inserter(message));
+/// Decode a ReadCurrentPosition command.
+ErrorOr<Position> decode(ResponseHeader const &, string_view & message, ReadCurrentPosition const &) {
+	if (auto error = expectSizeMax("position data", message.size(), 13 * 4)) return error;
+
+	// Pad the data until it is 13 * 4 bytes.
+	std::string padded_data;
+	padded_data.resize(13 * 4, '\0');
+	std::copy(message.begin(), message.end(), padded_data.begin());
+	string_view padded_view = padded_data;
+	return decode<Position>(padded_view);
 }
 
-ErrorOr<std::vector<std::string>> ReadFileList::decode(string_view & data) {
+namespace {
+	/// Convert a coordinate system to a cartesian move command coordinate system type.
+	int systemToMoveLSystem(CoordinateSystem system) {
+		if (system == CoordinateSystem::base) return 16;
+		if (system == CoordinateSystem::robot) return 17;
+		if (isUserCoordinateSystem(system)) return 18;
+		if (system == CoordinateSystem::tool) return 19;
+		throw std::runtime_error{"invalid coordinate system for MoveL: " + std::to_string(int(system))};
+	}
+}
+
+/// Encode a MoveL command.
+void encode(std::vector<std::uint8_t> & output, std::uint8_t request_id, MoveL const & command) {
+	constexpr int payload_size = 26 * 4;
+	constexpr int instance     = 2; // Absolute cartesian interpolated move.
+	constexpr int attribute    = 1;
+
+	encode(output, makeRobotRequestHeader(
+		payload_size,
+		commands::robot::read_robot_position,
+		instance,
+		attribute,
+		service::get_all,
+		request_id
+	));
+
+	writeLittleEndian<std::uint32_t>(output, command.control_group + 1);
+	writeLittleEndian<std::uint32_t>(output, 0); // Station control group.
+	writeLittleEndian<std::uint32_t>(output, std::int32_t(command.speed.type));
+	writeLittleEndian<std::uint32_t>(output, std::int32_t(command.speed.value));
+	writeLittleEndian<std::uint32_t>(output, systemToMoveLSystem(command.target.frame()));
+
+	// Translation coordinates in 1e-6 meters.
+	writeLittleEndian<std::int32_t>(output, command.target[0] * 1000);
+	writeLittleEndian<std::int32_t>(output, command.target[1] * 1000);
+	writeLittleEndian<std::int32_t>(output, command.target[2] * 1000);
+	// Rotation components in 1e-4 degrees.
+	writeLittleEndian<std::int32_t>(output, command.target[3] * 10000);
+	writeLittleEndian<std::int32_t>(output, command.target[4] * 10000);
+	writeLittleEndian<std::int32_t>(output, command.target[5] * 10000);
+
+	writeLittleEndian<std::uint32_t>(output, 0); // reserved
+	writeLittleEndian<std::uint32_t>(output, 0); // reserved
+	writeLittleEndian<std::uint32_t>(output, command.target.configuration());
+	writeLittleEndian<std::uint32_t>(output, 0); // extended type
+	writeLittleEndian<std::uint32_t>(output, command.target.tool());
+	writeLittleEndian<std::uint32_t>(output, userCoordinateNumber(command.target.frame()));
+
+	// unsupported base and station axes.
+	for (int i = 18; i <= 26; ++i) writeLittleEndian<std::uint32_t>(output, 0);
+}
+
+/// Decode a MoveL response.
+ErrorOr<void> decode(ResponseHeader const &, string_view & data, MoveL const &) {
+	if (auto error = expectSize("response data", data.size(), 0)) return error;
+	return in_place_valid;
+}
+
+namespace {
+	/// Encode a ReadVar command.
+	template<typename T>
+	void encodeReadVar(std::vector<std::uint8_t> & output, std::uint8_t request_id, ReadVar<T> const & command) {
+		encode(output, makeRobotRequestHeader(0, udp_command<ReadVar<T>>(), command.index, 0, service::get_all, request_id));
+	}
+
+	/// Encode a ReadVars command.
+	template<typename T>
+	void encodeReadVars(std::vector<std::uint8_t> & output, std::uint8_t request_id, ReadVars<T> const & command) {
+		if (command.count == 1) {
+			encodeReadVar(output, request_id, ReadVar<T>{command.index});
+		} else {
+			encode(output, makeRobotRequestHeader(4, udp_command<ReadVars<T>>(), command.index, 0, service::read_multiple, request_id));
+			writeLittleEndian<std::uint32_t>(output, command.count);
+		}
+	}
+
+	/// Decode a ReadVar response.
+	template<typename T>
+	ErrorOr<T> decodeReadVar(string_view & message, ReadVar<T> const &) {
+		// Read a single value (data is exactly one element).
+		if (auto error = expectSize( "response data", message.size(), encoded_size<T>())) return error;
+		return decode<T>(message);
+	}
+
+	/// Decode a ReadVars response.
+	template<typename T>
+	ErrorOr<std::vector<T>> decodeReadVars(string_view & message, ReadVars<T> const & command) {
+		// Read a single value (data is exactly one element).
+		if (command.count == 1) {
+			ErrorOr<T> result = decodeReadVar<T>(message, {command.index});
+			if (!result) return result.error_unchecked();
+			return std::vector<T>{*result};
+		}
+
+		// Read multiple values (data starts with a 32 bit value count).
+		if (auto error = expectSize( "response data", message.size(), 4 + command.count * encoded_size<T>())) return error;
+
+		// Check if value count matches our request.
+		std::uint32_t count = readLittleEndian<std::uint32_t>(message);
+		if (auto error = expectValue("value count", count, command.count)) return error;
+
+		// Decode and return values.
+		std::vector<T> result;
+		result.reserve(command.count);
+		for (std::size_t i = 0; i < command.count; ++i) {
+			ErrorOr<T> decoded = decode<T>(message);
+			if (!decoded) return decoded.error_unchecked();
+			result.push_back(*decoded);
+		}
+		return result;
+	}
+
+	/// Encode a WriteVar command.
+	template<typename T>
+	void encodeWriteVar(std::vector<std::uint8_t> & output, std::uint8_t request_id, WriteVar<T> const & command) {
+		encode(output, makeRobotRequestHeader(encoded_size<T>(), udp_command<WriteVar<T>>(), command.index, 0, service::set_all, request_id));
+		encode(output, command.value);
+	}
+
+	/// Encode a WriteVars command.
+	template<typename T>
+	void encodeWriteVars(std::vector<std::uint8_t> & output, std::uint8_t request_id, WriteVars<T> const & command) {
+
+		// Write a single value.
+		if (command.values.size() == 1) {
+			// Not delegating to WriteVar<T>, since that would require copying a T.
+			encode(output, makeRobotRequestHeader(encoded_size<T>(), udp_command<WriteVar<T>>(), command.index, 0, service::set_all, request_id));
+			encode(output, command.values[0]);
+			return;
+
+		// Write mutliple values.
+		} else {
+			std::uint32_t data_size = 4 + command.values.size() * encoded_size<T>();
+			encode(output, makeRobotRequestHeader(data_size, udp_command<WriteVars<T>>(), command.index, 0, service::write_multiple, request_id));
+			writeLittleEndian<std::uint32_t>(output, command.values.size());
+			for (auto const & val : command.values) encode(output, val);
+		}
+	}
+
+	/// Decode a WriteVar response.
+	template<typename T>
+	ErrorOr<void> decodeWriteVar(string_view & data, WriteVar<T> const &) {
+		if (auto error = expectSize("response data", data.size(), 0)) return error;
+		return in_place_valid;
+	}
+
+	/// Decode a WriteVars response.
+	template<typename T>
+	ErrorOr<void> decodeWriteVars(string_view & data, WriteVars<T> const &) {
+		if (auto error = expectSize("response data", data.size(), 0)) return error;
+		return in_place_valid;
+	}
+}
+
+#define DEFINE_VAR(TYPE) \
+void encode(std::vector<std::uint8_t> & out, std::uint8_t id, ReadVar<TYPE> const & cmd) { return encodeReadVar(out, id, cmd); } \
+void encode(std::vector<std::uint8_t> & out, std::uint8_t id, ReadVars<TYPE> const & cmd) { return encodeReadVars(out, id, cmd); } \
+void encode(std::vector<std::uint8_t> & out, std::uint8_t id, WriteVar<TYPE> const & cmd) { return encodeWriteVar(out, id, cmd); } \
+void encode(std::vector<std::uint8_t> & out, std::uint8_t id, WriteVars<TYPE> const & cmd) { return encodeWriteVars(out, id, cmd); } \
+ErrorOr<TYPE> decode(ResponseHeader const &, string_view & data, ReadVar<TYPE> const & cmd) { return decodeReadVar(data, cmd); } \
+ErrorOr<std::vector<TYPE>> decode(ResponseHeader const &, string_view & data,  ReadVars<TYPE> const & cmd) { return decodeReadVars  (data, cmd); } \
+ErrorOr<void> decode(ResponseHeader const &, string_view & data, WriteVar<TYPE> const & cmd) { return decodeWriteVar(data, cmd); } \
+ErrorOr<void> decode(ResponseHeader const &, string_view & data, WriteVars<TYPE> const & cmd) { return decodeWriteVars(data, cmd); }
+
+DEFINE_VAR(std::uint8_t)
+DEFINE_VAR(std::int16_t)
+DEFINE_VAR(std::int32_t)
+DEFINE_VAR(float)
+DEFINE_VAR(Position)
+
+#undef DEFINE_VAR
+
+/// Encode a ReadFileList command.
+void encode(std::vector<std::uint8_t> & out, std::uint8_t request_id, ReadFileList const & command) {
+	encode(out, makeFileRequestHeader(command.type.size(), commands::file::read_file_list, request_id));
+	std::copy(command.type.begin(), command.type.end(), std::back_inserter(out));
+}
+
+/// Decode a ReadFileList response.
+ErrorOr<std::vector<std::string>> decode(ResponseHeader const &, std::string && data, ReadFileList const &) {
 	if (data.size() == 0) return std::vector<std::string>{};
-	if (data.size() == 1) return DetailedError{std::errc::invalid_argument, "file list consist of exactly one byte"};
+	if (data.size() == 1) return malformedResponse("file list consist of exactly one byte");
+
 	auto line_start = data.begin();
 	auto finger     = line_start;
 	std::vector<std::string> result;
@@ -115,74 +280,39 @@ ErrorOr<std::vector<std::string>> ReadFileList::decode(string_view & data) {
 	return result;
 }
 
-void ReadFile::encode(std::vector<std::uint8_t> & message, string_view name) {
-	std::copy(name.begin(), name.end(), std::back_inserter(message));
+/// Encode a ReadFile command.
+void encode(std::vector<std::uint8_t> & out, std::uint8_t request_id, ReadFile const & command) {
+	encode(out, makeFileRequestHeader(command.name.size(), commands::file::read_file, request_id));
+	out.insert(out.end(), command.name.begin(), command.name.end());
 }
 
-ErrorOr<void> ReadFile::decode(string_view &) {
+/// Decode a ReadFile response.
+ErrorOr<std::string> decode(ResponseHeader const &, std::string && data, ReadFile const &) {
+	return std::move(data);
+}
+
+/// Encode a WriteFile command.
+void encode(std::vector<std::uint8_t> & out, std::uint8_t request_id, WriteFile const & command) {
+	encode(out, makeFileRequestHeader(command.name.size(), commands::file::write_file, request_id));
+	out.insert(out.end(), command.name.begin(), command.name.end());
+}
+
+/// Decode a WriteFile response.
+ErrorOr<void> decode(ResponseHeader const &, string_view & data, WriteFile const &) {
+	if (auto error = expectSize("response data", data.size(), 0)) return error;
 	return in_place_valid;
 }
 
-void WriteFile::encode(std::vector<std::uint8_t> & message, string_view name) {
-	std::copy(name.begin(), name.end(), std::back_inserter(message));
+/// Encode a DeleteFile command.
+void encode(std::vector<std::uint8_t> & out, std::uint8_t request_id, DeleteFile const & command) {
+	encode(out, makeFileRequestHeader(command.name.size(), commands::file::delete_file, request_id));
+	out.insert(out.end(), command.name.begin(), command.name.end());
 }
 
-ErrorOr<void> WriteFile::decode(string_view &) {
+/// Decode a DeleteFile response.
+ErrorOr<void> decode(ResponseHeader const &, string_view & data, DeleteFile const &) {
+	if (auto error = expectSize("response data", data.size(), 0)) return error;
 	return in_place_valid;
-}
-
-void DeleteFile::encode(std::vector<std::uint8_t> & message, string_view name) {
-	std::copy(name.begin(), name.end(), std::back_inserter(message));
-}
-
-ErrorOr<void> DeleteFile::decode(string_view &) {
-	return in_place_valid;
-}
-
-void FileData::encode(std::vector<std::uint8_t> & message, string_view data) {
-	std::copy(data.begin(), data.end(), std::back_inserter(message));
-}
-
-ErrorOr<std::string> FileData::decode(string_view & data) {
-	std::string result{data.begin(), data.end()};
-	data.remove_prefix(data.size());
-	return result;
-}
-
-int systemToMoveLSystem(CoordinateSystem system) {
-	if (system == CoordinateSystem::base) return 16;
-	if (system == CoordinateSystem::robot) return 17;
-	if (isUserCoordinateSystem(system)) return 18;
-	if (system == CoordinateSystem::tool) return 19;
-	throw std::runtime_error{"invalid coordinate system for MoveL: " + std::to_string(int(system))};
-}
-
-void MoveL::encode(std::vector<std::uint8_t> & out, CartesianPosition const & target, int control_group, Speed speed) {
-	writeLittleEndian<std::uint32_t>(out, control_group + 1);
-	writeLittleEndian<std::uint32_t>(out, 0); // Station control group.
-	writeLittleEndian<std::uint32_t>(out, std::int32_t(speed.type));
-	writeLittleEndian<std::uint32_t>(out, std::int32_t(speed.value));
-	writeLittleEndian<std::uint32_t>(out, systemToMoveLSystem(target.frame()));
-
-	// Translation coordinates in 1e-6 meters.
-	writeLittleEndian<std::int32_t>(out, target[0] * 1000);
-	writeLittleEndian<std::int32_t>(out, target[1] * 1000);
-	writeLittleEndian<std::int32_t>(out, target[2] * 1000);
-	// Rotation components in 1e-4 degrees.
-	writeLittleEndian<std::int32_t>(out, target[3] * 10000);
-	writeLittleEndian<std::int32_t>(out, target[4] * 10000);
-	writeLittleEndian<std::int32_t>(out, target[5] * 10000);
-
-	writeLittleEndian<std::uint32_t>(out, 0); // reserved
-	writeLittleEndian<std::uint32_t>(out, 0); // reserved
-	writeLittleEndian<std::uint32_t>(out, target.configuration());
-	writeLittleEndian<std::uint32_t>(out, 0); // extended type
-	writeLittleEndian<std::uint32_t>(out, target.tool());
-	writeLittleEndian<std::uint32_t>(out, userCoordinateNumber(target.frame()));
-
-	// unsupported base and station axes.
-	for (int i = 18; i <= 26; ++i) writeLittleEndian<std::uint32_t>(out, 0);
-
 }
 
 }}}

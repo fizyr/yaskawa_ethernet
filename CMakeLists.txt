@@ -1,9 +1,9 @@
-cmake_minimum_required(VERSION 3.1.0)
+cmake_minimum_required(VERSION 3.1)
 project(yaskawa_ethernet)
 
 option(BUILD_TOOLS "Build test/developer tools" ON)
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 add_compile_options(-Wall -Wextra -Wpedantic)
 
@@ -29,20 +29,15 @@ find_package(Eigen3)
 add_library(${PROJECT_NAME}
 	src/eigen.cpp
 	src/error.cpp
-	src/tcp/client.cpp
-	src/tcp/decode.cpp
-	src/tcp/encode.cpp
 	src/types.cpp
 	src/udp/client.cpp
 	src/udp/decode.cpp
 	src/udp/encode.cpp
 	src/udp/protocol.cpp
+	src/rpc_server/rpc_server.cpp
 )
 
-target_include_directories(${PROJECT_NAME}
-	INTERFACE include
-	PRIVATE include/${PROJECT_NAME}
-)
+include_directories(include/${PROJECT_NAME})
 
 target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC
 	${catkin_INCLUDE_DIRS}
