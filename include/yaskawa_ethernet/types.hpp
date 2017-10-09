@@ -1,6 +1,8 @@
 #pragma once
 #include "array_view.hpp"
 
+#include <dr_error/error_or.hpp>
+
 #include <boost/variant.hpp>
 
 #include <array>
@@ -72,6 +74,12 @@ enum class CoordinateSystem {
 	tool   = 18,
 	master = 19,
 };
+
+/// Get a string representation of a coordinate system.
+std::string toString(CoordinateSystem system);
+
+/// Parse a string representation of a coordinate system.
+ErrorOr<CoordinateSystem> toCoordinateSystem(std::string const & string);
 
 enum class SpeedType {
 	joint,       // 0.01% of max speed
