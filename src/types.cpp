@@ -30,7 +30,6 @@ std::string toString(CoordinateSystem system) {
 }
 
 ErrorOr<CoordinateSystem> toCoordinateSystem(std::string const & string) {
-	// TODO: Add all possible values.
 	if (string == "base") return CoordinateSystem::base;
 	if (string == "robot") return CoordinateSystem::robot;
 	if (string == "user1") return CoordinateSystem::user1;

@@ -34,3 +34,13 @@ bool YAML::convert<dr::yaskawa::CartesianPosition>::decode(Node const & node,dr:
 	return true;
 }
 
+YAML::Node YAML::convert<dr::yaskawa::CoordinateSystem>::encode(Node const & node,dr::yaskawa:: CoordinateSystem & out){
+	out = {
+		node["system"]  = dr::yaskawa::CoordinateSystem.value();
+		return node;
+	}
+
+bool YAML::convert<dr::yaskawa::CoordinateSystem>::decode(Node const & node, dr::yaskawa::CoordinateSystem & out) {
+	out = dr::yaskawa::CoordinateSystem{node["system"].as
+		return true;
+	}
