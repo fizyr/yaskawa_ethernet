@@ -24,12 +24,14 @@ set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 find_package(Boost REQUIRED COMPONENTS system)
 find_package(Eigen3)
+find_package(yaml-cpp REQUIRED)
 
 # Library
 add_library(${PROJECT_NAME}
 	src/eigen.cpp
 	src/error.cpp
 	src/types.cpp
+	src/yaml.cpp
 	src/udp/client.cpp
 	src/udp/decode.cpp
 	src/udp/encode.cpp
@@ -45,8 +47,10 @@ target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC
 	${Boost_INCLUDE_DIRS}
 )
 
-target_link_libraries(${PROJECT_NAME} PUBLIC Threads::Threads ${Boost_LIBRARIES})
-
+target_link_libraries(${PROJECT_NAME} PUBLIC Threads::Threads
+	${Boost_LIBRARIES}
+	${YAML_CPP_LIBRARIES}
+)
 
 install(TARGETS "${PROJECT_NAME}"
 	ARCHIVE DESTINATION "${CATKIN_PACKAGE_LIB_DESTINATION}"
