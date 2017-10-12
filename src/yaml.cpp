@@ -1,8 +1,7 @@
 #include "yaml.hpp"
 #include <yaml-cpp/yaml.h>
 
-/// Convert a coordinate system to YAML.
-YAML:: Node YAML::convert<dr::yaskawa::CartesianPosition>::encode(dr::yaskawa::CartesianPosition const & in) {
+YAML::Node YAML::convert<dr::yaskawa::CartesianPosition>::encode(dr::yaskawa::CartesianPosition const & in) {
 	YAML::Node node;
 	node["x"] = in.x();
 	node["y"] = in.y();
@@ -17,8 +16,7 @@ YAML:: Node YAML::convert<dr::yaskawa::CartesianPosition>::encode(dr::yaskawa::C
 }
 
 bool YAML::convert<dr::yaskawa::CartesianPosition>::decode(Node const & node, dr::yaskawa::CartesianPosition & out) {
-	if (node.IsMap() || (node.size() != 9)) return false;
-
+	if (!node.IsMap() || node.size() != 9) return false;
 	out = {
 		node["x"].as<double>(),
 		node["y"].as<double>(),
@@ -34,12 +32,11 @@ bool YAML::convert<dr::yaskawa::CartesianPosition>::decode(Node const & node, dr
 }
 
 YAML::Node YAML::convert<dr::yaskawa::CoordinateSystem>::encode(dr::yaskawa::CoordinateSystem const & in) {
-	YAML::Node node;
-	node["name"] = dr::yaskawa::toString(in);
+	YAML::Node node = YAML::Node{dr::yaskawa::toString(in)};
 	return node;
 }
 
 bool YAML::convert<dr::yaskawa::CoordinateSystem>::decode(Node const & node, dr::yaskawa::CoordinateSystem & out) {
-	out = dr::yaskawa::toCoordinateSystem(node["name"].as<std::string>()).value();
+	out = dr::yaskawa::toCoordinateSystem(node.as<std::string>()).value();
 	return true;
 }
