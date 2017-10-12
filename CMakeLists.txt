@@ -13,20 +13,20 @@ if (WERROR)
 endif()
 
 find_package(catkin REQUIRED COMPONENTS dr_error)
+
 catkin_package(
 	INCLUDE_DIRS include
 	LIBRARIES ${PROJECT_NAME}
 	CATKIN_DEPENDS dr_error
 )
 
-# Depencencies
 set(THREADS_PREFER_PTHREAD_FLAG ON)
+
 find_package(Threads REQUIRED)
 find_package(Boost REQUIRED COMPONENTS system)
 find_package(Eigen3)
 find_package(yaml-cpp REQUIRED)
 
-# Library
 add_library(${PROJECT_NAME}
 	src/eigen.cpp
 	src/error.cpp
@@ -40,6 +40,7 @@ add_library(${PROJECT_NAME}
 )
 
 include_directories(include/${PROJECT_NAME})
+include_directories(SYSTEM ${catkin_INCLUDE_DIRS})
 
 target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC
 	${catkin_INCLUDE_DIRS}
@@ -51,6 +52,8 @@ target_link_libraries(${PROJECT_NAME} PUBLIC Threads::Threads
 	${Boost_LIBRARIES}
 	${YAML_CPP_LIBRARIES}
 )
+
+catkin_add_gtest(${PROJECT_NAME}_yaml src/test/yaml.cpp)
 
 install(TARGETS "${PROJECT_NAME}"
 	ARCHIVE DESTINATION "${CATKIN_PACKAGE_LIB_DESTINATION}"
