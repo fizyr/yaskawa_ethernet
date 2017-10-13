@@ -53,7 +53,8 @@ target_link_libraries(${PROJECT_NAME} PUBLIC Threads::Threads
 	${YAML_CPP_LIBRARIES}
 )
 
-catkin_add_gtest(${PROJECT_NAME}_yaml src/test/yaml.cpp)
+catkin_add_gtest(${PROJECT_NAME}_test_yaml src/test/yaml.cpp)
+target_link_libraries(${PROJECT_NAME}_test_yaml ${PROJECT_NAME})
 
 install(TARGETS "${PROJECT_NAME}"
 	ARCHIVE DESTINATION "${CATKIN_PACKAGE_LIB_DESTINATION}"
