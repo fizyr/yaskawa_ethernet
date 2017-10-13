@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.8)
 project(yaskawa_ethernet)
 
 option(BUILD_TOOLS "Build test/developer tools" ON)
