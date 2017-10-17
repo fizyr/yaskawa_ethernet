@@ -9,9 +9,9 @@ YAML::Node YAML::convert<dr::yaskawa::CartesianPosition>::encode(dr::yaskawa::Ca
 	node["rx"] = in.rx();
 	node["ry"] = in.ry();
 	node["rz"] = in.rz();
-	node["configuration"] = std::uint8_t(in.configuration());
-	node["tool"] = in.tool();
 	node["frame"] = in.frame();
+	node["configuration"] = int(in.configuration());
+	node["tool"] = in.tool();
 	return node;
 }
 
@@ -25,7 +25,7 @@ bool YAML::convert<dr::yaskawa::CartesianPosition>::decode(Node const & node, dr
 		node["ry"].as<double>(),
 		node["rz"].as<double>(),
 		node["frame"].as<dr::yaskawa::CoordinateSystem>(),
-		node["configuration"].as<std::uint8_t>(),
+		std::uint8_t(node["configuration"].as<int>()),
 		node["tool"].as<int>()
 	};
 	return true;
