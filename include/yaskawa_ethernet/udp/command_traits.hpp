@@ -1,6 +1,5 @@
 #include "./message.hpp"
 #include "../commands.hpp"
-#include "../string_view.hpp"
 
 #include <dr_error/error_or.hpp>
 

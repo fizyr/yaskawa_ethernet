@@ -2,7 +2,6 @@
 #include "../commands.hpp"
 #include "../error.hpp"
 #include "../types.hpp"
-#include "../string_view.hpp"
 #include "message.hpp"
 
 #include <asio/io_service.hpp>
@@ -14,8 +13,9 @@
 #include <chrono>
 #include <cstdint>
 #include <functional>
-#include <string>
 #include <map>
+#include <string>
+#include <string_view>
 
 namespace dr {
 namespace yaskawa {
@@ -28,7 +28,7 @@ public:
 
 	struct OpenRequest {
 		std::chrono::steady_clock::time_point start_time;
-		std::function<void (ResponseHeader const & header, string_view data)> on_reply;
+		std::function<void (ResponseHeader const & header, std::string_view data)> on_reply;
 	};
 
 	using HandlerToken = std::map<std::uint8_t, OpenRequest>::iterator;
@@ -72,7 +72,7 @@ public:
 	Socket const  & socket() const { return socket_; }
 
 	/// Register a handler for a request id.
-	HandlerToken registerHandler(std::uint8_t request_id, std::function<void(ResponseHeader const &, string_view)> handler);
+	HandlerToken registerHandler(std::uint8_t request_id, std::function<void(ResponseHeader const &, std::string_view)> handler);
 
 	/// Remove a handler for a request id.
 	void removeHandler(HandlerToken);

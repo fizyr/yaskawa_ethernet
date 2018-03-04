@@ -3,11 +3,10 @@
 
 #include <dr_error/error_or.hpp>
 
-#include <boost/variant.hpp>
-
 #include <array>
 #include <bitset>
 #include <ostream>
+#include <variant>
 
 namespace dr {
 namespace yaskawa {
@@ -240,7 +239,7 @@ public:
 };
 
 class Position {
-	using Variant =  boost::variant<PulsePosition, CartesianPosition>;
+	using Variant = std::variant<PulsePosition, CartesianPosition>;
 	Variant data_;
 
 public:
@@ -248,15 +247,15 @@ public:
 	Position(PulsePosition      const & position) : data_(position) {}
 	Position(CartesianPosition  const & position) : data_(position) {}
 
-	PositionType type() const { return PositionType(data_.which());       }
+	PositionType type() const { return PositionType(data_.index());       }
 	bool isPulse()      const { return type() == PositionType::pulse;     }
 	bool isCartesian()  const { return type() == PositionType::cartesian; }
 
-	PulsePosition const & pulse() const { return boost::get<PulsePosition const &>(data_); }
-	PulsePosition       & pulse()       { return boost::get<PulsePosition       &>(data_); }
+	PulsePosition const & pulse() const { return std::get<PulsePosition>(data_); }
+	PulsePosition       & pulse()       { return std::get<PulsePosition>(data_); }
 
-	CartesianPosition const & cartesian() const { return boost::get<CartesianPosition const &>(data_); }
-	CartesianPosition       & cartesian()       { return boost::get<CartesianPosition       &>(data_); }
+	CartesianPosition const & cartesian() const { return std::get<CartesianPosition>(data_); }
+	CartesianPosition       & cartesian()       { return std::get<CartesianPosition>(data_); }
 
 	bool operator==(Position const & other) const { return data_ == other.data_; }
 	bool operator!=(Position const & other) const { return !(*this == other); }

@@ -9,7 +9,8 @@
 	<author email="maarten@de-vri.es">Maarten de Vries</author>
 
 	<buildtool_depend>catkin</buildtool_depend>
+
 	<depend>asio</depend>
-	<depend>boost</depend>
+
 	<depend>dr_error</depend>
 </package>

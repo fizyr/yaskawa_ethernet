@@ -1,6 +1,5 @@
 #pragma once
 #include "../../error.hpp"
-#include "../../string_view.hpp"
 #include "../client.hpp"
 #include "../protocol.hpp"
 #include "./deadline_session.hpp"
@@ -13,6 +12,7 @@
 #include <functional>
 #include <memory>
 #include <string>
+#include <string_view>
 #include <system_error>
 #include <utility>
 
@@ -73,7 +73,7 @@ public:
 		callback_ = std::move(callback);
 
 		// Register the response handler.
-		handler_ = client_->registerHandler(request_id_, [this] (ResponseHeader const & header, string_view data) {
+		handler_ = client_->registerHandler(request_id_, [this] (ResponseHeader const & header, std::string_view data) {
 			if (header.status != 0) {
 				resolve(commandFailed(header.status, header.extra_status));
 			} else {

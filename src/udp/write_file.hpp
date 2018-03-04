@@ -1,6 +1,5 @@
 #pragma once
 #include "error.hpp"
-#include "string_view.hpp"
 #include "udp/client.hpp"
 #include "udp/protocol.hpp"
 #include "encode.hpp"
@@ -13,6 +12,7 @@
 #include <cstdint>
 #include <functional>
 #include <memory>
+#include <string_view>
 #include <system_error>
 #include <utility>
 
@@ -71,7 +71,7 @@ public:
 		encode(write_buffer_, request_id_, command_);
 
 		// Register the response handler.
-		handler_ = client_->registerHandler(request_id_, [this, self = self()] (ResponseHeader const & header, string_view data) {
+		handler_ = client_->registerHandler(request_id_, [this, self = self()] (ResponseHeader const & header, std::string_view data) {
 			onResponse(header, data);
 		});
 
@@ -117,7 +117,7 @@ protected:
 	}
 
 	/// Called when the a response has been received.
-	void onResponse(ResponseHeader const & header, string_view data) {
+	void onResponse(ResponseHeader const & header, std::string_view data) {
 		if (done_.load()) return;
 		if (header.status != 0) return stopSession(commandFailed(header.status, header.extra_status));
 		if (auto error = expectSize("response data", data.size(), 0)) return stopSession(error);

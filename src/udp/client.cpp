@@ -34,7 +34,7 @@ void Client::close() {
 	socket_.close();
 }
 
-Client::HandlerToken Client::registerHandler(std::uint8_t request_id, std::function<void(ResponseHeader const &, string_view)> handler) {
+Client::HandlerToken Client::registerHandler(std::uint8_t request_id, std::function<void(ResponseHeader const &, std::string_view)> handler) {
 	auto result = requests_.insert({request_id, {std::chrono::steady_clock::now(), handler}});
 	if (!result.second) throw std::logic_error("request_id " + std::to_string(request_id) + " is already taken, can not register handler");
 	return result.first;
@@ -106,7 +106,7 @@ void Client::onReceive(std::error_code error, std::size_t message_size) {
 	}
 
 	// Decode the response header.
-	string_view message{reinterpret_cast<char const *>(read_buffer_->data()), message_size};
+	std::string_view message{reinterpret_cast<char const *>(read_buffer_->data()), message_size};
 	ErrorOr<ResponseHeader> header = decodeResponseHeader(message);
 	if (!header) {
 		if (on_error) on_error(header.error());

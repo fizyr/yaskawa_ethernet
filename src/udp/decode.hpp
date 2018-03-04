@@ -1,6 +1,5 @@
 #pragma once
 #include "error.hpp"
-#include "string_view.hpp"
 #include "types.hpp"
 #include "udp/message.hpp"
 
@@ -8,6 +7,7 @@
 
 #include <cstdint>
 #include <string>
+#include <string_view>
 #include <type_traits>
 #include <vector>
 
@@ -28,24 +28,24 @@ T readLittleEndian(std::uint8_t const * data) {
 
 /// Read and remove little-endian integral data from the front of a string view.
 template<typename T>
-T readLittleEndian(string_view & data) {
+T readLittleEndian(std::string_view & data) {
 	data.remove_prefix(sizeof(T));
 	return readLittleEndian<T>(reinterpret_cast<std::uint8_t const *>(data.data() - sizeof(T)));
 }
 
 /// Decode a response header.
-ErrorOr<ResponseHeader> decodeResponseHeader(string_view & data);
+ErrorOr<ResponseHeader> decodeResponseHeader(std::string_view & data);
 
 /// Generic decode function for raw types.
 template<typename T>
-ErrorOr<T> decode(string_view & data);
+ErrorOr<T> decode(std::string_view & data);
 
-template<> ErrorOr<std::uint8_t> decode<std::uint8_t>(string_view & data);
-template<> ErrorOr<std::int16_t> decode<std::int16_t>(string_view & data);
-template<> ErrorOr<std::int32_t> decode<std::int32_t>(string_view & data);
-template<> ErrorOr<float> decode<float>(string_view & data);
-template<> ErrorOr<Position> decode<Position>(string_view & data);
-template<> ErrorOr<PulsePosition> decode<PulsePosition>(string_view & data);
-template<> ErrorOr<CartesianPosition> decode<CartesianPosition>(string_view & data);
+template<> ErrorOr<std::uint8_t> decode<std::uint8_t>(std::string_view & data);
+template<> ErrorOr<std::int16_t> decode<std::int16_t>(std::string_view & data);
+template<> ErrorOr<std::int32_t> decode<std::int32_t>(std::string_view & data);
+template<> ErrorOr<float> decode<float>(std::string_view & data);
+template<> ErrorOr<Position> decode<Position>(std::string_view & data);
+template<> ErrorOr<PulsePosition> decode<PulsePosition>(std::string_view & data);
+template<> ErrorOr<CartesianPosition> decode<CartesianPosition>(std::string_view & data);
 
 }}}

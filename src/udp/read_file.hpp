@@ -1,6 +1,5 @@
 #pragma once
 #include "error.hpp"
-#include "string_view.hpp"
 #include "udp/client.hpp"
 #include "udp/protocol.hpp"
 #include "encode.hpp"
@@ -13,10 +12,9 @@
 #include <cstdint>
 #include <functional>
 #include <memory>
+#include <string_view>
 #include <system_error>
 #include <utility>
-
-#include <iostream>
 
 namespace dr {
 namespace yaskawa {
@@ -71,7 +69,7 @@ public:
 
 	void start() {
 		// Register the response handler.
-		handler_ = client_->registerHandler(request_id_, [this, self = self()] (ResponseHeader const & header, string_view data) {
+		handler_ = client_->registerHandler(request_id_, [this, self = self()] (ResponseHeader const & header, std::string_view data) {
 			onResponse(header, data);
 		});
 
@@ -98,7 +96,7 @@ protected:
 	}
 
 	/// Called when the command response has been read.
-	void onResponse(ResponseHeader const & header, string_view data) {
+	void onResponse(ResponseHeader const & header, std::string_view data) {
 		if (done_.load()) return;
 		if (header.status != 0) return stopSession(commandFailed(header.status, header.extra_status));
 

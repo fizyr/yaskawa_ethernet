@@ -5,8 +5,8 @@ namespace dr {
 namespace yaskawa {
 namespace udp {
 
-ErrorOr<ResponseHeader> decodeResponseHeader(string_view & data) {
-	string_view original = data;
+ErrorOr<ResponseHeader> decodeResponseHeader(std::string_view & data) {
+	std::string_view original = data;
 	ResponseHeader result;
 
 	// Check that the message is large enough to hold the header.
@@ -60,18 +60,18 @@ ErrorOr<ResponseHeader> decodeResponseHeader(string_view & data) {
 	return result;
 }
 
-template<> ErrorOr<std::uint8_t> decode<std::uint8_t>(string_view & data) {
+template<> ErrorOr<std::uint8_t> decode<std::uint8_t>(std::string_view & data) {
 	return readLittleEndian<std::uint8_t>(data);
 }
-template<> ErrorOr<std::int16_t> decode<std::int16_t>(string_view & data) {
+template<> ErrorOr<std::int16_t> decode<std::int16_t>(std::string_view & data) {
 	return readLittleEndian<std::int16_t>(data);
 }
 
-template<> ErrorOr<std::int32_t> decode<std::int32_t>(string_view & data) {
+template<> ErrorOr<std::int32_t> decode<std::int32_t>(std::string_view & data) {
 	return readLittleEndian<std::int32_t>(data);
 }
 
-template<> ErrorOr<float> decode<float>(string_view & data) {
+template<> ErrorOr<float> decode<float>(std::string_view & data) {
 	std::uint32_t integral = readLittleEndian<std::uint32_t>(data);
 	return reinterpret_cast<float const &>(integral);
 }
@@ -90,7 +90,7 @@ namespace {
 	}
 }
 
-template<> ErrorOr<Position> decode<Position>(string_view & data) {
+template<> ErrorOr<Position> decode<Position>(std::string_view & data) {
 	std::uint32_t type                   = readLittleEndian<std::uint32_t>(data);
 	std::uint8_t  configuration          = readLittleEndian<std::uint32_t>(data);
 	std::uint32_t tool                   = readLittleEndian<std::uint32_t>(data);

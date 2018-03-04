@@ -6,7 +6,6 @@ option(BUILD_TOOLS "Build test/developer tools" ON)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
-
 add_compile_options(-Wall -Wextra -Wpedantic)
 
 option(WERROR on)
@@ -23,9 +22,8 @@ catkin_package(
 )
 
 set(THREADS_PREFER_PTHREAD_FLAG ON)
-
 find_package(Threads REQUIRED)
-find_package(Boost REQUIRED COMPONENTS system)
+
 find_package(Eigen3)
 find_package(yaml-cpp REQUIRED)
 
@@ -47,11 +45,10 @@ include_directories(SYSTEM ${catkin_INCLUDE_DIRS})
 target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC
 	${catkin_INCLUDE_DIRS}
 	${EIGEN3_INCLUDE_DIRS}
-	${Boost_INCLUDE_DIRS}
 )
 
-target_link_libraries(${PROJECT_NAME} PUBLIC Threads::Threads
-	${Boost_LIBRARIES}
+target_link_libraries(${PROJECT_NAME} PUBLIC
+	Threads::Threads
 	${YAML_CPP_LIBRARIES}
 )
 
