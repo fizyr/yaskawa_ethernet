@@ -49,7 +49,7 @@ target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC
 
 target_link_libraries(${PROJECT_NAME} PUBLIC
 	Threads::Threads
-	${YAML_CPP_LIBRARIES}
+	yaml-cpp
 )
 
 catkin_add_gtest(${PROJECT_NAME}_test_yaml src/test/yaml.cpp)

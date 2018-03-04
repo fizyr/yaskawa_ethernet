@@ -11,6 +11,8 @@
 	<buildtool_depend>catkin</buildtool_depend>
 
 	<depend>asio</depend>
+	<depend>yaml-cpp</depend>
+	<depend>eigen</depend>
 
 	<depend>dr_error</depend>
 </package>
