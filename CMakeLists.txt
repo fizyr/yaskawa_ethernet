@@ -52,8 +52,10 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
 	yaml-cpp
 )
 
-catkin_add_gtest(${PROJECT_NAME}_test_yaml src/test/yaml.cpp)
-target_link_libraries(${PROJECT_NAME}_test_yaml ${PROJECT_NAME})
+if (CATKIN_ENABLE_TESTING)
+	catkin_add_gtest(${PROJECT_NAME}_test_yaml src/test/yaml.cpp)
+	target_link_libraries(${PROJECT_NAME}_test_yaml ${PROJECT_NAME})
+endif()
 
 install(TARGETS "${PROJECT_NAME}"
 	ARCHIVE DESTINATION "${CATKIN_PACKAGE_LIB_DESTINATION}"
