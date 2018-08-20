@@ -30,7 +30,7 @@ namespace impl {
  */
 template<typename Command>
 class WriteFileSession : public std::enable_shared_from_this<WriteFileSession<Command>> {
-	using DoneCallback     = std::function<void(ErrorOr<void>)>;
+	using DoneCallback     = std::function<void(Result<void>)>;
 	using ProgressCallback = std::function<void(std::size_t bytes_written, std::size_t total_bytes)>;
 
 	Client * client_;
@@ -78,7 +78,7 @@ public:
 		// Send the command.
 		client_->socket().async_send(asio::buffer(write_buffer_.data(), write_buffer_.size()), [this, self = self()] (std::error_code error, std::size_t) {
 			if (done_.load()) return;
-			if (error) return stopSession(DetailedError{error, "writing command for request " + std::to_string(request_id_)});
+			if (error) return stopSession(Error{error, "writing command for request " + std::to_string(request_id_)});
 		});
 
 		// Start the timeout.
@@ -111,7 +111,7 @@ protected:
 
 		client_->socket().async_send(buffer_list, [this, self = self(), buffer = std::move(buffer)] (std::error_code error, std::size_t) {
 			if (done_.load()) return;
-			if (error) return stopSession(DetailedError{error, "writing block for request " + std::to_string(request_id_)});
+			if (error) return stopSession(Error{error, "writing block for request " + std::to_string(request_id_)});
 		});
 		++blocks_sent_;
 	}
@@ -127,19 +127,19 @@ protected:
 		if (auto error = expectValue("block number", header.block_number, blocks_sent_)) return stopSession(error);
 
 		if (on_progress_) on_progress_(bytesSent(), command_.data.size());
-		if (bytesSent() >= command_.data.size()) stopSession(in_place_valid);
+		if (bytesSent() >= command_.data.size()) stopSession(estd::in_place_valid);
 	}
 
 	void resetTimeout() {
 		timer_.expires_from_now(timeout_);
 		timer_.async_wait([this, self=self()] (std::error_code error) {
 			if (error == asio::error::operation_aborted) return;
-			if (error) return stopSession(DetailedError(error, "waiting for reply to request " + std::to_string(request_id_)));
-			stopSession(DetailedError(std::errc::timed_out, "waiting for reply to request " + std::to_string(request_id_)));
+			if (error) return stopSession(Error(error, "waiting for reply to request " + std::to_string(request_id_)));
+			stopSession(Error(std::errc::timed_out, "waiting for reply to request " + std::to_string(request_id_)));
 		});
 	}
 
-	void stopSession(ErrorOr<void> result) {
+	void stopSession(Result<void> result) {
 		if (done_.exchange(true)) return;
 		timer_.cancel();
 		client_->removeHandler(handler_);
@@ -153,7 +153,7 @@ void writeFile(
 	std::uint8_t request_id,
 	Command command,
 	std::chrono::milliseconds timeout,
-	std::function<void(ErrorOr<void>)> on_done,
+	std::function<void(Result<void>)> on_done,
 	std::function<void(std::size_t bytes_sent, std::size_t total_bytes)> on_progress
 ) {
 	auto session = std::make_shared<WriteFileSession<std::decay_t<Command>>>(

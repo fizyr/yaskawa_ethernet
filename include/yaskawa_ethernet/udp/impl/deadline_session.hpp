@@ -1,5 +1,5 @@
 #pragma once
-#include <dr_error/error_or.hpp>
+#include <estd/result.hpp>
 
 #include <asio/io_service.hpp>
 #include <asio/steady_timer.hpp>
@@ -40,8 +40,8 @@ public:
 		timer_.expires_at(deadline);
 		timer_.async_wait([this] (std::error_code error) {
 			if (error == asio::error::operation_aborted) return;
-			if (error) work_.resolve(DetailedError{error, "waiting for timeout"});
-			work_.resolve(DetailedError{asio::error::timed_out});
+			if (error) work_.resolve(estd::error{error, "waiting for timeout"});
+			work_.resolve(estd::error{asio::error::timed_out});
 		});
 	}
 

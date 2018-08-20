@@ -34,7 +34,7 @@ template<typename Command>
 class CommandSession {
 public:
 	/// Type passed to the callback.
-	using result_type = ErrorOr<typename Command::Response>;
+	using result_type = Result<typename Command::Response>;
 
 private:
 	Client * client_;
@@ -83,7 +83,7 @@ public:
 
 		// Write the command.
 		client_->socket().async_send(asio::buffer(write_buffer_.data(), write_buffer_.size()), [this] (std::error_code error, std::size_t) {
-			if (error) resolve(DetailedError{error, "writing command for request " + std::to_string(request_id_)});
+			if (error) resolve(Error{error, "writing command for request " + std::to_string(request_id_)});
 		});
 	}
 

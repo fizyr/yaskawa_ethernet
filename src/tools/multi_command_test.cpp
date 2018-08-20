@@ -41,9 +41,9 @@ void write() {
 	client->sendCommands(
 		std::make_tuple(WriteUint8Var{5, byte_value}, WriteInt16Var{6, int16_value}, WriteInt32Var{7, int32_value}, WriteFloat32Var{8, float32_value}),
 		timeout,
-		[] (dr::ErrorOr<std::tuple<Empty, Empty, Empty, Empty>> result) {
+		[] (Result<std::tuple<Empty, Empty, Empty, Empty>> result) {
 			if (!result) {
-				std::cerr << "Failed to write: " << result.error().fullMessage() << "\n";
+				std::cerr << "Failed to write: " << result.error().format() << "\n";
 			} else {
 				++command_count;
 			}
@@ -56,9 +56,9 @@ void read() {
 	client->sendCommands(
 		std::make_tuple(ReadUint8Var{5}, ReadInt16Var{6}, ReadInt32Var{7}, ReadFloat32Var{8}),
 		timeout,
-		[] (dr::ErrorOr<std::tuple<std::uint8_t, std::int16_t, std::int32_t, float>> result) {
+		[] (Result<std::tuple<std::uint8_t, std::int16_t, std::int32_t, float>> result) {
 			if (!result) {
-				std::cerr << "Failed to read: " << result.error().fullMessage() << "\n";
+				std::cerr << "Failed to read: " << result.error().format() << "\n";
 			} else {
 				std::uint8_t int8    = std::get<0>(*result);
 				std::int16_t int16   = std::get<1>(*result);
@@ -80,9 +80,9 @@ void read() {
 }
 
 
-void onConnect(std::error_code const & error) {
+void onConnect(Error const & error) {
 	if (error) {
-		std::cout << "Error " << error.category().name() << ":" << error.value() << ": " << error.message() << "\n";
+		std::cout << error.format() << "\n";
 		return;
 	}
 	std::cout << "Connected to " << client->socket().remote_endpoint() << ".\n";
@@ -97,8 +97,8 @@ int main(int argc, char * * argv) {
 	asio::steady_timer timer(ios);
 	::timer = &timer;
 
-	client.on_error = [] (dr::DetailedError const & error) {
-		std::cout << "Communication error: " << error.fullMessage() << "\n";
+	client.on_error = [] (Error const & error) {
+		std::cout << "Communication error: " << error.format() << "\n";
 	};
 
 	std::string host = "10.0.0.2";

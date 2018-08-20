@@ -4,7 +4,7 @@
 #include "../error.hpp"
 #include "../types.hpp"
 
-#include <dr_error/error_or.hpp>
+#include <estd/result.hpp>
 
 #include <cstdint>
 #include <string_view>
@@ -17,12 +17,12 @@ namespace udp {
 // Macro to declare encode/decode functions in the dr::yaskawa::udp namespace.
 #define DECLARE_COMMAND(TYPE) \
 void encode(std::vector<std::uint8_t> & output, std::uint8_t request_id, TYPE const & command); \
-ErrorOr<TYPE::Response> decode(ResponseHeader const & header, std::string_view & data, TYPE const & command)
+Result<TYPE::Response> decode(ResponseHeader const & header, std::string_view & data, TYPE const & command)
 
 // File read functions get a string && owning the data to prevent needless copying.
 #define DECLARE_FILE_READ_COMMAND(TYPE) \
 void encode(std::vector<std::uint8_t> & output, std::uint8_t request_id, TYPE const & command); \
-ErrorOr<TYPE::Response> decode(ResponseHeader const & header, std::string && data, TYPE const & command)
+Result<TYPE::Response> decode(ResponseHeader const & header, std::string && data, TYPE const & command)
 
 // Declare ReadVar<TYPE>, ReadVars<TYPE>, WriteVar<TYPE> and WriteVars<TYPE> commands.
 #define DECLARE_VAR(TYPE) \

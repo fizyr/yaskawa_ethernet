@@ -28,7 +28,7 @@ void encode(std::vector<std::uint8_t> & output, std::uint8_t request_id, ReadSta
 }
 
 /// Decode a ReadStatus response.
-ErrorOr<Status> decode(ResponseHeader const &, std::string_view & data, ReadStatus const &) {
+Result<Status> decode(ResponseHeader const &, std::string_view & data, ReadStatus const &) {
 	if (auto error = expectSize("status data", data.size(), 8)) return error;
 
 	Status result;
@@ -74,7 +74,7 @@ void encode(std::vector<std::uint8_t> & output, std::uint8_t request_id, ReadCur
 }
 
 /// Decode a ReadCurrentPosition command.
-ErrorOr<Position> decode(ResponseHeader const &, std::string_view & message, ReadCurrentPosition const &) {
+Result<Position> decode(ResponseHeader const &, std::string_view & message, ReadCurrentPosition const &) {
 	if (auto error = expectSizeMax("position data", message.size(), 13 * 4)) return error;
 
 	// Pad the data until it is 13 * 4 bytes.
@@ -138,9 +138,9 @@ void encode(std::vector<std::uint8_t> & output, std::uint8_t request_id, MoveL c
 }
 
 /// Decode a MoveL response.
-ErrorOr<void> decode(ResponseHeader const &, std::string_view & data, MoveL const &) {
+Result<void> decode(ResponseHeader const &, std::string_view & data, MoveL const &) {
 	if (auto error = expectSize("response data", data.size(), 0)) return error;
-	return in_place_valid;
+	return estd::in_place_valid;
 }
 
 namespace {
@@ -163,7 +163,7 @@ namespace {
 
 	/// Decode a ReadVar response.
 	template<typename T>
-	ErrorOr<T> decodeReadVar(std::string_view & message, ReadVar<T> const &) {
+	Result<T> decodeReadVar(std::string_view & message, ReadVar<T> const &) {
 		// Read a single value (data is exactly one element).
 		if (auto error = expectSize( "response data", message.size(), encoded_size<T>())) return error;
 		return decode<T>(message);
@@ -171,10 +171,10 @@ namespace {
 
 	/// Decode a ReadVars response.
 	template<typename T>
-	ErrorOr<std::vector<T>> decodeReadVars(std::string_view & message, ReadVars<T> const & command) {
+	Result<std::vector<T>> decodeReadVars(std::string_view & message, ReadVars<T> const & command) {
 		// Read a single value (data is exactly one element).
 		if (command.count == 1) {
-			ErrorOr<T> result = decodeReadVar<T>(message, {command.index});
+			Result<T> result = decodeReadVar<T>(message, {command.index});
 			if (!result) return result.error_unchecked();
 			return std::vector<T>{*result};
 		}
@@ -190,7 +190,7 @@ namespace {
 		std::vector<T> result;
 		result.reserve(command.count);
 		for (std::size_t i = 0; i < command.count; ++i) {
-			ErrorOr<T> decoded = decode<T>(message);
+			Result<T> decoded = decode<T>(message);
 			if (!decoded) return decoded.error_unchecked();
 			result.push_back(*decoded);
 		}
@@ -226,16 +226,16 @@ namespace {
 
 	/// Decode a WriteVar response.
 	template<typename T>
-	ErrorOr<void> decodeWriteVar(std::string_view & data, WriteVar<T> const &) {
+	Result<void> decodeWriteVar(std::string_view & data, WriteVar<T> const &) {
 		if (auto error = expectSize("response data", data.size(), 0)) return error;
-		return in_place_valid;
+		return estd::in_place_valid;
 	}
 
 	/// Decode a WriteVars response.
 	template<typename T>
-	ErrorOr<void> decodeWriteVars(std::string_view & data, WriteVars<T> const &) {
+	Result<void> decodeWriteVars(std::string_view & data, WriteVars<T> const &) {
 		if (auto error = expectSize("response data", data.size(), 0)) return error;
-		return in_place_valid;
+		return estd::in_place_valid;
 	}
 }
 
@@ -244,10 +244,10 @@ void encode(std::vector<std::uint8_t> & out, std::uint8_t id, ReadVar<TYPE> cons
 void encode(std::vector<std::uint8_t> & out, std::uint8_t id, ReadVars<TYPE> const & cmd) { return encodeReadVars(out, id, cmd); } \
 void encode(std::vector<std::uint8_t> & out, std::uint8_t id, WriteVar<TYPE> const & cmd) { return encodeWriteVar(out, id, cmd); } \
 void encode(std::vector<std::uint8_t> & out, std::uint8_t id, WriteVars<TYPE> const & cmd) { return encodeWriteVars(out, id, cmd); } \
-ErrorOr<TYPE> decode(ResponseHeader const &, std::string_view & data, ReadVar<TYPE> const & cmd) { return decodeReadVar(data, cmd); } \
-ErrorOr<std::vector<TYPE>> decode(ResponseHeader const &, std::string_view & data,  ReadVars<TYPE> const & cmd) { return decodeReadVars  (data, cmd); } \
-ErrorOr<void> decode(ResponseHeader const &, std::string_view & data, WriteVar<TYPE> const & cmd) { return decodeWriteVar(data, cmd); } \
-ErrorOr<void> decode(ResponseHeader const &, std::string_view & data, WriteVars<TYPE> const & cmd) { return decodeWriteVars(data, cmd); }
+Result<TYPE> decode(ResponseHeader const &, std::string_view & data, ReadVar<TYPE> const & cmd) { return decodeReadVar(data, cmd); } \
+Result<std::vector<TYPE>> decode(ResponseHeader const &, std::string_view & data,  ReadVars<TYPE> const & cmd) { return decodeReadVars  (data, cmd); } \
+Result<void> decode(ResponseHeader const &, std::string_view & data, WriteVar<TYPE> const & cmd) { return decodeWriteVar(data, cmd); } \
+Result<void> decode(ResponseHeader const &, std::string_view & data, WriteVars<TYPE> const & cmd) { return decodeWriteVars(data, cmd); }
 
 DEFINE_VAR(std::uint8_t)
 DEFINE_VAR(std::int16_t)
@@ -264,7 +264,7 @@ void encode(std::vector<std::uint8_t> & out, std::uint8_t request_id, ReadFileLi
 }
 
 /// Decode a ReadFileList response.
-ErrorOr<std::vector<std::string>> decode(ResponseHeader const &, std::string && data, ReadFileList const &) {
+Result<std::vector<std::string>> decode(ResponseHeader const &, std::string && data, ReadFileList const &) {
 	if (data.size() == 0) return std::vector<std::string>{};
 	if (data.size() == 1) return malformedResponse("file list consist of exactly one byte");
 
@@ -287,7 +287,7 @@ void encode(std::vector<std::uint8_t> & out, std::uint8_t request_id, ReadFile c
 }
 
 /// Decode a ReadFile response.
-ErrorOr<std::string> decode(ResponseHeader const &, std::string && data, ReadFile const &) {
+Result<std::string> decode(ResponseHeader const &, std::string && data, ReadFile const &) {
 	return std::move(data);
 }
 
@@ -298,9 +298,9 @@ void encode(std::vector<std::uint8_t> & out, std::uint8_t request_id, WriteFile 
 }
 
 /// Decode a WriteFile response.
-ErrorOr<void> decode(ResponseHeader const &, std::string_view & data, WriteFile const &) {
+Result<void> decode(ResponseHeader const &, std::string_view & data, WriteFile const &) {
 	if (auto error = expectSize("response data", data.size(), 0)) return error;
-	return in_place_valid;
+	return estd::in_place_valid;
 }
 
 /// Encode a DeleteFile command.
@@ -310,9 +310,9 @@ void encode(std::vector<std::uint8_t> & out, std::uint8_t request_id, DeleteFile
 }
 
 /// Decode a DeleteFile response.
-ErrorOr<void> decode(ResponseHeader const &, std::string_view & data, DeleteFile const &) {
+Result<void> decode(ResponseHeader const &, std::string_view & data, DeleteFile const &) {
 	if (auto error = expectSize("response data", data.size(), 0)) return error;
-	return in_place_valid;
+	return estd::in_place_valid;
 }
 
 }}}

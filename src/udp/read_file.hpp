@@ -24,7 +24,7 @@ namespace impl {
 template<typename Command>
 class ReadFileSession : public std::enable_shared_from_this<ReadFileSession<Command>> {
 	using Response         = typename Command::Response;
-	using DoneCallback     = std::function<void(ErrorOr<Response>)>;
+	using DoneCallback     = std::function<void(Result<Response>)>;
 	using ProgressCallback = std::function<void(std::size_t bytes_received)>;
 
 public:
@@ -75,7 +75,7 @@ public:
 
 		// Send the command.
 		client_->socket().async_send(asio::buffer(write_buffer_.data(), write_buffer_.size()), [this, self = self()] (std::error_code error, std::size_t) {
-			if (error) return stopSession(DetailedError(error, "writing command for request " + std::to_string(request_id_)));
+			if (error) return stopSession(Error(error, "writing command for request " + std::to_string(request_id_)));
 		});
 
 		// Start the timeout.
@@ -91,7 +91,7 @@ protected:
 		auto buffer = std::make_shared<std::vector<std::uint8_t>>();
 		encode(*buffer, makeFileRequestHeader(0, commands::file::read_file, request_id_, block_number, true));
 		client_->socket().async_send(asio::buffer(*buffer), [this, self = self(), buffer = std::move(buffer)] (std::error_code error, std::size_t) {
-			if (error) return stopSession(DetailedError(error, "writing ack for request " + std::to_string(request_id_)));
+			if (error) return stopSession(Error(error, "writing ack for request " + std::to_string(request_id_)));
 		});
 	}
 
@@ -116,12 +116,12 @@ protected:
 		timer_.expires_from_now(timeout_);
 		timer_.async_wait([this, self = self()] (std::error_code error) {
 			if (error == asio::error::operation_aborted) return;
-			if (error) return stopSession(DetailedError(error, "waiting for reply to request " + std::to_string(request_id_)));
-			stopSession(DetailedError(std::errc::timed_out, "waiting for reply to request " + std::to_string(request_id_)));
+			if (error) return stopSession(Error(error, "waiting for reply to request " + std::to_string(request_id_)));
+			stopSession(Error(std::errc::timed_out, "waiting for reply to request " + std::to_string(request_id_)));
 		});
 	}
 
-	void stopSession(ErrorOr<Response> result) {
+	void stopSession(Result<Response> result) {
 		if (done_.exchange(true)) return;
 		timer_.cancel();
 		client_->removeHandler(handler_);
@@ -135,7 +135,7 @@ void readFile(
 	std::uint8_t request_id,
 	Command && command,
 	std::chrono::milliseconds timeout,
-	std::function<void(ErrorOr<typename Command::Response>)> on_done,
+	std::function<void(Result<typename Command::Response>)> on_done,
 	std::function<void(std::size_t bytes_received)> on_progress
 ) {
 	auto session = std::make_shared<ReadFileSession<std::decay_t<Command>>>(

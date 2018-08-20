@@ -8,7 +8,7 @@
 #include <asio/ip/udp.hpp>
 #include <asio/streambuf.hpp>
 
-#include <dr_error/error_or.hpp>
+#include <estd/result.hpp>
 
 #include <chrono>
 #include <cstdint>
@@ -24,7 +24,7 @@ namespace udp {
 class Client {
 public:
 	using Socket   = asio::ip::udp::socket;
-	using ErrorCallback = std::function<void (DetailedError error)>;
+	using ErrorCallback = std::function<void (Error error)>;
 
 	struct OpenRequest {
 		std::chrono::steady_clock::time_point start_time;
@@ -105,33 +105,33 @@ public:
 	void readFileList(
 		std::string type,
 		std::chrono::milliseconds timeout,
-		std::function<void(ErrorOr<std::vector<std::string>>)> callback,
+		std::function<void(Result<std::vector<std::string>>)> callback,
 		std::function<void(std::size_t bytes_received)> on_progress
 	);
 
 	void readFile(
 		std::string name,
 		std::chrono::milliseconds timeout,
-		std::function<void(ErrorOr<std::string>)> on_done,
+		std::function<void(Result<std::string>)> on_done,
 		std::function<void(std::size_t bytes_received)> on_progress
 	);
 	void writeFile(
 		std::string name,
 		std::string data,
 		std::chrono::milliseconds timeout,
-		std::function<void(ErrorOr<void>)> on_done,
+		std::function<void(Result<void>)> on_done,
 		std::function<void(std::size_t bytes_sent, std::size_t bytes_total)> on_progress
 	);
 
 	void deleteFile(
 		std::string name,
 		std::chrono::milliseconds timeout,
-		std::function<void(ErrorOr<void>)> callback
+		std::function<void(Result<void>)> callback
 	);
 
 private:
 	/// Called when a connection attempt finishes.
-	void onConnect(DetailedError, ErrorCallback callback);
+	void onConnect(Error, ErrorCallback callback);
 
 	/// Start an asynchronous receive.
 	void receive();

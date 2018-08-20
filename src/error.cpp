@@ -1,4 +1,5 @@
 #include "error.hpp"
+#include "types.hpp"
 
 #include <string>
 
@@ -47,18 +48,18 @@ namespace {
 	}
 }
 
-DetailedError malformedResponse(std::string message) {
+Error malformedResponse(std::string message) {
 	return {errc::malformed_response, std::move(message)};
 }
 
-DetailedError commandFailed(std::uint16_t status, std::uint16_t extra_status) {
+Error commandFailed(std::uint16_t status, std::uint16_t extra_status) {
 	return {errc::command_failed,
 		"command failed with status 0x" + toHex(status)
 		+ " and additional status 0x" + toHex(extra_status)
 	};
 }
 
-DetailedError expectValue(std::string name, int value, int expected) {
+Error expectValue(std::string name, int value, int expected) {
 	if (value == expected) return {};
 	return malformedResponse(
 		"unexpected " + std::move(name) + ", "
@@ -67,7 +68,7 @@ DetailedError expectValue(std::string name, int value, int expected) {
 	);
 }
 
-DetailedError expectValueMin(std::string name, int value, int min) {
+Error expectValueMin(std::string name, int value, int min) {
 	if (value >= min) return {};
 	return malformedResponse(
 		"unexpected " + std::move(name) + ", "
@@ -76,7 +77,7 @@ DetailedError expectValueMin(std::string name, int value, int min) {
 	);
 }
 
-DetailedError expectValueMax(std::string name, int value, int max) {
+Error expectValueMax(std::string name, int value, int max) {
 	if (value <= max) return {};
 	return malformedResponse(
 		"unexpected " + std::move(name) + ", "
@@ -85,7 +86,7 @@ DetailedError expectValueMax(std::string name, int value, int max) {
 	);
 }
 
-DetailedError expectValueMinMax(std::string name, int value, int min, int max) {
+Error expectValueMinMax(std::string name, int value, int min, int max) {
 	if (value >= min && value <= max) return {};
 	return malformedResponse(
 		"unexpected " + std::move(name) + ", "
@@ -94,7 +95,7 @@ DetailedError expectValueMinMax(std::string name, int value, int min, int max) {
 	);
 }
 
-DetailedError expectSize(std::string description, std::size_t actual_size, std::size_t expected_size) {
+Error expectSize(std::string description, std::size_t actual_size, std::size_t expected_size) {
 	if (actual_size == expected_size) return {};
 	return {errc::malformed_response,
 		"unexpected " + description + " size, "
@@ -103,7 +104,7 @@ DetailedError expectSize(std::string description, std::size_t actual_size, std::
 	};
 }
 
-DetailedError expectSizeMin(std::string description, std::size_t actual_size, std::size_t minimum_size) {
+Error expectSizeMin(std::string description, std::size_t actual_size, std::size_t minimum_size) {
 	if (actual_size >= minimum_size) return {};
 	return {errc::malformed_response,
 		"unexpected " + description + " size, "
@@ -112,7 +113,7 @@ DetailedError expectSizeMin(std::string description, std::size_t actual_size, st
 	};
 }
 
-DetailedError expectSizeMax(std::string description, std::size_t actual_size, std::size_t maximum_size) {
+Error expectSizeMax(std::string description, std::size_t actual_size, std::size_t maximum_size) {
 	if (actual_size <= maximum_size) return {};
 	return {errc::malformed_response,
 		"unexpected " + description + " size, "
@@ -121,7 +122,7 @@ DetailedError expectSizeMax(std::string description, std::size_t actual_size, st
 	};
 }
 
-DetailedError expectSizeMinMax(std::string description, std::size_t actual_size, std::size_t min, std::size_t max) {
+Error expectSizeMinMax(std::string description, std::size_t actual_size, std::size_t min, std::size_t max) {
 	if (actual_size >= min &&  actual_size <= max) return {};
 	return {errc::malformed_response,
 		"unexpected " + description + " size, "

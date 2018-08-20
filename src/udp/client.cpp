@@ -20,7 +20,7 @@ Client::Client(asio::io_service & ios) :
 	read_buffer_{std::make_unique<std::array<std::uint8_t, 512>>()} {}
 
 void Client::connect(std::string const & host, std::string const & port, std::chrono::milliseconds timeout, ErrorCallback callback) {
-	auto on_connect = [this, callback = std::move(callback)] (DetailedError error) {
+	auto on_connect = [this, callback = std::move(callback)] (Error error) {
 		onConnect(error, std::move(callback));
 	};
 	asyncResolveConnect({host, port}, timeout, socket_, on_connect);
@@ -49,7 +49,7 @@ void Client::removeHandler(HandlerToken token) {
 void Client::readFileList(
 	std::string type,
 	std::chrono::milliseconds timeout,
-	std::function<void(ErrorOr<std::vector<std::string>>)> on_done,
+	std::function<void(Result<std::vector<std::string>>)> on_done,
 	std::function<void(std::size_t bytes_received)> on_progress
 ) {
 	impl::readFile(*this, request_id_++, ReadFileList{std::move(type)}, timeout, std::move(on_done), std::move(on_progress));
@@ -58,7 +58,7 @@ void Client::readFileList(
 void Client::readFile(
 	std::string name,
 	std::chrono::milliseconds timeout,
-	std::function<void(ErrorOr<std::string>)> on_done,
+	std::function<void(Result<std::string>)> on_done,
 	std::function<void(std::size_t bytes_received)> on_progress
 ) {
 	impl::readFile(*this, request_id_++, ReadFile{std::move(name)}, timeout, std::move(on_done), std::move(on_progress));
@@ -68,7 +68,7 @@ void Client::writeFile(
 	std::string name,
 	std::string data,
 	std::chrono::milliseconds timeout,
-	std::function<void(ErrorOr<void>)> on_done,
+	std::function<void(Result<void>)> on_done,
 	std::function<void(std::size_t bytes_sent, std::size_t total_bytes)> on_progress
 ) {
 	impl::writeFile(*this, request_id_++, WriteFile{std::move(name), std::move(data)}, timeout, std::move(on_done), std::move(on_progress));
@@ -77,14 +77,14 @@ void Client::writeFile(
 void Client::deleteFile(
 	std::string name,
 	std::chrono::milliseconds timeout,
-	std::function<void(ErrorOr<void>)> on_done
+	std::function<void(Result<void>)> on_done
 ) {
 	sendCommand(DeleteFile{std::move(name)}, timeout, on_done);
 }
 
 // Other stuff
 
-void Client::onConnect(DetailedError error, ErrorCallback callback) {
+void Client::onConnect(Error error, ErrorCallback callback) {
 	callback(error);
 	if (!error) receive();
 }
@@ -107,7 +107,7 @@ void Client::onReceive(std::error_code error, std::size_t message_size) {
 
 	// Decode the response header.
 	std::string_view message{reinterpret_cast<char const *>(read_buffer_->data()), message_size};
-	ErrorOr<ResponseHeader> header = decodeResponseHeader(message);
+	Result<ResponseHeader> header = decodeResponseHeader(message);
 	if (!header) {
 		if (on_error) on_error(header.error());
 		receive();

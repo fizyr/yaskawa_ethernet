@@ -1,7 +1,7 @@
 #pragma once
 #include "array_view.hpp"
 
-#include <dr_error/error_or.hpp>
+#include <estd/result.hpp>
 
 #include <array>
 #include <bitset>
@@ -10,6 +10,11 @@
 
 namespace dr {
 namespace yaskawa {
+
+using Error = estd::error;
+
+template<typename T>
+using Result = estd::result<T, Error>;
 
 struct Status {
 	bool step;
@@ -78,7 +83,7 @@ enum class CoordinateSystem {
 std::string toString(CoordinateSystem system);
 
 /// Parse a string representation of a coordinate system.
-ErrorOr<CoordinateSystem> toCoordinateSystem(std::string const & string);
+Result<CoordinateSystem> toCoordinateSystem(std::string const & string);
 
 enum class SpeedType {
 	joint,       // 0.01% of max speed

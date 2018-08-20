@@ -29,7 +29,7 @@ std::string toString(CoordinateSystem system) {
 	throw std::logic_error{"invalid coordinate system: " + std::to_string(int(system))};
 }
 
-ErrorOr<CoordinateSystem> toCoordinateSystem(std::string const & string) {
+Result<CoordinateSystem> toCoordinateSystem(std::string const & string) {
 	if (string == "base") return CoordinateSystem::base;
 	if (string == "robot") return CoordinateSystem::robot;
 	if (string == "user1") return CoordinateSystem::user1;
@@ -51,7 +51,7 @@ ErrorOr<CoordinateSystem> toCoordinateSystem(std::string const & string) {
 	if (string == "tool") return CoordinateSystem::tool;
 	if (string == "master") return CoordinateSystem::master;
 
-	return DetailedError{std::errc::invalid_argument, "invalid coordinate system: " + string};
+	return Error{std::errc::invalid_argument, "invalid coordinate system: " + string};
 }
 
 std::ostream & operator<<(std::ostream & stream, CoordinateSystem const & frame) {

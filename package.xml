@@ -14,5 +14,5 @@
 	<depend>yaml-cpp</depend>
 	<depend>eigen</depend>
 
-	<depend>dr_error</depend>
+	<depend>estd</depend>
 </package>

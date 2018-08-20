@@ -38,7 +38,7 @@ class MultiCommandSession {
 
 public:
 	using response_type  = map_tuple_t<Commands, response_tuple_element>;
-	using result_type    = ErrorOr<response_type>;
+	using result_type    = Result<response_type>;
 
 private:
 	/// Sub-sessions.
@@ -70,16 +70,16 @@ public:
 		static_assert(I < Count, "command callback index exceeds valid range");
 		using Response = typename std::tuple_element_t<I, Commands>::Response;
 
-		return [this] (ErrorOr<Response> result) {
+		return [this] (Result<Response> result) {
 			if (!result) return resolve(result.error_unchecked());
 			if constexpr (std::is_same<Response, void>() == false) {
 				std::get<I>(result_) = std::move(*result);
 			}
-			if (++finished_commands_ == Count) resolve(DetailedError{});
+			if (++finished_commands_ == Count) resolve(Error{});
 		};
 	}
 
-	void resolve(DetailedError error) {
+	void resolve(Error error) {
 		if (done_.test_and_set()) return;
 		if (error) {
 			stop_sessions_<0>(asio::error::operation_aborted);
@@ -110,7 +110,7 @@ protected:
 
 	/// Recursively start sub-sessions.
 	template<std::size_t I>
-	void stop_sessions_(DetailedError const & error) {
+	void stop_sessions_(Error const & error) {
 		if constexpr(I < Count) {
 			std::get<I>(sessions_)->resolve(error);
 			stop_sessions_<I + 1>(error);

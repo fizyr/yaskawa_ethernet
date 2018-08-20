@@ -13,12 +13,12 @@ if (WERROR)
 	add_compile_options(-Werror)
 endif()
 
-find_package(catkin REQUIRED COMPONENTS dr_error)
+find_package(catkin REQUIRED COMPONENTS estd)
 
 catkin_package(
 	INCLUDE_DIRS include
 	LIBRARIES ${PROJECT_NAME}
-	CATKIN_DEPENDS dr_error
+	CATKIN_DEPENDS estd
 )
 
 set(THREADS_PREFER_PTHREAD_FLAG ON)

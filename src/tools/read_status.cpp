@@ -12,9 +12,9 @@ using namespace dr::yaskawa;
 std::chrono::milliseconds timeout = 200ms;
 
 void readStatus(udp::Client & client) {
-	client.sendCommand(ReadStatus{}, timeout, [&client] (dr::ErrorOr<dr::yaskawa::Status> const & result) {
+	client.sendCommand(ReadStatus{}, timeout, [&client] (Result<dr::yaskawa::Status> const & result) {
 		if (!result) {
-			std::cout << "Error reading status: " << result.error().category().name() << ":" << result.error().value() << ": " << result.error().message() << ": " << result.error().details() << "\n";
+			std::cout << "Error reading status: " << result.error().format() << "\n";
 			client.close();
 			return;
 		}
@@ -40,9 +40,9 @@ void readStatus(udp::Client & client) {
 }
 
 void connect(udp::Client & client, std::string host, std::string port) {
-	client.connect(host, port, timeout, [&client] (dr::DetailedError error) {
+	client.connect(host, port, timeout, [&client] (Error error) {
 		if (error) {
-			std::cout << "Error " << error.category().name() << ":" << error.value() << ": " << error.message() << ": " << error.details() << "\n";
+			std::cout << error.format() << "\n";
 			client.close();
 			return;
 		}
@@ -55,8 +55,8 @@ int main(int argc, char * * argv) {
 	asio::io_service ios;
 	dr::yaskawa::udp::Client client(ios);
 
-	client.on_error = [&client] (dr::DetailedError const & error) {
-		std::cout << "Communication error: " << error.fullMessage() << "\n";
+	client.on_error = [&client] (Error const & error) {
+		std::cout << "Communication error: " << error.format() << "\n";
 		client.close();
 	};
 

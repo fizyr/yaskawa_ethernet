@@ -50,9 +50,9 @@ void onTimeout(std::error_code const & error) {
 }
 
 void writeByte() {
-	client->sendCommand(WriteUint8Var{5, byte_value}, timeout, [] (dr::ErrorOr<void> const & result) {
+	client->sendCommand(WriteUint8Var{5, byte_value}, timeout, [] (Result<void> const & result) {
 		if (!result) {
-			std::cerr << "Failed to write byte: " << result.error().fullMessage() << "\n";
+			std::cerr << "Failed to write byte: " << result.error().format() << "\n";
 		} else {
 			++command_count;
 		}
@@ -61,9 +61,9 @@ void writeByte() {
 }
 
 void readByte() {
-	client->sendCommand(ReadUint8Var{5}, timeout, [] (dr::ErrorOr<std::uint8_t> const & result) {
+	client->sendCommand(ReadUint8Var{5}, timeout, [] (Result<std::uint8_t> const & result) {
 		if (!result) {
-			std::cout << "Failed to read byte: " << result.error().fullMessage() << "\n";
+			std::cout << "Failed to read byte: " << result.error().format() << "\n";
 		} else {
 			int value = (*result);
 			++command_count;
@@ -75,9 +75,9 @@ void readByte() {
 }
 
 void writeInt16() {
-	client->sendCommand(WriteInt16Var{6, int16_value}, timeout, [] (dr::ErrorOr<void> const & result) {
+	client->sendCommand(WriteInt16Var{6, int16_value}, timeout, [] (Result<void> const & result) {
 		if (!result) {
-			std::cerr << "Failed to write int16: " << result.error().fullMessage() << "\n";
+			std::cerr << "Failed to write int16: " << result.error().format() << "\n";
 		} else {
 			++command_count;
 		}
@@ -86,9 +86,9 @@ void writeInt16() {
 }
 
 void readInt16() {
-	client->sendCommand(ReadInt16Var{6}, timeout, [] (dr::ErrorOr<std::int16_t> result) {
+	client->sendCommand(ReadInt16Var{6}, timeout, [] (Result<std::int16_t> result) {
 		if (!result) {
-			std::cout << "Failed to read int16: " << result.error().fullMessage() << "\n";
+			std::cout << "Failed to read int16: " << result.error().format() << "\n";
 		} else {
 			int value = (*result);
 			++command_count;
@@ -100,9 +100,9 @@ void readInt16() {
 }
 
 void writeInt32() {
-	client->sendCommand(WriteInt32Var{7, int32_value}, timeout, [] (dr::ErrorOr<void> const & result) {
+	client->sendCommand(WriteInt32Var{7, int32_value}, timeout, [] (Result<void> const & result) {
 		if (!result) {
-			std::cerr << "Failed to write int32: " << result.error().fullMessage() << "\n";
+			std::cerr << "Failed to write int32: " << result.error().format() << "\n";
 		} else {
 			++command_count;
 		}
@@ -111,9 +111,9 @@ void writeInt32() {
 }
 
 void readInt32() {
-	client->sendCommand(ReadInt32Var{7}, timeout, [] (dr::ErrorOr<std::int32_t> result) {
+	client->sendCommand(ReadInt32Var{7}, timeout, [] (Result<std::int32_t> result) {
 		if (!result) {
-			std::cout << "Failed to read int32: " << result.error().fullMessage() << "\n";
+			std::cout << "Failed to read int32: " << result.error().format() << "\n";
 		} else {
 			int value = (*result);
 			++command_count;
@@ -125,9 +125,9 @@ void readInt32() {
 }
 
 void writeFloat32() {
-	client->sendCommand(WriteFloat32Var{8, float32_value}, timeout, [] (dr::ErrorOr<void> result) {
+	client->sendCommand(WriteFloat32Var{8, float32_value}, timeout, [] (Result<void> result) {
 		if (!result) {
-			std::cerr << "Failed to write float32 value: " << result.error().fullMessage() << "\n";
+			std::cerr << "Failed to write float32 value: " << result.error().format() << "\n";
 		} else {
 			++command_count;
 		}
@@ -135,9 +135,9 @@ void writeFloat32() {
 }
 
 void readFloat32() {
-	client->sendCommand(ReadFloat32Var{8}, timeout, [] (dr::ErrorOr<float> result) {
+	client->sendCommand(ReadFloat32Var{8}, timeout, [] (Result<float> result) {
 		if (!result) {
-			std::cout << "Failed to read float32: " << result.error().fullMessage() << "\n";
+			std::cout << "Failed to read float32: " << result.error().format() << "\n";
 		} else {
 			float value = (*result);
 			++command_count;
@@ -148,9 +148,9 @@ void readFloat32() {
 }
 
 void writePosition() {
-	client->sendCommand(WritePositionVar{9, positions[position_index]}, timeout, [] (dr::ErrorOr<void> result) {
+	client->sendCommand(WritePositionVar{9, positions[position_index]}, timeout, [] (Result<void> result) {
 		if (!result) {
-			std::cerr << "Failed to write position value: " << result.error().fullMessage() << "\n";
+			std::cerr << "Failed to write position value: " << result.error().format() << "\n";
 		} else {
 			++command_count;
 		}
@@ -158,9 +158,9 @@ void writePosition() {
 }
 
 void readPosition() {
-	client->sendCommand(ReadPositionVar{9}, timeout, [] (dr::ErrorOr<Position> const & result) {
+	client->sendCommand(ReadPositionVar{9}, timeout, [] (Result<Position> const & result) {
 		if (!result) {
-			std::cout << "Failed to read position: " << result.error().fullMessage() << "\n";
+			std::cout << "Failed to read position: " << result.error().format() << "\n";
 		} else {
 			Position value = (*result);
 			++command_count;
@@ -174,9 +174,9 @@ void readPosition() {
 	});
 }
 
-void onConnect(std::error_code const & error) {
+void onConnect(Error error) {
 	if (error) {
-		std::cout << "Error " << error.category().name() << ":" << error.value() << ": " << error.message() << "\n";
+		std::cout << error.format() << "\n";
 		return;
 	}
 	std::cout << "Connected to " << client->socket().remote_endpoint() << ".\n";
@@ -195,8 +195,8 @@ int main(int argc, char * * argv) {
 	asio::steady_timer timer(ios);
 	::timer = &timer;
 
-	client.on_error = [] (dr::DetailedError const & error) {
-		std::cout << "Communication error: " << error.fullMessage() << "\n";
+	client.on_error = [] (Error const & error) {
+		std::cout << "Communication error: " << error.format() << "\n";
 	};
 
 	std::string host = "10.0.0.2";

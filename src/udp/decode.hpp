@@ -3,8 +3,6 @@
 #include "types.hpp"
 #include "udp/message.hpp"
 
-#include <dr_error/error_or.hpp>
-
 #include <cstdint>
 #include <string>
 #include <string_view>
@@ -34,18 +32,18 @@ T readLittleEndian(std::string_view & data) {
 }
 
 /// Decode a response header.
-ErrorOr<ResponseHeader> decodeResponseHeader(std::string_view & data);
+Result<ResponseHeader> decodeResponseHeader(std::string_view & data);
 
 /// Generic decode function for raw types.
 template<typename T>
-ErrorOr<T> decode(std::string_view & data);
+Result<T> decode(std::string_view & data);
 
-template<> ErrorOr<std::uint8_t> decode<std::uint8_t>(std::string_view & data);
-template<> ErrorOr<std::int16_t> decode<std::int16_t>(std::string_view & data);
-template<> ErrorOr<std::int32_t> decode<std::int32_t>(std::string_view & data);
-template<> ErrorOr<float> decode<float>(std::string_view & data);
-template<> ErrorOr<Position> decode<Position>(std::string_view & data);
-template<> ErrorOr<PulsePosition> decode<PulsePosition>(std::string_view & data);
-template<> ErrorOr<CartesianPosition> decode<CartesianPosition>(std::string_view & data);
+template<> Result<std::uint8_t> decode<std::uint8_t>(std::string_view & data);
+template<> Result<std::int16_t> decode<std::int16_t>(std::string_view & data);
+template<> Result<std::int32_t> decode<std::int32_t>(std::string_view & data);
+template<> Result<float> decode<float>(std::string_view & data);
+template<> Result<Position> decode<Position>(std::string_view & data);
+template<> Result<PulsePosition> decode<PulsePosition>(std::string_view & data);
+template<> Result<CartesianPosition> decode<CartesianPosition>(std::string_view & data);
 
 }}}

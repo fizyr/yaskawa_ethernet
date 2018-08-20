@@ -5,7 +5,7 @@ namespace dr {
 namespace yaskawa {
 namespace udp {
 
-ErrorOr<ResponseHeader> decodeResponseHeader(std::string_view & data) {
+Result<ResponseHeader> decodeResponseHeader(std::string_view & data) {
 	std::string_view original = data;
 	ResponseHeader result;
 
@@ -60,24 +60,24 @@ ErrorOr<ResponseHeader> decodeResponseHeader(std::string_view & data) {
 	return result;
 }
 
-template<> ErrorOr<std::uint8_t> decode<std::uint8_t>(std::string_view & data) {
+template<> Result<std::uint8_t> decode<std::uint8_t>(std::string_view & data) {
 	return readLittleEndian<std::uint8_t>(data);
 }
-template<> ErrorOr<std::int16_t> decode<std::int16_t>(std::string_view & data) {
+template<> Result<std::int16_t> decode<std::int16_t>(std::string_view & data) {
 	return readLittleEndian<std::int16_t>(data);
 }
 
-template<> ErrorOr<std::int32_t> decode<std::int32_t>(std::string_view & data) {
+template<> Result<std::int32_t> decode<std::int32_t>(std::string_view & data) {
 	return readLittleEndian<std::int32_t>(data);
 }
 
-template<> ErrorOr<float> decode<float>(std::string_view & data) {
+template<> Result<float> decode<float>(std::string_view & data) {
 	std::uint32_t integral = readLittleEndian<std::uint32_t>(data);
 	return reinterpret_cast<float const &>(integral);
 }
 
 namespace {
-	ErrorOr<CoordinateSystem> decodeCartesianFrame(int type, int user_frame) {
+	Result<CoordinateSystem> decodeCartesianFrame(int type, int user_frame) {
 		switch (type) {
 			case 16: return CoordinateSystem::base;
 			case 17: return CoordinateSystem::robot;
@@ -90,7 +90,7 @@ namespace {
 	}
 }
 
-template<> ErrorOr<Position> decode<Position>(std::string_view & data) {
+template<> Result<Position> decode<Position>(std::string_view & data) {
 	std::uint32_t type                   = readLittleEndian<std::uint32_t>(data);
 	std::uint8_t  configuration          = readLittleEndian<std::uint32_t>(data);
 	std::uint32_t tool                   = readLittleEndian<std::uint32_t>(data);
@@ -107,7 +107,7 @@ template<> ErrorOr<Position> decode<Position>(std::string_view & data) {
 		return Position{result};
 	}
 
-	ErrorOr<CoordinateSystem> frame = decodeCartesianFrame(type, user_frame);
+	Result<CoordinateSystem> frame = decodeCartesianFrame(type, user_frame);
 	if (!frame) return frame.error();
 
 	// Cartesian position.

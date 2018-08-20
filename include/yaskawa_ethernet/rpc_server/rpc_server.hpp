@@ -12,7 +12,7 @@ namespace yaskawa {
 namespace detail {
 	class RpcService {
 	public:
-		using OnExecute = std::function<void(std::function<void(DetailedError)> resolve)>;
+		using OnExecute = std::function<void(std::function<void(Error)> resolve)>;
 
 		/// Atomic flag to remember if the service is currently busy.
 		std::atomic_flag busy = ATOMIC_FLAG_INIT;
@@ -34,7 +34,7 @@ namespace service_status {
 	constexpr std::uint8_t error     = 2;
 }
 
-void disabledService(udp::Client &, std::function<void(DetailedError)> resolve);
+void disabledService(udp::Client &, std::function<void(Error)> resolve);
 
 class RpcServer {
 	/// The client to use for reading/writing command status.
@@ -56,7 +56,7 @@ class RpcServer {
 	std::atomic<bool> started_{false};
 
 	/// A callback to invoke when an error occurs.
-	std::function<void(DetailedError)> on_error_;
+	std::function<void(Error)> on_error_;
 
 public:
 	/// Construct a RPC server.
@@ -64,14 +64,14 @@ public:
 		udp::Client & client,                       ///< The client to use for reading/writing command status.
 		std::uint8_t base_register,                 ///< The base register to use for reading/writing command status.
 		std::chrono::steady_clock::duration delay,  ///< Delay between reading command registers.
-		std::function<void(DetailedError)> on_error ///< The callback to invoke when an error occurs.
+		std::function<void(Error)> on_error         ///< The callback to invoke when an error occurs.
 	);
 
 	/// Register a new service without parameters.
 	/**
 	 * The service callback is invoked as:
 	 *   callback(resolve)
-	 * where `resolve` is a functor taking a DetailedError that the service should invoke
+	 * where `resolve` is a functor taking a Error that the service should invoke
 	 * to notify the RPC server that the service call is finished.
 	 */
 	template<typename Callback>
@@ -85,7 +85,7 @@ public:
 	 * If an error occurs for one of the commands, the RPC server error handler is called with the error.
 	 * If all commands succeeded, the service callback is invoked as:
 	 *   callback(result, resolve)
-	 * where `result` is a tuple with the results of each pre_command and `resolve` is a functor taking a DetailedError
+	 * where `result` is a tuple with the results of each pre_command and `resolve` is a functor taking a Error
 	 * that the service should invoke to notify the RPC server that the service call is finished.
 	 */
 	template<typename PreCommands, typename Callback>
@@ -95,7 +95,7 @@ public:
 			pre_commands = std::forward<PreCommands>(pre_commands),
 			timeout,
 			callback = std::forward<Callback>(callback)
-		] (std::function<void(DetailedError)> resolve) {
+		] (std::function<void(Error)> resolve) {
 			auto on_response = [&client, resolve = std::move(resolve), callback = std::move(callback)] (udp::MultiCommandResult<PreCommands> && result) {
 				if (!result) std::move(resolve)(std::move(result.error_unchecked()));
 				else callback(std::move(*result), std::move(resolve));
