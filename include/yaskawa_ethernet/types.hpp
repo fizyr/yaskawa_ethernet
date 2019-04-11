@@ -1,7 +1,6 @@
 #pragma once
-#include "array_view.hpp"
-
 #include <estd/result.hpp>
+#include <estd/view.hpp>
 
 #include <array>
 #include <bitset>
@@ -164,8 +163,8 @@ public:
 		std::copy(array.begin(), array.end(), joints_.begin());
 	}
 
-	array_view<int      > joints()       noexcept { return {joints_.data(), size_}; }
-	array_view<int const> joints() const noexcept { return {joints_.data(), size_}; }
+	estd::view<int      > joints()       noexcept { return {joints_.data(), size_}; }
+	estd::view<int const> joints() const noexcept { return {joints_.data(), size_}; }
 
 	int & tool()       noexcept { return tool_; }
 	int   tool() const noexcept { return tool_; }
