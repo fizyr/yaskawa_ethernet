@@ -54,11 +54,11 @@ template<> struct udp_command<WriteVar<TYPE>>  : command_constant<SINGLE>{}; \
 template<> struct udp_command<ReadVars<TYPE>>   : command_constant<MULTI>{}; \
 template<> struct udp_command<WriteVars<TYPE>>  : command_constant<MULTI>{}
 
-VAR_TRAITS(std::uint8_t,     1, commands::robot::readwrite_int8_variable,           commands::robot::readwrite_multiple_int8);
-VAR_TRAITS(std::int16_t,     2, commands::robot::readwrite_int16_variable,          commands::robot::readwrite_multiple_int16);
-VAR_TRAITS(std::int32_t,     4, commands::robot::readwrite_int32_variable,          commands::robot::readwrite_multiple_int32);
-VAR_TRAITS(float,            4, commands::robot::readwrite_float_variable,          commands::robot::readwrite_multiple_float);
-VAR_TRAITS(Position,     13* 4, commands::robot::readwrite_robot_position_variable, commands::robot::readwrite_multiple_robot_position);
+VAR_TRAITS(std::uint8_t,      1, commands::robot::readwrite_int8_variable,           commands::robot::readwrite_multiple_int8);
+VAR_TRAITS(std::int16_t,      2, commands::robot::readwrite_int16_variable,          commands::robot::readwrite_multiple_int16);
+VAR_TRAITS(std::int32_t,      4, commands::robot::readwrite_int32_variable,          commands::robot::readwrite_multiple_int32);
+VAR_TRAITS(float,             4, commands::robot::readwrite_float_variable,          commands::robot::readwrite_multiple_float);
+VAR_TRAITS(Position,     13 * 4, commands::robot::readwrite_robot_position_variable, commands::robot::readwrite_multiple_robot_position);
 
 /// If true, Command is a multi-part download command.
 template<typename Command> struct is_file_read_command : std::false_type{};
