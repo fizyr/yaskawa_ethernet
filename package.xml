@@ -3,7 +3,7 @@
 	<name>yaskawa_ethernet</name>
 	<version>0.1.4</version>
 	<description>Ethernet client for the Yaskawa high-speed ethernet server</description>
-	<license>proprietary</license>
+	<license>BSD-3-Clause</license>
 
 	<maintainer email="maarten@de-vri.es">Maarten de Vries</maintainer>
 	<author email="maarten@de-vri.es">Maarten de Vries</author>
