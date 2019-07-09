@@ -33,11 +33,61 @@
 
 #include <chrono>
 #include <iostream>
+#include <iomanip>
 
 using namespace std::chrono_literals;
 using namespace dr::yaskawa;
 
 std::chrono::milliseconds timeout = 200ms;
+
+void readPosition(udp::Client & client);
+void readStatus(udp::Client & client);
+
+void readPosition(udp::Client & client) {
+	client.sendCommand(ReadCurrentPosition{0, CoordinateSystemType::robot_cartesian}, timeout, [&client] (Result<Position> const & result) {
+		if (!result) {
+			std::cout << "Error reading current position: " << result.error().format() << "\n";
+			client.close();
+			return;
+		}
+
+		if (result->isPulse()) {
+			auto position = result->cartesian();
+			std::cout
+				<< "position: !pulse\n"
+				<< "  tool:   " << position.tool()  << "\n"
+				<< "  joints: [\n"
+				   "    " << position[0] << ",\n"
+				   "    " << position[1] << ",\n"
+				   "    " << position[2] << ",\n"
+				   "    " << position[3] << ",\n"
+				   "    " << position[4] << ",\n"
+				   "    " << position[5] << ",\n"
+				   "    " << position[6] << ",\n"
+				   "    " << position[7] << ",\n"
+				   "  ]\n";
+				;
+		}
+
+		if (result->isCartesian()) {
+			auto position = result->cartesian();
+			std::cout
+				<< "position: !cartesian\n"
+				<< "  x:      " << std::fixed << std::setprecision(3) << position.x()  << "\n"
+				<< "  y:      " << std::fixed << std::setprecision(3) << position.y()  << "\n"
+				<< "  z:      " << std::fixed << std::setprecision(3) << position.z()  << "\n"
+				<< "  rx:     " << std::fixed << std::setprecision(4) << position.rx() << "\n"
+				<< "  ry:     " << std::fixed << std::setprecision(4) << position.ry() << "\n"
+				<< "  rz:     " << std::fixed << std::setprecision(4) << position.rz() << "\n"
+				<< "  frame:  " << position.frame()          << "\n"
+				<< "  tool:   " << position.tool()           << "\n"
+				<< "  config: " << position.configuration()  << "\n"
+				;
+		}
+
+		readStatus(client);
+	});
+}
 
 void readStatus(udp::Client & client) {
 	client.sendCommand(ReadStatus{}, timeout, [&client] (Result<dr::yaskawa::Status> const & result) {
@@ -47,23 +97,25 @@ void readStatus(udp::Client & client) {
 			return;
 		}
 		std::cout
-			<< "----------\n"
-			<< "step:               " << (result->step               ? "true" : "false") << "\n"
-			<< "one_cycle:          " << (result->one_cycle          ? "true" : "false") << "\n"
-			<< "continuous:         " << (result->continuous         ? "true" : "false") << "\n"
-			<< "running:            " << (result->running            ? "true" : "false") << "\n"
-			<< "speed_limited:      " << (result->speed_limited      ? "true" : "false") << "\n"
-			<< "teach:              " << (result->teach              ? "true" : "false") << "\n"
-			<< "play:               " << (result->play               ? "true" : "false") << "\n"
-			<< "remote:             " << (result->remote             ? "true" : "false") << "\n"
-			<< "teach_pendant_hold: " << (result->teach_pendant_hold ? "true" : "false") << "\n"
-			<< "external_hold:      " << (result->external_hold      ? "true" : "false") << "\n"
-			<< "command_hold:       " << (result->command_hold       ? "true" : "false") << "\n"
-			<< "alarm:              " << (result->alarm              ? "true" : "false") << "\n"
-			<< "error:              " << (result->error              ? "true" : "false") << "\n"
-			<< "servo_on:           " << (result->servo_on           ? "true" : "false") << "\n";
+			<< "---\n"
+			<< "status:\n"
+			<< "  step:               " << (result->step               ? "true" : "false") << "\n"
+			<< "  one_cycle:          " << (result->one_cycle          ? "true" : "false") << "\n"
+			<< "  continuous:         " << (result->continuous         ? "true" : "false") << "\n"
+			<< "  running:            " << (result->running            ? "true" : "false") << "\n"
+			<< "  speed_limited:      " << (result->speed_limited      ? "true" : "false") << "\n"
+			<< "  teach:              " << (result->teach              ? "true" : "false") << "\n"
+			<< "  play:               " << (result->play               ? "true" : "false") << "\n"
+			<< "  remote:             " << (result->remote             ? "true" : "false") << "\n"
+			<< "  teach_pendant_hold: " << (result->teach_pendant_hold ? "true" : "false") << "\n"
+			<< "  external_hold:      " << (result->external_hold      ? "true" : "false") << "\n"
+			<< "  command_hold:       " << (result->command_hold       ? "true" : "false") << "\n"
+			<< "  alarm:              " << (result->alarm              ? "true" : "false") << "\n"
+			<< "  error:              " << (result->error              ? "true" : "false") << "\n"
+			<< "  servo_on:           " << (result->servo_on           ? "true" : "false") << "\n"
+			;
 
-		readStatus(client);
+		readPosition(client);
 	});
 }
 
