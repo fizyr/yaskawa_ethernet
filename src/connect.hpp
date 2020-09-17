@@ -65,8 +65,8 @@ public:
 	explicit ConnectionAttempt(Socket & socket, Callback callback) :
 		socket(&socket),
 		callback(std::move(callback)),
-		resolver(socket.get_io_service()),
-		timer(socket.get_io_service()) {}
+		resolver(socket.get_executor()),
+		timer(socket.get_executor()) {}
 
 	/// Start the connection attempt.
 	void start(

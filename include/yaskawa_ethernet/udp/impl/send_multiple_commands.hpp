@@ -154,14 +154,14 @@ auto sendMultipleCommands(
 	std::function<void(typename MultiCommandSession<Commands>::result_type)> callback
 ) {
 	using Session = DeadlineSession<MultiCommandSession<Commands>>;
-	auto session = std::make_shared<Session>(client.ios(), client, std::move(commands));
+	auto session = std::make_shared<Session>(client.get_executor(), client, std::move(commands));
 	session->start(deadline, [&client, session, callback = std::move(callback)] (typename Session::result_type && result) mutable {
 		session->cancelTimeout();
 		std::move(callback)(std::move(result));
 
 		// Move the shared_ptr into a posted handler which resets it.
 		// That way, any queued event handlers can still completer succesfully.
-		client.ios().post([session = std::move(session)] () mutable {
+		asio::post(client.get_executor(), [session = std::move(session)] () mutable {
 			session.reset();
 		});
 

@@ -41,7 +41,7 @@ RpcServer::RpcServer(udp::Client & client, std::uint8_t base_register, std::chro
 	client_{&client},
 	base_register_{base_register},
 	read_commands_delay_{delay},
-	read_commands_timer_{client.ios()},
+	read_commands_timer_{client.get_executor()},
 	on_error_{std::move(on_error)} {}
 
 bool RpcServer::start() {

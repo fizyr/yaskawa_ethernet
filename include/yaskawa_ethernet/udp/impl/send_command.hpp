@@ -132,14 +132,14 @@ public:
 template<typename Command, typename Callback>
 auto sendCommand(Client & client, Command command, std::chrono::steady_clock::time_point deadline, Callback callback) {
 	using Session = DeadlineSession<CommandSession<std::decay_t<Command>>>;
-	auto session = std::make_shared<Session>(client.ios(), client, std::move(command));
+	auto session = std::make_shared<Session>(client.get_executor(), client, std::move(command));
 	session->start(deadline, [&client, session, callback = std::move(callback)] (typename Session::result_type && result) mutable {
 		session->cancelTimeout();
 		std::move(callback)(std::move(result));
 
 		// Move the shared_ptr into a posted handler which resets it.
 		// That way, any queued event handlers can still completer succesfully.
-		client.ios().post([session = std::move(session)] () mutable {
+		asio::post(client.get_executor(), [session = std::move(session)] () mutable {
 			session.reset();
 		});
 

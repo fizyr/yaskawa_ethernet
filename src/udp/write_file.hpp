@@ -88,7 +88,7 @@ public:
 		client_(&client),
 		request_id_{request_id},
 		command_{std::move(command)},
-		timer_(client.ios()),
+		timer_(client.get_executor()),
 		timeout_{timeout},
 		on_done_(std::move(on_done)),
 		on_progress_(std::move(on_progress))

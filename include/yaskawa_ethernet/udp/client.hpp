@@ -92,8 +92,8 @@ public:
 	/// Close the connection.
 	void close();
 
-	/// Get the IO service used by the client.
-	asio::io_service & ios() { return socket_.get_io_service(); }
+	/// Get the executor used by the client.
+	asio::executor get_executor() { return socket_.get_executor(); }
 
 	/// Get the socket used by the client.
 	Socket        & socket()       { return socket_; }
