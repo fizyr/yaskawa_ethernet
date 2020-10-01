@@ -57,7 +57,7 @@ private:
 
 public:
 	template<typename ...Args>
-	DeadlineSession(asio::executor executor, Args && ...args) :
+	DeadlineSession(asio::any_io_executor executor, Args && ...args) :
 		timer_{executor},
 		work_(std::forward<Args>(args)...) {}
 

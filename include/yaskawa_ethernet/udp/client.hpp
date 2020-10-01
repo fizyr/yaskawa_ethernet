@@ -93,7 +93,7 @@ public:
 	void close();
 
 	/// Get the executor used by the client.
-	asio::executor get_executor() { return socket_.get_executor(); }
+	asio::any_io_executor get_executor() { return socket_.get_executor(); }
 
 	/// Get the socket used by the client.
 	Socket        & socket()       { return socket_; }
