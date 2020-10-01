@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package format="2">
 	<name>yaskawa_ethernet</name>
-	<version>0.2.0</version>
+	<version>0.2.1</version>
 	<description>Ethernet client for the Yaskawa high-speed ethernet server</description>
 	<license>BSD-3-Clause</license>
 
