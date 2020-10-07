@@ -56,7 +56,7 @@ namespace impl {
  * - Read command response.
  * - Read response data.
  *
- * It does not support timeouts dreictly, but it does have a cancel() method.
+ * It does not support timeouts directly, but it does have a cancel() method.
  */
 template<typename Command>
 class CommandSession {
