@@ -107,7 +107,7 @@ struct Header {
 };
 
 constexpr std::size_t header_size      = 0x20;
-constexpr std::size_t max_payload_size = 0x479;
+constexpr std::size_t max_payload_size = 0x1df;
 
 struct RequestHeader : Header {
 	std::uint16_t command;
